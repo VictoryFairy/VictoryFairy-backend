@@ -28,6 +28,6 @@ services:
     ports:
       - '${DB_TCP_PORT}:${DB_TCP_PORT}'
     environment:
-      - POSTGRES_PASSWORD=${DB_PASSWORD}
+      - POSTGRES_PASSWORD=${DB_ROOT_PASSWORD}
     volumes:
       - ./db_data:/var/lib/postgres
