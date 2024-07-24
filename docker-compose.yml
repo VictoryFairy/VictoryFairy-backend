@@ -5,13 +5,29 @@ services:
       dockerfile: Dockerfile
     ports:
       - '3000:3000'
+    environment:
+      - NODE_ENV=${NODE_ENV}
+      - DB_CONTAINER_NAME=${DB_CONTAINER_NAME}
+      - DB_DATABASE_NAME=${DB_DATABASE_NAME}
+      - DB_USER=${DB_USER}
+      - DB_PASSWORD=${DB_PASSWORD}
+      - DB_TCP_PORT=${DB_TCP_PORT}
+      - JWT_ACCESS_SECRET=${JWT_ACCESS_SECRET}
+      - JWT_REFRESH_SECRET=${JWT_REFRESH_SECRET}
+      - ACCESS_EXPIRE_TIME=${ACCESS_EXPIRE_TIME}
+      - REFRESH_EXPIRE_TIME=${REFRESH_EXPIRE_TIME}
+      - BACK_END_URL=${BACK_END_URL}
+      - FRONT_END_URL=${FRONT_END_URL}
     volumes:
       - ./src:/usr/src/app/src
   mysql:
-    container_name: postgreSQL
+    container_name: ${DB_CONTAINER_NAME}
     image: postgres:alpine
     restart: always
+    shm_size: 128mb
     ports:
-      - '5432:5432'
+      - '${DB_TCP_PORT}:${DB_TCP_PORT}'
+    environment:
+      - POSTGRES_PASSWORD=${DB_PASSWORD}
     volumes:
-      - ./mysql_data:/var/lib/mysql
+      - ./db_data:/var/lib/postgres
