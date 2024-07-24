@@ -1,0 +1,17 @@
+services:
+  nestjs_api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - '3000:3000'
+    volumes:
+      - ./src:/usr/src/app/src
+  mysql:
+    container_name: postgreSQL
+    image: postgres:alpine
+    restart: always
+    ports:
+      - '5432:5432'
+    volumes:
+      - ./mysql_data:/var/lib/mysql
