@@ -2,10 +2,16 @@ FROM node:lts-alpine
 
 WORKDIR /usr/src/app
 
-COPY . .
+COPY package*.json ./
 
 RUN npm install
 
+COPY . .
+
+RUN npm run build
+
+RUN rm -rf ./src
+
 EXPOSE 3000
 
-CMD [ "npm", "run", "start:dev" ]
+CMD ["node", "dist/main"]
