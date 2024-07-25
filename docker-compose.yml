@@ -3,6 +3,15 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
+    develop:
+      watch:
+        - action: sync
+          path: ./src
+          target: /src
+          ignore:
+            - node_modules/
+        - action: rebuild
+          path: package.json
     ports:
       - '3000:3000'
     environment:
