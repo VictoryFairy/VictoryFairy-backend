@@ -4,6 +4,4 @@ import { TeamService } from 'src/services/team.service';
 @Controller('team')
 export class TeamController {
   constructor(private readonly teamService: TeamService) {}
-
-  
 }
