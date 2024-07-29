@@ -17,7 +17,7 @@ jobs:
       run: |
         {
           echo '${{ toJson(secrets) }}' | jq -r 'to_entries | .[] | "\(.key)=\(.value)"';
-          echo '${{ toJson(variables) }}' | jq -r 'to_entries | .[] | "\(.key)=\(.value)"'
+          echo '${{ toJson(vars) }}' | jq -r 'to_entries | .[] | "\(.key)=\(.value)"'
         } > .env
 
     - name: Build and run with docker-compose
