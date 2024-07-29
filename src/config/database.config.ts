@@ -7,7 +7,7 @@ export const getDatabaseConfig = (
   const nodeEnv = configService.get<string>('NODE_ENV');
 
   return {
-    type: 'mysql',
+    type: 'postgres',
     host: configService.get<string>('DB_CONTAINER_NAME'),
     port: configService.get<number>('DB_TCP_PORT'),
     database: configService.get<string>('DB_DATABASE_NAME'),
