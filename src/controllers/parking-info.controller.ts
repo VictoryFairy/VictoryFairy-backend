@@ -4,4 +4,6 @@ import { ParkingInfoService } from 'src/services/parking-info.service';
 @Controller('parking-info')
 export class ParkingInfoController {
   constructor(private readonly parkingInfoService: ParkingInfoService) {}
+
+  
 }
