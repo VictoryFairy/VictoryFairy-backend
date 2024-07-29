@@ -10,6 +10,8 @@ import { TeamModule } from './modules/team.module';
 import { RegisteredGameModule } from './modules/registered-game.module';
 import { GameModule } from './modules/game.module';
 import { UserModule } from './modules/user.module';
+import { RedisModule } from './modules/redis.module';
+import { RankModule } from './modules/rank.module';
 
 @Module({
   imports: [
@@ -28,6 +30,8 @@ import { UserModule } from './modules/user.module';
     RegisteredGameModule,
     GameModule,
     UserModule,
+    RedisModule,
+    RankModule,
   ],
   controllers: [AppController],
   providers: [AppService],
