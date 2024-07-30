@@ -43,9 +43,10 @@ jobs:
             test("^(AWS|DOCKERHUB)") | not)) | 
           from_entries' |
         jq -r 'to_entries[] | "    \(.key): \"\(.value)\""' >> .ebextensions/env.config
-        - name: Create deployment package
-          run: |
-            zip -r deploy.zip .ebextensions docker-compose.yml
+
+    - name: Create deployment package
+      run: |
+        zip -r deploy.zip .ebextensions docker-compose.yml
     
     - name: Deploy to Elastic Beanstalk
       uses: einaregilsson/beanstalk-deploy@v22
