@@ -6,6 +6,8 @@ services:
         condition: service_healthy
     container_name: api
     image: gjeodnd12165/victory-fairy:lts-alpine
+    build:
+      context: .
     platform: linux/amd64
     ports:
       - '3000:3000'
