@@ -1,6 +1,8 @@
 name: Branch CI/CD with Docker
 
-on: push
+on:
+  push:
+    branches-ignore: [ Chore/aws-deploy ]
 
 jobs:
   build-and-test:
