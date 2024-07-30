@@ -46,6 +46,8 @@ jobs:
 
     - name: Create deployment package
       run: |
+        mv docker-compose.yml docker-compose.dev.yml
+        mv docker-compose.prod.yml docker-compose.yml
         zip -r deploy.zip .ebextensions docker-compose.yml
     
     - name: Deploy to Elastic Beanstalk
