@@ -46,12 +46,10 @@ jobs:
 
     - name: Add DockerHub Auth Config
       run: |
-        DOCKERHUB_USERNAME=${{ secrets.DOCKERHUB_USERNAME }}
-        DOCKERHUB_PASSWORD=${{ secrets.DOCKERHUB_PASSWORD }}
-        AUTH=$(echo -n "$DOCKERHUB_USERNAME:$DOCKERHUB_ACCESS_TOKEN" | base64)
-        
         mkdir -p .ebextensions
         
+        # Use GitHub Secrets directly in the content
+        echo "Creating Docker Hub auth config"
         echo 'files:' > .ebextensions/dockerhub_auth.config
         echo '  "/root/.docker/config.json":' >> .ebextensions/dockerhub_auth.config
         echo '    mode: "000600"' >> .ebextensions/dockerhub_auth.config
@@ -61,7 +59,10 @@ jobs:
         echo '      {' >> .ebextensions/dockerhub_auth.config
         echo '        "auths": {' >> .ebextensions/dockerhub_auth.config
         echo '          "https://index.docker.io/v1/": {' >> .ebextensions/dockerhub_auth.config
-        echo '            "auth": "'$AUTH'"' >> .ebextensions/dockerhub_auth.config
+        
+        # Add auth entry with base64 encoding
+        echo '            "auth": "'$(echo -n "${{ secrets.DOCKERHUB_USERNAME }}:${{ secrets.DOCKERHUB_ACCESS_TOKEN }}" | base64)'"' >> .ebextensions/dockerhub_auth.config
+
         echo '          }' >> .ebextensions/dockerhub_auth.config
         echo '        }' >> .ebextensions/dockerhub_auth.config
         echo '      }' >> .ebextensions/dockerhub_auth.config
@@ -71,7 +72,7 @@ jobs:
         mv docker-compose.yml docker-compose.dev.yml
         mv docker-compose.prod.yml docker-compose.yml
         zip -r deploy.zip .ebextensions docker-compose.yml
-    
+   
     - name: Deploy to Elastic Beanstalk
       uses: einaregilsson/beanstalk-deploy@v22
       with:
