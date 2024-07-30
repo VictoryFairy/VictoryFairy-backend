@@ -44,6 +44,28 @@ jobs:
           from_entries' |
         jq -r 'to_entries[] | "    \(.key): \"\(.value)\""' >> .ebextensions/env.config
 
+    - name: Add DockerHub Auth Config
+      run: |
+        DOCKERHUB_USERNAME=${{ secrets.DOCKERHUB_USERNAME }}
+        DOCKERHUB_PASSWORD=${{ secrets.DOCKERHUB_PASSWORD }}
+        AUTH=$(echo -n "$DOCKERHUB_USERNAME:$DOCKERHUB_PASSWORD" | base64)
+        
+        mkdir -p .ebextensions
+        
+        echo 'files:' > .ebextensions/dockerhub_auth.config
+        echo '  "/root/.docker/config.json":' >> .ebextensions/dockerhub_auth.config
+        echo '    mode: "000600"' >> .ebextensions/dockerhub_auth.config
+        echo '    owner: root' >> .ebextensions/dockerhub_auth.config
+        echo '    group: root' >> .ebextensions/dockerhub_auth.config
+        echo '    content: |' >> .ebextensions/dockerhub_auth.config
+        echo '      {' >> .ebextensions/dockerhub_auth.config
+        echo '        "auths": {' >> .ebextensions/dockerhub_auth.config
+        echo '          "https://index.docker.io/v1/": {' >> .ebextensions/dockerhub_auth.config
+        echo '            "auth": "'$AUTH'"' >> .ebextensions/dockerhub_auth.config
+        echo '          }' >> .ebextensions/dockerhub_auth.config
+        echo '        }' >> .ebextensions/dockerhub_auth.config
+        echo '      }' >> .ebextensions/dockerhub_auth.config
+
     - name: Create deployment package
       run: |
         mv docker-compose.yml docker-compose.dev.yml
