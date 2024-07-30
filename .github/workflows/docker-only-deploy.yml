@@ -1,6 +1,8 @@
-name: Branch CI/CD with Docker
+name: Docker Build and Local Test
 
-on: push
+on:
+  push:
+    branches-ignore: [ main ]
 
 jobs:
   build-and-test:
