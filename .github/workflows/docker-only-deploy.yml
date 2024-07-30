@@ -1,8 +1,8 @@
-name: Branch CI/CD with Docker
+name: Docker Build and Local Test
 
 on:
   push:
-    branches-ignore: [ Chore/aws-deploy ]
+    branches-ignore: [ main ]
 
 jobs:
   build-and-test:

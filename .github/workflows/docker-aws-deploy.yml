@@ -1,8 +1,8 @@
-name: Docker Build and Deploy
+name: Docker Build and AWS EB Deploy
 
 on:
   push:
-    branches: [ Chore/aws-deploy ]
+    branches: [ main ]
 
 jobs:
   build-and-push:
