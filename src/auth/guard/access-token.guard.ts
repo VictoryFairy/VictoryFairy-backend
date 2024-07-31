@@ -9,7 +9,7 @@ import { AuthService } from '../auth.service';
 import { UserService } from 'src/services/user.service';
 
 @Injectable()
-class BaseBearTokenGuard implements CanActivate {
+export class AccessTokenGuard implements CanActivate {
   constructor(
     private readonly authService: AuthService,
     private readonly userService: UserService,
@@ -28,33 +28,10 @@ class BaseBearTokenGuard implements CanActivate {
     req.token = token;
     req.tokenType = payload.type;
 
-    return true;
-  }
-}
-
-@Injectable()
-export class AccessTokenGuard extends BaseBearTokenGuard {
-  async canActivate(context: ExecutionContext): Promise<boolean> {
-    await super.canActivate(context);
-    const req = context.switchToHttp().getRequest();
-
     if (req.tokenType !== 'ac') {
-      throw new UnauthorizedException('유효한 토큰이 아님');
+      throw new UnauthorizedException('access-token이 아님');
     }
 
-    return true;
-  }
-}
-
-@Injectable()
-export class RefreshTokenGuard extends BaseBearTokenGuard {
-  async canActivate(context: ExecutionContext): Promise<boolean> {
-    await super.canActivate(context);
-    const req = context.switchToHttp().getRequest();
-
-    if (req.tokenType != 'rf') {
-      throw new UnauthorizedException('유효한 토큰이 아님');
-    }
     return true;
   }
 }
