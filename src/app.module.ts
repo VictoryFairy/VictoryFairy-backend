@@ -22,8 +22,7 @@ import { MailModule } from './modules/mail.module';
     }),
     TypeOrmModule.forRootAsync({
       imports: [ConfigModule],
-      useFactory: (configService: ConfigService) =>
-        getDatabaseConfig(configService),
+      useFactory: getDatabaseConfig,
       inject: [ConfigService],
     }),
     ParkingInfoModule,
