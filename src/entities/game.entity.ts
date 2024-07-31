@@ -8,7 +8,10 @@ export class Game {
   id: number;
 
   @Column('date')
-  time: Date;
+  date: string;
+
+  @Column('time')
+  time: string;
 
   @Column()
   status: string;

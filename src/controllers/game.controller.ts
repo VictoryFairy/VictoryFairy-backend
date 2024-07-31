@@ -5,5 +5,8 @@ import { GameService } from 'src/services/game.service';
 export class GameController {
   constructor(private readonly gameService: GameService) {}
 
-  
+  @Get('schedules')
+  getGamesSchedule() {
+    return this.gameService.getGamesSchedule();  
+  }
 }

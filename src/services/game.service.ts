@@ -1,8 +1,7 @@
 import { HttpService } from '@nestjs/axios';
 import { Injectable } from '@nestjs/common';
-import { parse } from 'path';
 import { map, Observable } from 'rxjs';
-import { GameSchedule, GameData, ITeamAndScore, TTeam } from 'src/types/crawling-game.type';
+import { IGameSchedule, IGameData, ITeamAndScore, TTeam, IRawScheduleList } from 'src/types/crawling-game.type';
 import { isNotTimeFormat, convertDateFormat } from 'src/util/time-format';
 
 @Injectable()
@@ -15,11 +14,11 @@ export class GameService {
    * 크롤링 관련 로직:
    * @author EvansKJ57
    */
-  getGamesSchedule(): Observable<GameSchedule> {
+  getGamesSchedule(): Observable<unknown> {
     const date = new Date();
     const curYear = date.getFullYear();
     
-    return this.httpService.post(
+    return this.httpService.post<IRawScheduleList>(
       'https://www.koreabaseball.com/ws/Schedule.asmx/GetScheduleList',
       {
         leId: 1, // 1 => 1부 | 2 => 퓨쳐스 리그
@@ -35,24 +34,24 @@ export class GameService {
       },
     ).pipe(
       map(response => {
-        const convertRowsToArray = response.data.data.rows.map(row => 
+        const convertRowsToArray = response.data.rows.map(row => 
           this.extractTextFromHtml(row.row)
         );
+        // return convertRowsToArray;
         return this.refineGamesData(convertRowsToArray, curYear);
       })
     );
   }
 
-  extractTextFromHtml(data): string[] {
+  extractTextFromHtml(data: IRawScheduleList['rows'][number]['row']): string[] {
     return data.map((row) => {
-      const root = parse(row.Text);
-      return root.ext;
+      return row.Text.replace(/<[^>]*>/g, '');
     });
   }
 
-  refineGamesData(rawData, year): GameSchedule {
-    const groupedData = {};
-    let currentDate = '';
+  refineGamesData(rawData: string[][], year: number): IGameSchedule {
+    const groupedData: IGameSchedule = {};
+    let currentDate: string = '';
 
     rawData.forEach((entry) => {
       let date, time, game, review, highlight, channel, empty1, stadium, status;
@@ -71,8 +70,16 @@ export class GameService {
           status,
         ] = entry;
       } else if (entry.length === 8) {
-        [time, game, review, highlight, channel, empty1, stadium, status] =
-          entry;
+        [
+          time,
+          game,
+          review,
+          highlight,
+          channel,
+          empty1,
+          stadium,
+          status
+        ] = entry;
       } else {
         return; // 예상하지 못한 형식의 데이터는 무시
       }
@@ -86,7 +93,8 @@ export class GameService {
       // 해당 날짜에 경기 넣어주기
       if (currentDate) {
         const { homeTeam, awayTeam } = this.getTeamAndScore(game);
-        const gameData: GameData = {
+        const gameData: IGameData = {
+          date,
           time,
           // game,
           homeTeam: homeTeam.name,
