@@ -21,7 +21,6 @@ import { MailModule } from './modules/mail.module';
       isGlobal: true,
     }),
     TypeOrmModule.forRootAsync({
-      imports: [ConfigModule],
       useFactory: getDatabaseConfig,
       inject: [ConfigService],
     }),
