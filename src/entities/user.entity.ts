@@ -1,5 +1,12 @@
-import { Team } from "src/entities/team.entity";
-import { Column, Entity, OneToOne, PrimaryGeneratedColumn } from "typeorm";
+import {
+  Column,
+  Entity,
+  JoinColumn,
+  ManyToOne,
+  PrimaryGeneratedColumn,
+} from 'typeorm';
+import { Team } from './team.entity';
+import { ApiProperty } from '@nestjs/swagger';
 
 @Entity()
 export class User {
@@ -9,18 +16,19 @@ export class User {
   @Column()
   profile_image: string;
 
-  @Column()
+  @Column({ unique: true })
   nickname: string;
 
-  @Column()
+  @Column({ unique: true })
   email: string;
 
   @Column()
   password: string;
 
-  @Column()
+  @Column({ default: 1000 })
   score: number;
 
-  @OneToOne(type => Team)
-  cheering_team: Team;
+  @ManyToOne(() => Team, (team) => team.users)
+  @JoinColumn({ name: 'team_id' })
+  support_team: Team;
 }
