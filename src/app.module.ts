@@ -12,6 +12,8 @@ import { GameModule } from './modules/game.module';
 import { UserModule } from './modules/user.module';
 import { RedisModule } from './modules/redis.module';
 import { RankModule } from './modules/rank.module';
+import { AuthModule } from './auth/auth.module';
+import { MailModule } from './modules/mail.module';
 
 @Module({
   imports: [
@@ -32,6 +34,8 @@ import { RankModule } from './modules/rank.module';
     UserModule,
     RedisModule,
     RankModule,
+    AuthModule,
+    MailModule,
   ],
   controllers: [AppController],
   providers: [AppService],
