@@ -12,6 +12,7 @@ import { GameModule } from './modules/game.module';
 import { UserModule } from './modules/user.module';
 import { RedisModule } from './modules/redis.module';
 import { RankModule } from './modules/rank.module';
+import { SeederService } from './seeder.service';
 
 @Module({
   imports: [
@@ -34,6 +35,6 @@ import { RankModule } from './modules/rank.module';
     RankModule,
   ],
   controllers: [AppController],
-  providers: [AppService],
+  providers: [AppService, SeederService],
 })
 export class AppModule {}

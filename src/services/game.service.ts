@@ -1,28 +1,37 @@
 import { HttpService } from '@nestjs/axios';
 import { Injectable } from '@nestjs/common';
-import { map, Observable } from 'rxjs';
-import { IGameSchedule, IGameData, ITeamAndScore, TTeam, IRawScheduleList } from 'src/types/crawling-game.type';
+import { InjectRepository } from '@nestjs/typeorm';
+import { from, map, Observable, switchMap } from 'rxjs';
+import { Game } from 'src/entities/game.entity';
+import { TGameSchedule, IGameData, ITeamAndScore, TTeam, IRawScheduleList } from 'src/types/crawling-game.type';
 import { isNotTimeFormat, convertDateFormat } from 'src/util/time-format';
+import { Repository } from 'typeorm';
+import { TeamService } from './team.service';
+import { StadiumService } from './stadium.service';
 
 @Injectable()
 export class GameService {
   constructor(
     private readonly httpService: HttpService,
+    @InjectRepository(Game)
+    private readonly gameRepository: Repository<Game>,
+    private readonly teamService: TeamService,
+    private readonly stadiumService: StadiumService,
   ) {}
 
   /** 
    * 크롤링 관련 로직:
-   * @author EvansKJ57
+   * Thanks to EvansKJ57
    */
-  getGamesSchedule(): Observable<unknown> {
+  getGamesSchedule(): Observable<void> {
     const date = new Date();
     const curYear = date.getFullYear();
-    
+
     return this.httpService.post<IRawScheduleList>(
       'https://www.koreabaseball.com/ws/Schedule.asmx/GetScheduleList',
       {
         leId: 1, // 1 => 1부 | 2 => 퓨쳐스 리그
-        srIdList: [0, 9, 6, 3, 4, 5, 7].join(','), // 0 => 프로팀 경기 | 1 => 시범경기 | 3,4,5,7 => 포스트 시즌 | 9 => 올스타전 | 6 => 모름
+        srIdList: [0, /*9, 6, 3, 4, 5, 7*/].join(','), // 0 => 프로팀 경기 | 1 => 시범경기 | 3,4,5,7 => 포스트 시즌 | 9 => 올스타전 | 6 => 모름
         seasonId: curYear,
         gameMonth: date.getMonth() + 1,
         teamid: '', //LG => LG | 롯데 => LT | 두산 => OB | KIA => HT | 삼성 => SS | SSG => SK | NC => NC | 키움 => WO | KT => KT | 한화 => HH
@@ -33,15 +42,70 @@ export class GameService {
         },
       },
     ).pipe(
-      map(response => {
+      switchMap(response => {
         const convertRowsToArray = response.data.rows.map(row => 
           this.extractTextFromHtml(row.row)
         );
-        // return convertRowsToArray;
-        return this.refineGamesData(convertRowsToArray, curYear);
+        const refinedGameData: TGameSchedule = this.refineGamesData(convertRowsToArray, curYear);
+        
+        return from(this.createMany(refinedGameData));
       })
     );
   }
+
+  async createMany(gameSchedules: TGameSchedule): Promise<void> {
+    await this.gameRepository.manager.transaction(async manager => {
+      for (const schedule of gameSchedules) {
+        // Create or update game entity
+        let game = new Game();
+        game.date = schedule.date;
+        game.time = schedule.time;
+        game.status = schedule.status;
+        game.home_team_score = schedule.homeScore ?? null;
+        game.away_team_score = schedule.awayScore ?? null;
+        game.winning_team = schedule.winner ? await this.teamService.findByName(schedule.winner) : null;
+  
+        // Ensure home_team exists
+        game.home_team = await this.teamService.findByName(schedule.homeTeam);
+        if (!game.home_team) {
+          console.log('홈 팀이 누락되었거나 아직 로드되지 않았습니다:', game, schedule);
+          continue; // Skip this schedule
+        }
+  
+        // Ensure away_team exists
+        game.away_team = await this.teamService.findByName(schedule.awayTeam);
+        if (!game.away_team) {
+          console.log('원정 팀이 누락되었거나 아직 로드되지 않았습니다:', game, schedule);
+          continue; // Skip this schedule
+        }
+  
+        // Ensure stadium exists
+        game.stadium = await this.stadiumService.findByName(schedule.stadium);
+        if (!game.stadium) {
+          console.log('구장이 누락되었거나 아직 로드되지 않았습니다:', game, schedule);
+          continue; // Skip this schedule
+        }
+  
+        // Validate all required fields
+        if (!game.date || !game.time || !game.status) {
+          console.log('필수 필드가 누락되었거나 잘못되었습니다:', game, schedule);
+          continue; // Skip this schedule
+        }
+  
+        try {
+          await manager.upsert(Game, game, ['date', 'time', 'stadium']);
+        } catch (error) {
+          console.error('게임 저장 중 오류 발생:', error);
+          throw error; // Rethrow error to trigger rollback
+        }
+      }
+    });
+  }
+  
+  
+  
+  
+  
 
   extractTextFromHtml(data: IRawScheduleList['rows'][number]['row']): string[] {
     return data.map((row) => {
@@ -49,8 +113,8 @@ export class GameService {
     });
   }
 
-  refineGamesData(rawData: string[][], year: number): IGameSchedule {
-    const groupedData: IGameSchedule = {};
+  refineGamesData(rawData: string[][], year: number): TGameSchedule {
+    const groupedData: TGameSchedule = [];
     let currentDate: string = '';
 
     rawData.forEach((entry) => {
@@ -87,14 +151,13 @@ export class GameService {
       //  객체에 날짜 키 추가하기
       if (date && isNotTimeFormat(date)) {
         currentDate = `${year}-${convertDateFormat(date)}`;
-        groupedData[currentDate] = [];
       }
 
       // 해당 날짜에 경기 넣어주기
       if (currentDate) {
         const { homeTeam, awayTeam } = this.getTeamAndScore(game);
         const gameData: IGameData = {
-          date,
+          date: currentDate,
           time,
           // game,
           homeTeam: homeTeam.name,
@@ -105,7 +168,7 @@ export class GameService {
         // 종료된 경기는 승자팀과 스코어 할당
         if (review === '리뷰') {
           gameData['winner'] =
-            homeTeam.score > awayTeam.score ? 'home' : 'away';
+            homeTeam.score > awayTeam.score ? homeTeam.name : awayTeam.name;
           gameData['homeScore'] = homeTeam.score;
           gameData['awayScore'] = awayTeam.score;
           gameData['status'] = '경기 종료';
@@ -113,7 +176,7 @@ export class GameService {
           gameData['status'] = '경기 전';
         }
 
-        groupedData[currentDate].push(gameData);
+        groupedData.push(gameData);
       }
     });
 

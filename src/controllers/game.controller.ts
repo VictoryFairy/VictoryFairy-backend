@@ -7,6 +7,6 @@ export class GameController {
 
   @Get('schedules')
   getGamesSchedule() {
-    return this.gameService.getGamesSchedule();  
+    return this.gameService.getGamesSchedule();
   }
 }

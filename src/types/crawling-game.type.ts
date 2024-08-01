@@ -19,13 +19,12 @@ export type TStadium =
   | '문학'
   | '수원'
   | '사직'
-  | '광주';
+  | '광주'
+  | '울산';
 
 export type TGameStatus = '경기 전' | '우천취소' | '경기 종료';
 
-export interface IGameSchedule {
-  [index: number]: IGameData;
-}
+export type TGameSchedule = IGameData[];
 
 export interface IGameData {
   date: string;
@@ -36,7 +35,7 @@ export interface IGameData {
   status: TGameStatus;
   homeTeam: TTeam;
   awayTeam: TTeam;
-  winner?: 'home' | 'away';
+  winner?: TTeam;
   homeScore?: number;
   awayScore?: number;
 }
