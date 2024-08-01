@@ -56,28 +56,27 @@ export class AuthController {
     const rfExTime = this.configService.get('REFRESH_EXPIRE_TIME');
     const cookieOptions: CookieOptions = {
       maxAge: parseInt(rfExTime),
-      httpOnly: true,
       domain: domain || 'localhost',
+      httpOnly: true,
     };
     res.cookie('token', rfToken, cookieOptions);
-    res.json({ acToken });
+    return res.json({ acToken });
   }
 
   /** 유저 로그아웃 */
   @Post('logout')
   @HttpCode(HttpStatus.OK)
   @UseGuards(RefreshTokenGuard)
-  @ApiCookieAuth('token')
   @ApiOperation({ summary: '로그아웃' })
   @ApiResponse({ description: '성공 시 데이터 없이 상태코드만 응답' })
   @ApiUnauthorizedResponse({ description: '유효하지 않은 토큰' })
   logout(@Res() res: Response) {
     const domain = this.configService.get('DOMAIN');
-    return res.clearCookie('token', {
-      maxAge: 0,
-      httpOnly: true,
+    res.clearCookie('token', {
       domain: domain || 'localhost',
+      httpOnly: true,
     });
+    return res.sendStatus(HttpStatus.OK);
   }
 
   /** 엑세스 토큰 재발급 */

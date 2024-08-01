@@ -8,6 +8,7 @@ services:
       - '3000:3000'
     environment:
       - NODE_ENV=${NODE_ENV}
+      - DOMAIN=${DOMAIN}
       - DB_CONTAINER_NAME=${DB_CONTAINER_NAME}
       - DB_DATABASE_NAME=${DB_DATABASE_NAME}
       - DB_USER=${DB_USER}

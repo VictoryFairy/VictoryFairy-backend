@@ -6,7 +6,6 @@ import {
   PrimaryGeneratedColumn,
 } from 'typeorm';
 import { Team } from './team.entity';
-import { ApiProperty } from '@nestjs/swagger';
 
 @Entity()
 export class User {
