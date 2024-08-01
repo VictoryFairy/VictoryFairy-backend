@@ -1,5 +1,4 @@
 import {
-  BadRequestException,
   CanActivate,
   ExecutionContext,
   Injectable,
@@ -17,17 +16,11 @@ export class RefreshTokenGuard implements CanActivate {
   async canActivate(context: ExecutionContext): Promise<boolean> {
     const req = context.switchToHttp().getRequest();
 
-    if (!req.cookies) {
-      throw new BadRequestException('쿠키가 없습니다.');
+    if (!req.cookies?.token) {
+      throw new UnauthorizedException('리프레시 토큰이 없음. 재로그인 필요');
     }
 
-    const token = req.cookies.refreshToken;
-
-    if (!token) {
-      throw new BadRequestException(
-        '리프레쉬 토큰 없음. 다시 로그인 해주세요.',
-      );
-    }
+    const token = req.cookies.token;
 
     const payload = await this.authService.verifyToken(token, true);
     const user = await this.userService.findUserByEmail(payload.email);

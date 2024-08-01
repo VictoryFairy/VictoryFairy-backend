@@ -5,11 +5,16 @@ import { Injectable } from '@nestjs/common';
 export class MailService {
   constructor(private readonly mailerService: MailerService) {}
 
-  async sendEmail(email: string) {
-    await this.mailerService.sendMail({
-      to: `${email}`,
-      subject: 'Test',
-      text: '테스트',
-    });
+  async sendAuthCodeMail(email: string, code: string) {
+    try {
+      await this.mailerService.sendMail({
+        to: `${email}`,
+        subject: '승리요정 인증 코드 번호입니다.',
+        text: `인증 코드  :  ${code}`,
+      });
+      return true;
+    } catch (error) {
+      return false;
+    }
   }
 }
