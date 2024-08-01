@@ -3,6 +3,7 @@ import { Cron, CronExpression, SchedulerRegistry } from "@nestjs/schedule";
 import { GameService } from "./game.service";
 import { firstValueFrom } from "rxjs";
 import { CronJob } from "cron";
+import * as moment from "moment-timezone";
 
 @Injectable()
 export class BatchService {
@@ -51,13 +52,16 @@ export class BatchService {
 
   private setupGameUpdateScheduler(gameId: string, startTime: string) {
     const [startHour, startMinute] = startTime.split(':').map(Number);
-    const now = new Date();
-    const startDateTime = new Date(
-      now.getFullYear(),
-      now.getMonth(),
-      now.getDate(),
-      startHour,
-      startMinute
+    const now = moment();  // 현재 시간을 가져옵니다.
+    const startDateTime = moment.tz(
+      {
+        year: now.year(),
+        month: now.month(),  // month는 0부터 시작합니다. (0: January, 11: December)
+        day: now.date(),
+        hour: startHour,
+        minute: startMinute
+      },
+      'Asia/Seoul'  // 원하는 타임존을 설정합니다.
     );
 
     // 시작 시간이 현재 시간보다 이전일 경우 실행하지 않습니다.
@@ -67,7 +71,7 @@ export class BatchService {
     }
 
     // 현재 시간과 시작 시간 사이의 차이를 계산합니다.
-    const timeUntilStart = startDateTime.getTime() - now.getTime();
+    const timeUntilStart = startDateTime.diff(now);
 
     // 시작 시간에 도달하면 설정된 작업을 수행합니다.
     setTimeout(() => {

@@ -14,25 +14,40 @@ export class StadiumService {
   async seed() {
     await this.stadiumRepository.manager.transaction(async manager => {
       const savePromises = stadiumSeeder.map(seed => {
-        const team = new Stadium();
-        team.name = seed.name;
-        team.address = 'no address';
-        team.latitude = 0;
-        team.longitude = 0;
-        return manager.save(team);
+        const stadium = new Stadium();
+        stadium.name = seed.name;
+        stadium.address = 'no address';
+        stadium.latitude = 0;
+        stadium.longitude = 0;
+        return manager.save(stadium);
       });
 
       await Promise.all(savePromises);
     });
   }
 
-  findByName(name: string): Promise<Stadium> {
+  async findByName(name: string): Promise<Stadium> {
     return this.stadiumRepository.findOneBy({
       name: name,
     });
   }
 
-  findByNames(names: string[]): Promise<Stadium[]> {
+  async findByNameOrCreate(name: string): Promise<Stadium> {
+    let stadium = await this.stadiumRepository.findOneBy({ name: name });
+
+    if (!stadium) {
+        stadium = new Stadium();
+        stadium.name = name;
+        stadium.address = 'no address';
+        stadium.latitude = 0;
+        stadium.longitude = 0;
+        await this.stadiumRepository.save(stadium);
+    }
+
+    return stadium;
+  }
+
+  async findByNames(names: string[]): Promise<Stadium[]> {
     return this.stadiumRepository.findBy({
       name: In(names),
     })

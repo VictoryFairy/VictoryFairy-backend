@@ -23,13 +23,25 @@ export class TeamService {
     });
   }
 
-  findByName(name: string): Promise<Team> {
+  async findByName(name: string): Promise<Team> {
     return this.teamRepository.findOneBy({
       name: name,
     });
   }
 
-  findByNames(names: string[]): Promise<Team[]> {
+  async findByNameOrCreate(name: string): Promise<Team> {
+    let team = await this.teamRepository.findOneBy({ name: name });
+
+    if (!team) {
+        team = new Team();
+        team.name = name;
+        await this.teamRepository.save(team);
+    }
+
+    return team;
+  }
+
+  async findByNames(names: string[]): Promise<Team[]> {
     return this.teamRepository.findBy({
       name: In(names),
     })

@@ -1,5 +1,5 @@
 import { HttpService } from '@nestjs/axios';
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { forkJoin, from, map, Observable, switchMap } from 'rxjs';
 import { Game } from 'src/entities/game.entity';
@@ -15,6 +15,8 @@ import { BatchUpdateGameDto } from 'src/dtos/batch-update-game.dto';
 
 @Injectable()
 export class GameService {
+  private readonly logger = new Logger(GameService.name);
+
   constructor(
     private readonly httpService: HttpService,
     @InjectRepository(Game)
@@ -175,24 +177,24 @@ export class GameService {
         game.status = schedule.status;
         game.home_team_score = schedule.homeScore ?? null;
         game.away_team_score = schedule.awayScore ?? null;
-        game.winning_team = schedule.winner ? await this.teamService.findByName(schedule.winner) : null;
+        game.winning_team = schedule.winner ? await this.teamService.findByNameOrCreate(schedule.winner) : null;
   
         // Ensure home_team exists
-        game.home_team = await this.teamService.findByName(schedule.homeTeam);
+        game.home_team = await this.teamService.findByNameOrCreate(schedule.homeTeam);
         if (!game.home_team) {
           console.log('홈 팀이 누락되었거나 아직 로드되지 않았습니다:', game, schedule);
           continue; // Skip this schedule
         }
   
         // Ensure away_team exists
-        game.away_team = await this.teamService.findByName(schedule.awayTeam);
+        game.away_team = await this.teamService.findByNameOrCreate(schedule.awayTeam);
         if (!game.away_team) {
           console.log('원정 팀이 누락되었거나 아직 로드되지 않았습니다:', game, schedule);
           continue; // Skip this schedule
         }
   
         // Ensure stadium exists
-        game.stadium = await this.stadiumService.findByName(schedule.stadium);
+        game.stadium = await this.stadiumService.findByNameOrCreate(schedule.stadium);
         if (!game.stadium) {
           console.log('구장이 누락되었거나 아직 로드되지 않았습니다:', game, schedule);
           continue; // Skip this schedule

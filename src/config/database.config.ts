@@ -16,6 +16,5 @@ export const getDatabaseConfig = (
     entities: ['dist/**/entities/*.entity.{ts,js}'],
     synchronize: nodeEnv !== 'production',
     dropSchema: nodeEnv !== 'production',
-    logging: true,
   };
 };
