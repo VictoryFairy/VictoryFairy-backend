@@ -1,7 +1,7 @@
 import { HttpService } from '@nestjs/axios';
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { from, map, Observable, switchMap } from 'rxjs';
+import { forkJoin, from, map, Observable, switchMap } from 'rxjs';
 import { Game } from 'src/entities/game.entity';
 import { TGameSchedule, IGameData, ITeamAndScore, TTeam, IRawScheduleList } from 'src/types/crawling-game.type';
 import { isNotTimeFormat, convertDateFormat } from 'src/util/time-format';
@@ -10,6 +10,8 @@ import { TeamService } from './team.service';
 import { StadiumService } from './stadium.service';
 import { teamNameToTeamId } from 'src/util/teamid-mapper';
 import parse from 'node-html-parser';
+import * as moment from 'moment';
+import { BatchUpdateGameDto } from 'src/dtos/batch-update-game.dto';
 
 @Injectable()
 export class GameService {
@@ -21,7 +23,46 @@ export class GameService {
     private readonly stadiumService: StadiumService,
   ) {}
 
-  getScores(gameId: string = '20240731SSLG0'): Observable<unknown> {
+  async updateCurrentStatus(gameId: string, currentStatus: BatchUpdateGameDto): Promise<void> {
+    return await this.gameRepository.manager.transaction(async manager => {
+      const game = new Game();
+      game.home_team_score = currentStatus.homeScore;
+      game.away_team_score = currentStatus.awayScore;
+      
+      await manager.update(Game, { id: gameId }, game);
+    });
+  }
+
+  async getTodayGameIds(): Promise<string[]> {
+    const today = moment().startOf('day').format('YYYY-MM-DD');
+
+    const todayGames = await this.gameRepository.find({
+      where: {
+        date: today,
+      },
+      select: ['id'],
+    });
+
+    return todayGames.map(game => game.id);
+  }
+
+  getCurrentGameStatus(
+    leagueId: number,
+    seriesId: number,
+    gameId: string,
+    gyear: number,
+  ): Observable<BatchUpdateGameDto> {
+    const extractStatus = (htmlString: string) => {
+      const root = parse(htmlString);
+      const statusElement = root.querySelector('span.date');
+
+      const status: string | null = (statusElement.innerText.match(/\[(.*?)\]/) || [])[1] ?? null;
+
+      return {
+        status
+      }
+    }
+
     const extractScore = (htmlString: string) => {
       const root = parse(htmlString);
       const homeScoreElement = root.querySelector('.teamHome em');
@@ -36,56 +77,46 @@ export class GameService {
       }
     }
 
-    return this.httpService.post(
-      'https://www.koreabaseball.com/Game/LiveTextView1.aspx',
-      {
-        leagueId: 1,
-        seriesId: 0,
-        gameId: gameId,
-        gyear: 2024
-      },
-      {
-        headers: {
-          'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8'
+    return forkJoin({
+      scores: this.httpService.post(
+        'https://www.koreabaseball.com/Game/LiveTextView1.aspx',
+        {
+          leagueId,
+          seriesId,
+          gameId,
+          gyear
         },
-      },
-    ).pipe(
-      map(response => {
-        return extractScore(response.data);
-      })
-    )
-  }
-
-  getStatus(gameId: string = '20240731SSLG0'): Observable<unknown> {
-    const extractStatus = (htmlString: string) => {
-      const root = parse(htmlString);
-      const statusElement = root.querySelector('span.date');
-
-      const status: string | null = (statusElement.innerText.match(/\[(.*?)\]/) || [])[1] ?? null;
-
-      return {
-        status
-      }
-    }
-
-    return this.httpService.post(
-      'https://www.koreabaseball.com/Game/LiveTextView2.aspx',
-      {
-        leagueId: 1,
-        seriesId: 0,
-        gameId: gameId,
-        gyear: 2024
-      },
-      {
-        headers: {
-          'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8'
+        {
+          headers: {
+            'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8'
+          },
+        }
+      ).pipe(
+        map(response => extractScore(response.data)) // 점수 추출
+      ),
+      status: this.httpService.post(
+        'https://www.koreabaseball.com/Game/LiveTextView2.aspx',
+        {
+          leagueId,
+          seriesId,
+          gameId,
+          gyear,
         },
-      },
-    ).pipe(
-      map(response => {
-        return extractStatus(response.data);
-      })
-    )
+        {
+          headers: {
+            'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8'
+          },
+        }
+      ).pipe(
+        map(response => extractStatus(response.data)) // 상태 추출
+      )
+    }).pipe(
+      map(({ scores, status }) => ({
+        homeScore: scores.homeScore,
+        awayScore: scores.awayScore,
+        status: status.status
+      }))
+    );
   }
 
   /** 

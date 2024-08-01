@@ -12,12 +12,7 @@ export class GameController {
   }
 
   @Get('scores')
-  async getScores(): Promise<any[]> {
-    const scoresPromise = firstValueFrom(this.gameService.getScores());
-    const statusPromise = firstValueFrom(this.gameService.getStatus());
-
-    const [scores, status] = await Promise.all([scoresPromise, statusPromise]);
-
-    return [scores, status];
+  async getScores(): Promise<unknown> {
+    return this.gameService.getCurrentGame();
   }
 }
