@@ -124,7 +124,7 @@ export class AuthController {
   })
   @ApiUnauthorizedResponse({ description: '인증코드 틀린 경우' })
   @ApiInternalServerErrorResponse({ description: '레디스 관련 문제인 경우' })
-  checkEmailCode(@Body() body: EmailWithCodeDto) {
-    return this.authService.verifyEmailCode(body);
+  async checkEmailCode(@Body() body: EmailWithCodeDto) {
+    await this.authService.verifyEmailCode(body);
   }
 }
