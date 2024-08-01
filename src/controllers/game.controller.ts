@@ -13,6 +13,8 @@ export class GameController {
 
   @Get('scores')
   async getScores(): Promise<unknown> {
-    return this.gameService.getCurrentGame();
+    return this.gameService.getCurrentGameStatus(
+      1, 0, '20240801LGSS0', 2024
+    );
   }
 }

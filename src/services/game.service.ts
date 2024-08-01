@@ -23,6 +23,17 @@ export class GameService {
     private readonly stadiumService: StadiumService,
   ) {}
 
+  async getGameTime(gameId: string): Promise<string> {
+    const game = await this.gameRepository.findOne({
+      where: {
+        id: gameId
+      },
+      select: ['time']
+    });
+
+    return game.time;
+  }
+
   async updateCurrentStatus(gameId: string, currentStatus: BatchUpdateGameDto): Promise<void> {
     return await this.gameRepository.manager.transaction(async manager => {
       const game = new Game();

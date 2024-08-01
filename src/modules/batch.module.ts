@@ -9,5 +9,6 @@ import { GameModule } from './game.module';
     GameModule,
   ],
   providers: [BatchService],
+  exports: [BatchService],
 })
 export class BatchModule {}
