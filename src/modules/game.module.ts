@@ -16,5 +16,6 @@ import { StadiumModule } from './stadium.module';
   ],
   controllers: [GameController],
   providers: [GameService],
+  exports: [GameService],
 })
 export class GameModule {}

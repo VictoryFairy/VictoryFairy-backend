@@ -9,6 +9,7 @@ import { Repository } from 'typeorm';
 import { TeamService } from './team.service';
 import { StadiumService } from './stadium.service';
 import { teamNameToTeamId } from 'src/util/teamid-mapper';
+import parse from 'node-html-parser';
 
 @Injectable()
 export class GameService {
@@ -20,19 +21,14 @@ export class GameService {
     private readonly stadiumService: StadiumService,
   ) {}
 
-  getScores(gameId: string = '20240731SSLG0'): Observable<void> {
+  getScores(gameId: string = '20240731SSLG0'): Observable<unknown> {
+    const extractScore = (htmlString: string) => {
+      const root = parse(htmlString);
+      const homeScoreElement = root.querySelector('.teamHome em');
+      const awayScoreElement = root.querySelector('.teamAway em');
 
-    const extractScore = (htmlString: string): {
-      homeScore: number | null,
-      awayScore: number | null,
-    } => {
-      const parser: DOMParser = new window.DOMParser();
-      const doc: Document = parser.parseFromString(htmlString, 'text/html');
-      const homeScoreElement: Element = doc.querySelector('.teamHome em');
-      const awayScoreElement: Element = doc.querySelector('.teamAway em');
-
-      const awayScore: number | null = awayScoreElement ? parseInt(awayScoreElement.textContent) : null;
-      const homeScore: number | null = homeScoreElement ? parseInt(homeScoreElement.textContent) : null;
+      const homeScore: number | null = homeScoreElement ? parseInt(homeScoreElement.innerText) : null;
+      const awayScore: number | null = awayScoreElement ? parseInt(awayScoreElement.innerText) : null;
 
       return {
         homeScore,
@@ -50,14 +46,44 @@ export class GameService {
       },
       {
         headers: {
-          'Content-Type': 'text/html; charset=utf-8'
+          'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8'
         },
       },
     ).pipe(
       map(response => {
-        console.log(typeof response.data);
-        console.log(extractScore(response.data));
-        return;
+        return extractScore(response.data);
+      })
+    )
+  }
+
+  getStatus(gameId: string = '20240731SSLG0'): Observable<unknown> {
+    const extractStatus = (htmlString: string) => {
+      const root = parse(htmlString);
+      const statusElement = root.querySelector('span.date');
+
+      const status: string | null = (statusElement.innerText.match(/\[(.*?)\]/) || [])[1] ?? null;
+
+      return {
+        status
+      }
+    }
+
+    return this.httpService.post(
+      'https://www.koreabaseball.com/Game/LiveTextView2.aspx',
+      {
+        leagueId: 1,
+        seriesId: 0,
+        gameId: gameId,
+        gyear: 2024
+      },
+      {
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8'
+        },
+      },
+    ).pipe(
+      map(response => {
+        return extractStatus(response.data);
       })
     )
   }
