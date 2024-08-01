@@ -6,6 +6,7 @@ import {
   Put,
   HttpCode,
   UseGuards,
+  BadRequestException,
 } from '@nestjs/common';
 import {
   ApiBadRequestResponse,
@@ -89,12 +90,20 @@ export class UserController {
 
   /** 유저 프로필 변경 */
   @Put('/profile')
+  @HttpCode(HttpStatus.NO_CONTENT)
   @UseGuards(AccessTokenGuard)
   @ApiOperation({ description: '프로필 변경' })
+  @ApiResponse({ status: HttpStatus.NO_CONTENT })
   async updateUserProfile(
     @Body() body: UserProfileDto,
     @UserDeco() user: User,
   ) {
+    const objToArr = Object.keys(body);
+    if (objToArr.length !== 1) {
+      throw new BadRequestException(
+        '적절한 데이터가 아니거나 2개 이상의 데이터가 요청됨',
+      );
+    }
     await this.userService.changeUserProfile(body, user);
   }
 }
