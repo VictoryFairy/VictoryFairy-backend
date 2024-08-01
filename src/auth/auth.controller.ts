@@ -8,7 +8,6 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import { AuthService } from './auth.service';
-import { CreateUserDto } from 'src/dtos/create-user.dto';
 import { UserDeco } from 'src/decorator/user.decorator';
 import { User } from 'src/entities/user.entity';
 import {
@@ -20,11 +19,12 @@ import {
   ApiTags,
   ApiUnauthorizedResponse,
 } from '@nestjs/swagger';
-import { LoginUserDto } from 'src/dtos/login-user.dto';
 import { RefreshTokenGuard } from './guard/refresh-token.guard';
 import { CookieOptions, Response } from 'express';
 import { ConfigService } from '@nestjs/config';
-import { EmailDto, EmailWithCodeDto } from 'src/dtos/check-code.dto';
+import { LoginUserDto } from 'src/dtos/login-user.dto';
+import { EmailWithCodeDto } from 'src/dtos/check-code.dto';
+import { EmailDto } from 'src/dtos/duplicate-user.dto';
 
 @ApiTags('Auth')
 @Controller('auth')
@@ -33,19 +33,7 @@ export class AuthController {
     private readonly authService: AuthService,
     private readonly configService: ConfigService,
   ) {}
-
-  @Post('signup')
-  @ApiOperation({ summary: '회원가입' })
-  @ApiBody({ type: CreateUserDto, description: '회원가입에 필요한 정보' })
-  @ApiResponse({
-    status: HttpStatus.CREATED,
-    description: '성공 시 데이터 없이 상태코드만 응답',
-  })
-  @ApiInternalServerErrorResponse({ description: 'DB 유저 저장 실패한 경우' })
-  async signIn(@Body() body: CreateUserDto) {
-    await this.authService.registerUser(body);
-  }
-
+  /** 유저 로그인 */
   @Post('login')
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: '로그인' })
@@ -62,17 +50,37 @@ export class AuthController {
   })
   @ApiUnauthorizedResponse({ description: '아이디 또는 비밀번호가 틀린 경우' })
   async login(@Body() body: LoginUserDto, @Res() res: Response) {
+    const domain = this.configService.get('DOMAIN');
     const { acToken, rfToken } = await this.authService.loginUser(body);
 
     const rfExTime = this.configService.get('REFRESH_EXPIRE_TIME');
     const cookieOptions: CookieOptions = {
       maxAge: parseInt(rfExTime),
       httpOnly: true,
+      domain: domain || 'localhost',
     };
     res.cookie('token', rfToken, cookieOptions);
     res.json({ acToken });
   }
 
+  /** 유저 로그아웃 */
+  @Post('logout')
+  @HttpCode(HttpStatus.OK)
+  @UseGuards(RefreshTokenGuard)
+  @ApiCookieAuth('token')
+  @ApiOperation({ summary: '로그아웃' })
+  @ApiResponse({ description: '성공 시 데이터 없이 상태코드만 응답' })
+  @ApiUnauthorizedResponse({ description: '유효하지 않은 토큰' })
+  logout(@Res() res: Response) {
+    const domain = this.configService.get('DOMAIN');
+    return res.clearCookie('token', {
+      maxAge: 0,
+      httpOnly: true,
+      domain: domain || 'localhost',
+    });
+  }
+
+  /** 엑세스 토큰 재발급 */
   @Post('token/issue')
   @UseGuards(RefreshTokenGuard)
   @HttpCode(HttpStatus.OK)
@@ -92,6 +100,7 @@ export class AuthController {
     return { acToken };
   }
 
+  /** 인증 코드 메일 전송 */
   @Post('code/email')
   @HttpCode(HttpStatus.NO_CONTENT)
   @ApiOperation({ summary: '인증 번호 이메일 요청' })
@@ -106,6 +115,7 @@ export class AuthController {
     await this.authService.makeCodeAndSendMail(body.email);
   }
 
+  /** 인증코드와 이매일 매칭 확인 */
   @Post('code/verification')
   @HttpCode(HttpStatus.NO_CONTENT)
   @ApiOperation({ summary: '유저가 제출한 인증번호 확인' })

@@ -6,33 +6,32 @@ import {
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
-import { CreateUserDto } from 'src/dtos/create-user.dto';
-import { UserService } from 'src/services/user.service';
 import * as bcrypt from 'bcrypt';
-import { LoginUserDto } from 'src/dtos/login-user.dto';
 import { IJwtPayload } from 'src/types/auth.type';
 import { Redis } from 'ioredis';
 import { MailService } from 'src/services/mail.service';
 import { createRandomCode } from 'src/utils/random-code.util';
 import { EmailWithCodeDto } from 'src/dtos/check-code.dto';
 import { CODE_LENGTH, CODE_LIMIT_TIME } from 'src/const/auth.const';
+import { InjectRepository } from '@nestjs/typeorm';
+import { User } from 'src/entities/user.entity';
+import { FindOptionsWhere, Repository } from 'typeorm';
+import { LoginUserDto } from 'src/dtos/login-user.dto';
 
 @Injectable()
 export class AuthService {
   constructor(
-    private readonly userService: UserService,
     private readonly jwtService: JwtService,
     private readonly configService: ConfigService,
     private readonly mailService: MailService,
     @Inject('REDIS_CLIENT')
     private readonly redisClient: Redis,
+    @InjectRepository(User)
+    private readonly userRepository: Repository<User>,
   ) {}
 
-  async registerUser(dto: CreateUserDto) {
-    return this.userService.createUser(dto);
-  }
   async loginUser(dto: LoginUserDto) {
-    const user = await this.userService.findUserByEmail(dto.email);
+    const user = await this.getUser({ email: dto.email });
     if (!user) {
       throw new UnauthorizedException('아이디 또는 비밀번호가 틀림');
     }
@@ -122,6 +121,10 @@ export class AuthService {
     }
     const token = splitToken[1];
     return token;
+  }
+
+  getUser(whereOpt: FindOptionsWhere<User>) {
+    return this.userRepository.findOne({ where: whereOpt });
   }
 
   /** 환경변수 게터 함수 */
