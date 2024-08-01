@@ -27,6 +27,7 @@ export type TGameStatus = '경기 전' | '우천취소' | '경기 종료';
 export type TGameSchedule = IGameData[];
 
 export interface IGameData {
+  id: string;
   date: string;
   time: string;
   // game: string;

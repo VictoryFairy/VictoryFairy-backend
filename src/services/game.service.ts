@@ -8,6 +8,7 @@ import { isNotTimeFormat, convertDateFormat } from 'src/util/time-format';
 import { Repository } from 'typeorm';
 import { TeamService } from './team.service';
 import { StadiumService } from './stadium.service';
+import { teamNameToTeamId } from 'src/util/teamid-mapper';
 
 @Injectable()
 export class GameService {
@@ -19,11 +20,53 @@ export class GameService {
     private readonly stadiumService: StadiumService,
   ) {}
 
+  getScores(gameId: string = '20240731SSLG0'): Observable<void> {
+
+    const extractScore = (htmlString: string): {
+      homeScore: number | null,
+      awayScore: number | null,
+    } => {
+      const parser: DOMParser = new window.DOMParser();
+      const doc: Document = parser.parseFromString(htmlString, 'text/html');
+      const homeScoreElement: Element = doc.querySelector('.teamHome em');
+      const awayScoreElement: Element = doc.querySelector('.teamAway em');
+
+      const awayScore: number | null = awayScoreElement ? parseInt(awayScoreElement.textContent) : null;
+      const homeScore: number | null = homeScoreElement ? parseInt(homeScoreElement.textContent) : null;
+
+      return {
+        homeScore,
+        awayScore,
+      }
+    }
+
+    return this.httpService.post(
+      'https://www.koreabaseball.com/Game/LiveTextView1.aspx',
+      {
+        leagueId: 1,
+        seriesId: 0,
+        gameId: gameId,
+        gyear: 2024
+      },
+      {
+        headers: {
+          'Content-Type': 'text/html; charset=utf-8'
+        },
+      },
+    ).pipe(
+      map(response => {
+        console.log(typeof response.data);
+        console.log(extractScore(response.data));
+        return;
+      })
+    )
+  }
+
   /** 
    * 크롤링 관련 로직:
    * Thanks to EvansKJ57
    */
-  getGamesSchedule(): Observable<void> {
+  getSchedules(): Observable<void> {
     const date = new Date();
     const curYear = date.getFullYear();
 
@@ -53,11 +96,12 @@ export class GameService {
     );
   }
 
-  async createMany(gameSchedules: TGameSchedule): Promise<void> {
+  private async createMany(gameSchedules: TGameSchedule): Promise<void> {
     await this.gameRepository.manager.transaction(async manager => {
       for (const schedule of gameSchedules) {
         // Create or update game entity
         let game = new Game();
+        game.id = schedule.id;
         game.date = schedule.date;
         game.time = schedule.time;
         game.status = schedule.status;
@@ -102,18 +146,13 @@ export class GameService {
     });
   }
   
-  
-  
-  
-  
-
-  extractTextFromHtml(data: IRawScheduleList['rows'][number]['row']): string[] {
+  private extractTextFromHtml(data: IRawScheduleList['rows'][number]['row']): string[] {
     return data.map((row) => {
       return row.Text.replace(/<[^>]*>/g, '');
     });
   }
 
-  refineGamesData(rawData: string[][], year: number): TGameSchedule {
+  private refineGamesData(rawData: string[][], year: number): TGameSchedule {
     const groupedData: TGameSchedule = [];
     let currentDate: string = '';
 
@@ -157,6 +196,7 @@ export class GameService {
       if (currentDate) {
         const { homeTeam, awayTeam } = this.getTeamAndScore(game);
         const gameData: IGameData = {
+          id: currentDate.replaceAll('-', '') + teamNameToTeamId[homeTeam.name] + teamNameToTeamId[awayTeam.name] + '0', 
           date: currentDate,
           time,
           // game,
@@ -183,7 +223,7 @@ export class GameService {
     return groupedData;
   }
 
-  getTeamAndScore(gameString: string): { [team: string]: ITeamAndScore } {
+  private getTeamAndScore(gameString: string): { [team: string]: ITeamAndScore } {
     const [awayTeamString, homeTeamString] = gameString.split('vs');
 
     if (!awayTeamString || !homeTeamString) {

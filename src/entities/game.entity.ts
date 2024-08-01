@@ -1,12 +1,12 @@
-import { Column, Entity, JoinColumn, ManyToOne, OneToMany, OneToOne, PrimaryGeneratedColumn, Unique } from "typeorm";
+import { Column, Entity, JoinColumn, ManyToOne, OneToMany, OneToOne, PrimaryColumn, PrimaryGeneratedColumn, Unique } from "typeorm";
 import { Team } from "./team.entity";
 import { Stadium } from "./stadium.entity";
 
 @Entity()
 @Unique(['date', 'time', 'stadium'])
 export class Game {
-  @PrimaryGeneratedColumn()
-  id: number;
+  @PrimaryColumn()
+  id: string;
 
   @Column('date')
   date: string;
