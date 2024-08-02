@@ -1,9 +1,42 @@
-import { Injectable, CanActivate, ExecutionContext } from '@nestjs/common';
+import {
+  CanActivate,
+  ExecutionContext,
+  Injectable,
+  UnauthorizedException,
+} from '@nestjs/common';
+import { AuthService } from '../auth.service';
+import { ConfigService } from '@nestjs/config';
 
 @Injectable()
 export class RefreshTokenGuard implements CanActivate {
-  canActivate(context: ExecutionContext): boolean {
-    // 여기에 실제 인증 로직이 들어감
-    return true; // 항상 인증 성공으로 가정
+  constructor(
+    private readonly authService: AuthService,
+    private readonly configService: ConfigService,
+  ) {}
+  async canActivate(context: ExecutionContext): Promise<boolean> {
+    if (this.configService.get('NODE_ENV') !== 'production') {
+      return true;
+    }
+
+    const req = context.switchToHttp().getRequest();
+
+    if (!req.cookies?.token) {
+      throw new UnauthorizedException('리프레시 토큰이 없음. 재로그인 필요');
+    }
+
+    const token = req.cookies.token;
+
+    const payload = await this.authService.verifyToken(token, true);
+    const user = await this.authService.getUser({ email: payload.email });
+
+    req.user = user;
+    req.token = token;
+    req.tokenType = payload.type;
+
+    if (req.tokenType !== 'rf') {
+      throw new UnauthorizedException('refresh-token이 아님');
+    }
+
+    return true;
   }
 }

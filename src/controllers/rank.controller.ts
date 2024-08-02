@@ -1,6 +1,8 @@
 import { Controller, Delete, Get, Post } from '@nestjs/common';
 import { RankService } from '../services/rank.service';
+import { ApiTags } from '@nestjs/swagger';
 
+@ApiTags('Rank')
 @Controller('ranks')
 export class RankController {
   constructor(private readonly rankService: RankService) {}
