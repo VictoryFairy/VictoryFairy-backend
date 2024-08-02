@@ -12,6 +12,8 @@ import { GameModule } from './modules/game.module';
 import { UserModule } from './modules/user.module';
 import { RedisModule } from './modules/redis.module';
 import { RankModule } from './modules/rank.module';
+import { SeederService } from './seeder.service';
+import { BatchModule } from './modules/batch.module';
 
 @Module({
   imports: [
@@ -32,8 +34,9 @@ import { RankModule } from './modules/rank.module';
     UserModule,
     RedisModule,
     RankModule,
+    BatchModule,
   ],
   controllers: [AppController],
-  providers: [AppService],
+  providers: [AppService, SeederService],
 })
 export class AppModule {}
