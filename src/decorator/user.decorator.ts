@@ -1,20 +1,12 @@
-import { Injectable, Logger } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
+import { ExecutionContext, createParamDecorator } from '@nestjs/common';
 import { Team } from 'src/entities/team.entity';
 import { User } from 'src/entities/user.entity';
-import { Repository } from 'typeorm';
 
-@Injectable()
-export class UserService {
-  private readonly logger = new Logger(UserService.name);
-
-  constructor(
-    @InjectRepository(User)
-    private readonly userRepository: Repository<User>,
-  ) {}
-
-  async seed() {
+export const UserDeco = createParamDecorator(
+  (data: keyof User | undefined, ctx: ExecutionContext) => {
+    // 여기서는 모킹된 사용자 정보를 반환
     const user = new User();
+    user.id = 1;
     user.email = 'example@example.com';
     user.password = 'should be hidden';
     user.nickname = 'nickname example';
@@ -26,7 +18,6 @@ export class UserService {
     exampleCheeringTeam.name = 'example';
     user.cheering_team = exampleCheeringTeam;
     
-    await this.userRepository.insert(user);
-    this.logger.log('test user 1 is created');
-  }
-}
+    return user;
+  },
+);
