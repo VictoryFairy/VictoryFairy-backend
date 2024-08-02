@@ -3,15 +3,12 @@ import {
   Injectable,
   InternalServerErrorException,
 } from '@nestjs/common';
-import { CreateUserDto } from 'src/dtos/create-user.dto';
 import * as bcrypt from 'bcrypt';
 import { HASH_ROUND } from 'src/const/user.const';
-import { LoginUserDto } from 'src/dtos/login-user.dto';
 import { InjectRepository } from '@nestjs/typeorm';
-import { FindOptions, Repository } from 'typeorm';
+import { Repository } from 'typeorm';
 import { User } from 'src/entities/user.entity';
-import { UserProfileDto } from 'src/dtos/profile-user.dto';
-import { QueryDeepPartialEntity } from 'typeorm/query-builder/QueryPartialEntity';
+import { CreateUserDto, LoginUserDto, UserProfileDto } from 'src/dtos/user-dto';
 
 @Injectable()
 export class UserService {
@@ -89,18 +86,9 @@ export class UserService {
 
   async changeUserProfile(dto: UserProfileDto, user: User) {
     try {
-      const { image, nickname, teamId } = dto;
-      const condition: QueryDeepPartialEntity<User> = {};
-      if (dto.image) {
-        condition.profile_image = image;
-      }
-      if (dto.nickname) {
-        condition.nickname = nickname;
-      }
-      if (dto.teamId) {
-        condition.support_team = { id: teamId };
-      }
-      await this.userRepository.update({ id: user.id }, condition);
+      const { field, value } = dto;
+
+      await this.userRepository.update({ id: user.id }, { [field]: value });
     } catch (error) {
       throw new InternalServerErrorException('유저 프로필 업데이트 실패');
     }

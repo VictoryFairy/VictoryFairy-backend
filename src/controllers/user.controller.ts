@@ -3,14 +3,10 @@ import {
   Post,
   Body,
   HttpStatus,
-  Put,
   HttpCode,
   UseGuards,
-  BadRequestException,
-  UseInterceptors,
-  UploadedFile,
+  Patch,
 } from '@nestjs/common';
-import { FileInterceptor } from '@nestjs/platform-express';
 import {
   ApiBadRequestResponse,
   ApiBody,
@@ -21,21 +17,20 @@ import {
 } from '@nestjs/swagger';
 import { AccessTokenGuard } from 'src/auth/guard/access-token.guard';
 import { UserDeco } from 'src/decorator/user.decorator';
-import { CreateUserDto } from 'src/dtos/create-user.dto';
-import { EmailDto, NicknameDto } from 'src/dtos/duplicate-user.dto';
-import { LoginUserDto } from 'src/dtos/login-user.dto';
-import { UserProfileDto } from 'src/dtos/profile-user.dto';
+import {
+  CreateUserDto,
+  EmailDto,
+  LoginUserDto,
+  NicknameDto,
+  UserProfileDto,
+} from 'src/dtos/user-dto';
 import { User } from 'src/entities/user.entity';
-import { AwsS3Service } from 'src/services/aws-s3.service';
 import { UserService } from 'src/services/user.service';
 
 @ApiTags('User')
 @Controller('users')
 export class UserController {
-  constructor(
-    private readonly userService: UserService,
-    private readonly awsS3Service: AwsS3Service,
-  ) {}
+  constructor(private readonly userService: UserService) {}
 
   /** 유저 회원가입 */
   @Post('signup')
@@ -51,7 +46,7 @@ export class UserController {
   }
 
   /** 이메일 중복 확인 */
-  @Post('/exist/email')
+  @Post('existed-email')
   @ApiOperation({ summary: '이메일 중복 확인' })
   @ApiResponse({
     status: HttpStatus.OK,
@@ -66,7 +61,7 @@ export class UserController {
   }
 
   /** 닉네임 중복 확인 */
-  @Post('/exist/nickname')
+  @Post('existed-nickname')
   @ApiOperation({ summary: '닉네임 중복 확인' })
   @ApiResponse({
     status: HttpStatus.OK,
@@ -80,7 +75,7 @@ export class UserController {
     return { isExist };
   }
   /** 비밀번호 변경 , 프로필과 따로 뺀 이유 : 이메일 인증 코드 확인 후 변경 */
-  @Put('/password')
+  @Patch('password')
   @HttpCode(HttpStatus.NO_CONTENT)
   @ApiOperation({ summary: '비밀번호 변경' })
   @ApiResponse({
@@ -95,44 +90,43 @@ export class UserController {
     await this.userService.changeUserPw(body);
   }
 
-  /** 프로필 사진 s3에 업로드하고 이미지 url 반환 */
-  @Post('upload/profile')
-  @UseInterceptors(
-    FileInterceptor('file', { limits: { fileSize: 1 * 1024 * 1024 } }),
-  )
-  @ApiOperation({ summary: '프로필 이미지 업로드' })
-  @ApiResponse({
-    status: HttpStatus.CREATED,
-    schema: {
-      properties: {
-        profileImgUrl: { type: 'string' },
+  /** 유저 프로필 변경 */
+  @Patch('/profile')
+  @HttpCode(HttpStatus.NO_CONTENT)
+  @UseGuards(AccessTokenGuard)
+  @ApiOperation({ summary: '프로필 변경' })
+  @ApiBody({
+    description: '사용자 프로필의 특정 필드를 업데이트합니다.',
+    type: UserProfileDto,
+    examples: {
+      updateNickname: {
+        summary: 'Nickname 업데이트 예제',
+        value: {
+          field: 'nickname',
+          value: 'evans',
+        },
+      },
+      updateImage: {
+        summary: 'Image 업데이트 예제',
+        value: {
+          field: 'image',
+          value: 'http://example.com/image.jpg',
+        },
+      },
+      updateTeamId: {
+        summary: 'Team ID 업데이트 예제',
+        value: {
+          field: 'teamId',
+          value: 1,
+        },
       },
     },
   })
-  async uploadProfileImg(@UploadedFile() file: Express.Multer.File) {
-    const profileImgUrl = await this.awsS3Service.uploadProfile(
-      file.buffer,
-      file.mimetype,
-    );
-    return { profileImgUrl };
-  }
-
-  /** 유저 프로필 변경 */
-  @Put('/profile')
-  @HttpCode(HttpStatus.NO_CONTENT)
-  @UseGuards(AccessTokenGuard)
-  @ApiOperation({ description: '프로필 변경' })
   @ApiResponse({ status: HttpStatus.NO_CONTENT })
   async updateUserProfile(
     @Body() body: UserProfileDto,
     @UserDeco() user: User,
   ) {
-    const objToArr = Object.keys(body);
-    if (objToArr.length !== 1) {
-      throw new BadRequestException(
-        '적절한 데이터가 아니거나 2개 이상의 데이터가 요청됨',
-      );
-    }
     await this.userService.changeUserProfile(body, user);
   }
 }

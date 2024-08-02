@@ -11,12 +11,11 @@ import { IJwtPayload } from 'src/types/auth.type';
 import { Redis } from 'ioredis';
 import { MailService } from 'src/services/mail.service';
 import { createRandomCode } from 'src/utils/random-code.util';
-import { EmailWithCodeDto } from 'src/dtos/check-code.dto';
 import { CODE_LENGTH, CODE_LIMIT_TIME } from 'src/const/auth.const';
 import { InjectRepository } from '@nestjs/typeorm';
 import { User } from 'src/entities/user.entity';
 import { FindOptionsWhere, Repository } from 'typeorm';
-import { LoginUserDto } from 'src/dtos/login-user.dto';
+import { EmailWithCodeDto, LoginUserDto } from 'src/dtos/user-dto';
 
 @Injectable()
 export class AuthService {

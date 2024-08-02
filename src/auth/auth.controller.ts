@@ -1,6 +1,7 @@
 import {
   Body,
   Controller,
+  Delete,
   HttpCode,
   HttpStatus,
   Post,
@@ -22,9 +23,7 @@ import {
 import { RefreshTokenGuard } from './guard/refresh-token.guard';
 import { CookieOptions, Response } from 'express';
 import { ConfigService } from '@nestjs/config';
-import { LoginUserDto } from 'src/dtos/login-user.dto';
-import { EmailWithCodeDto } from 'src/dtos/check-code.dto';
-import { EmailDto } from 'src/dtos/duplicate-user.dto';
+import { EmailDto, EmailWithCodeDto, LoginUserDto } from 'src/dtos/user-dto';
 
 @ApiTags('Auth')
 @Controller('auth')
@@ -64,7 +63,7 @@ export class AuthController {
   }
 
   /** 유저 로그아웃 */
-  @Post('logout')
+  @Delete('logout')
   @HttpCode(HttpStatus.OK)
   @UseGuards(RefreshTokenGuard)
   @ApiOperation({ summary: '로그아웃' })
@@ -100,7 +99,7 @@ export class AuthController {
   }
 
   /** 인증 코드 메일 전송 */
-  @Post('code/email')
+  @Post('email-code')
   @HttpCode(HttpStatus.NO_CONTENT)
   @ApiOperation({ summary: '인증 번호 이메일 요청' })
   @ApiResponse({
@@ -115,7 +114,7 @@ export class AuthController {
   }
 
   /** 인증코드와 이매일 매칭 확인 */
-  @Post('code/verification')
+  @Post('verify-email-code')
   @HttpCode(HttpStatus.NO_CONTENT)
   @ApiOperation({ summary: '유저가 제출한 인증번호 확인' })
   @ApiResponse({
