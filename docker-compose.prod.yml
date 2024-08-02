@@ -48,4 +48,11 @@ services:
     image: redis:alpine
     ports:
       - '${REDIS_TCP_PORT}:${REDIS_TCP_PORT}'
-    command: redis-server --port ${REDIS_TCP_PORT} --requirepass ${REDIS_PASSWORD}
+    command: >
+      redis-server
+      --port ${REDIS_TCP_PORT}
+      --requirepass ${REDIS_PASSWORD}
+      --save ""
+      --appendonly no
+      --maxmemory 1gb
+      --maxmemory-policy allkeys-lru
