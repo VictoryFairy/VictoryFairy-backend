@@ -12,6 +12,9 @@ import { GameModule } from './modules/game.module';
 import { UserModule } from './modules/user.module';
 import { RedisModule } from './modules/redis.module';
 import { RankModule } from './modules/rank.module';
+import { AuthModule } from './auth/auth.module';
+import { MailModule } from './modules/mail.module';
+import { AwsS3Module } from './modules/aws-s3.module';
 import { SeederService } from './seeder.service';
 import { BatchModule } from './modules/batch.module';
 
@@ -21,9 +24,7 @@ import { BatchModule } from './modules/batch.module';
       isGlobal: true,
     }),
     TypeOrmModule.forRootAsync({
-      imports: [ConfigModule],
-      useFactory: (configService: ConfigService) =>
-        getDatabaseConfig(configService),
+      useFactory: getDatabaseConfig,
       inject: [ConfigService],
     }),
     ParkingInfoModule,
@@ -34,6 +35,9 @@ import { BatchModule } from './modules/batch.module';
     UserModule,
     RedisModule,
     RankModule,
+    AuthModule,
+    MailModule,
+    AwsS3Module,
     BatchModule,
   ],
   controllers: [AppController],
