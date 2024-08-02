@@ -1,6 +1,6 @@
 import { Module } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import * as nodemailer from 'nodemailer';
+import { nodeMailerConfig } from 'src/config/nodemailer.config';
 import { MailService } from 'src/services/mail.service';
 
 @Module({
@@ -8,17 +8,7 @@ import { MailService } from 'src/services/mail.service';
     MailService,
     {
       provide: 'MAIL_TRANSPORTER',
-      useFactory: (configService: ConfigService) => {
-        return nodemailer.createTransport({
-          host: 'smtp.naver.com',
-          port: 587,
-          secure: false,
-          auth: {
-            user: configService.get<string>('MAIL_USER'),
-            pass: configService.get<string>('MAIL_PW'),
-          },
-        });
-      },
+      useFactory: nodeMailerConfig,
       inject: [ConfigService],
     },
   ],

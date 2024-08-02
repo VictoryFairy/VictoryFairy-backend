@@ -1,7 +1,7 @@
 import { Module } from '@nestjs/common';
 import { AwsS3Service } from '../services/aws-s3.service';
 import { ConfigService } from '@nestjs/config';
-import { S3Client } from '@aws-sdk/client-s3';
+import { s3Config } from 'src/config/s3.config';
 
 @Module({
   exports: [AwsS3Service],
@@ -10,15 +10,7 @@ import { S3Client } from '@aws-sdk/client-s3';
     {
       provide: 'S3_CLIENT',
       inject: [ConfigService],
-      useFactory: (configService: ConfigService) => {
-        return new S3Client({
-          region: configService.get<string>('AWS_S3_REGION'),
-          credentials: {
-            accessKeyId: configService.get('AWS_S3_ACCESS_KEY_ID'),
-            secretAccessKey: configService.get('AWS_S3_SECRET_ACCESS_KEY'),
-          },
-        });
-      },
+      useFactory: s3Config,
     },
   ],
 })
