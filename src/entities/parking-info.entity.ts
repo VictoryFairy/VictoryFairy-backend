@@ -21,6 +21,6 @@ export class ParkingInfo {
   @Column()
   address: string;
 
-  @ManyToOne(type => Stadium)
+  @ManyToOne(() => Stadium)
   stadium: Stadium;
 }

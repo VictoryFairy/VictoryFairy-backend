@@ -3,9 +3,15 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { RegisteredGameController } from 'src/controllers/registered-game.controller';
 import { RegisteredGame } from 'src/entities/registered-game.entity';
 import { RegisteredGameService } from 'src/services/registered-game.service';
+import { GameModule } from './game.module';
+import { TeamModule } from './team.module';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([RegisteredGame])],
+  imports: [
+    TypeOrmModule.forFeature([RegisteredGame]),
+    GameModule,
+    TeamModule,
+  ],
   controllers: [RegisteredGameController],
   providers: [RegisteredGameService],
 })

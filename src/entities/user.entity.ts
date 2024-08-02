@@ -21,6 +21,6 @@ export class User {
   @Column()
   score: number;
 
-  @OneToOne(type => Team)
+  @OneToOne(() => Team)
   cheering_team: Team;
 }
