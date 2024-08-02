@@ -7,7 +7,10 @@ import {
   HttpCode,
   UseGuards,
   BadRequestException,
+  UseInterceptors,
+  UploadedFile,
 } from '@nestjs/common';
+import { FileInterceptor } from '@nestjs/platform-express';
 import {
   ApiBadRequestResponse,
   ApiBody,
@@ -23,12 +26,16 @@ import { EmailDto, NicknameDto } from 'src/dtos/duplicate-user.dto';
 import { LoginUserDto } from 'src/dtos/login-user.dto';
 import { UserProfileDto } from 'src/dtos/profile-user.dto';
 import { User } from 'src/entities/user.entity';
+import { AwsS3Service } from 'src/services/aws-s3.service';
 import { UserService } from 'src/services/user.service';
 
 @ApiTags('User')
 @Controller('users')
 export class UserController {
-  constructor(private readonly userService: UserService) {}
+  constructor(
+    private readonly userService: UserService,
+    private readonly awsS3Service: AwsS3Service,
+  ) {}
 
   /** 유저 회원가입 */
   @Post('signup')
@@ -86,6 +93,28 @@ export class UserController {
   @ApiInternalServerErrorResponse({ description: 'DB 업데이트 실패' })
   async resetPw(@Body() body: LoginUserDto) {
     await this.userService.changeUserPw(body);
+  }
+
+  /** 프로필 사진 s3에 업로드하고 이미지 url 반환 */
+  @Post('upload/profile')
+  @UseInterceptors(
+    FileInterceptor('file', { limits: { fileSize: 1 * 1024 * 1024 } }),
+  )
+  @ApiOperation({ summary: '프로필 이미지 업로드' })
+  @ApiResponse({
+    status: HttpStatus.CREATED,
+    schema: {
+      properties: {
+        profileImgUrl: { type: 'string' },
+      },
+    },
+  })
+  async uploadProfileImg(@UploadedFile() file: Express.Multer.File) {
+    const profileImgUrl = await this.awsS3Service.uploadProfile(
+      file.buffer,
+      file.mimetype,
+    );
+    return { profileImgUrl };
   }
 
   /** 유저 프로필 변경 */

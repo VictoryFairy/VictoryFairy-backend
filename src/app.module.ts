@@ -14,6 +14,7 @@ import { RedisModule } from './modules/redis.module';
 import { RankModule } from './modules/rank.module';
 import { AuthModule } from './auth/auth.module';
 import { MailModule } from './modules/mail.module';
+import { AwsS3Module } from './modules/aws-s3.module';
 
 @Module({
   imports: [
@@ -34,6 +35,7 @@ import { MailModule } from './modules/mail.module';
     RankModule,
     AuthModule,
     MailModule,
+    AwsS3Module,
   ],
   controllers: [AppController],
   providers: [AppService],
