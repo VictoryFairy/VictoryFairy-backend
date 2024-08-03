@@ -22,7 +22,7 @@ import {
   EmailDto,
   LoginUserDto,
   NicknameDto,
-  UserProfileDto,
+  PatchUserProfileDto,
 } from 'src/dtos/user-dto';
 import { User } from 'src/entities/user.entity';
 import { UserService } from 'src/services/user.service';
@@ -97,7 +97,7 @@ export class UserController {
   @ApiOperation({ summary: '프로필 변경' })
   @ApiBody({
     description: '사용자 프로필의 특정 필드를 업데이트합니다.',
-    type: UserProfileDto,
+    type: PatchUserProfileDto,
     examples: {
       updateNickname: {
         summary: 'Nickname 업데이트 예제',
@@ -124,7 +124,7 @@ export class UserController {
   })
   @ApiResponse({ status: HttpStatus.NO_CONTENT })
   async updateUserProfile(
-    @Body() body: UserProfileDto,
+    @Body() body: PatchUserProfileDto,
     @UserDeco() user: User,
   ) {
     await this.userService.changeUserProfile(body, user);

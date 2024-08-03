@@ -8,7 +8,8 @@ import { HASH_ROUND } from 'src/const/user.const';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { User } from 'src/entities/user.entity';
-import { CreateUserDto, LoginUserDto, UserProfileDto } from 'src/dtos/user-dto';
+import { CreateUserDto, LoginUserDto } from 'src/dtos/user-dto';
+import { QueryDeepPartialEntity } from 'typeorm/query-builder/QueryPartialEntity';
 
 @Injectable()
 export class UserService {
@@ -84,11 +85,22 @@ export class UserService {
     }
   }
 
-  async changeUserProfile(dto: UserProfileDto, user: User) {
+  async changeUserProfile(
+    updateInput: { field: 'teamId' | 'image' | 'nickname'; value: any },
+    user: User,
+  ) {
     try {
-      const { field, value } = dto;
+      const { field, value } = updateInput;
+      const condition: QueryDeepPartialEntity<User> = {};
+      if (field === 'teamId') {
+        condition.support_team = { id: value };
+      } else if (field === 'image') {
+        condition.profile_image = value;
+      } else {
+        condition[field] = value;
+      }
 
-      await this.userRepository.update({ id: user.id }, { [field]: value });
+      await this.userRepository.update({ id: user.id }, condition);
     } catch (error) {
       throw new InternalServerErrorException('유저 프로필 업데이트 실패');
     }
