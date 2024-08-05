@@ -1,7 +1,11 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { CreateRegisteredGameDto, RegisteredGameDto, UpdateRegisteredGameDto } from 'src/dtos/registered-game.dto';
+import {
+  CreateRegisteredGameDto,
+  RegisteredGameDto,
+  UpdateRegisteredGameDto,
+} from 'src/dtos/registered-game.dto';
 import { RegisteredGame } from 'src/entities/registered-game.entity';
 import { User } from 'src/entities/user.entity';
 import { plainToInstance } from 'class-transformer';
@@ -10,6 +14,8 @@ import { GameService } from './game.service';
 
 @Injectable()
 export class RegisteredGameService {
+  private readonly logger = new Logger(RegisteredGameService.name);
+
   constructor(
     @InjectRepository(RegisteredGame)
     private readonly registeredGameRepository: Repository<RegisteredGame>,
@@ -17,9 +23,14 @@ export class RegisteredGameService {
     private readonly teamService: TeamService,
   ) {}
 
-  async create(createRegisteredGameDto: CreateRegisteredGameDto, user: User): Promise<RegisteredGameDto> {
+  async create(
+    createRegisteredGameDto: CreateRegisteredGameDto,
+    user: User,
+  ): Promise<RegisteredGameDto> {
     const game = await this.gameService.findOne(createRegisteredGameDto.gameId);
-    const cheeringTeam = await this.teamService.findOne(createRegisteredGameDto.cheeringTeamId);
+    const cheeringTeam = await this.teamService.findOne(
+      createRegisteredGameDto.cheeringTeamId,
+    );
 
     const registeredGame = this.registeredGameRepository.create({
       ...createRegisteredGameDto,
@@ -30,26 +41,37 @@ export class RegisteredGameService {
 
     await this.registeredGameRepository.save(registeredGame);
 
-    return plainToInstance(RegisteredGameDto, registeredGame, {
-      excludeExtraneousValues: true,
-    });
+    return plainToInstance(RegisteredGameDto, registeredGame);
   }
 
   async findAll(user: User): Promise<RegisteredGameDto[]> {
-    const registeredGames = await this.registeredGameRepository.find({ where: { user } });
+    const registeredGames = await this.registeredGameRepository.find({
+      where: { user },
+      relations: { cheering_team: true, game: true },
+    });
     return plainToInstance(RegisteredGameDto, registeredGames);
   }
 
   async findOne(id: number, user: User): Promise<RegisteredGameDto> {
-    const registeredGame = await this.registeredGameRepository.findOne({ where: { id, user } });
+    const registeredGame = await this.registeredGameRepository.findOne({
+      where: { id, user },
+      relations: { cheering_team: true, game: true },
+    });
     if (!registeredGame) {
       throw new NotFoundException(`Registered game with ID ${id} not found`);
     }
     return plainToInstance(RegisteredGameDto, registeredGame);
   }
 
-  async update(id: number, updateRegisteredGameDto: UpdateRegisteredGameDto, user: User): Promise<void> {
-    const registeredGame = await this.registeredGameRepository.findOne({ where: { id, user } });
+  async update(
+    id: number,
+    updateRegisteredGameDto: UpdateRegisteredGameDto,
+    user: User,
+  ): Promise<void> {
+    const registeredGame = await this.registeredGameRepository.findOne({
+      where: { id, user },
+      relations: { cheering_team: true, game: true },
+    });
     if (!registeredGame) {
       throw new NotFoundException(`Registered game with ID ${id} not found`);
     }

@@ -1,7 +1,16 @@
-import { Column, CreateDateColumn, DeleteDateColumn, Entity, JoinColumn, ManyToOne, PrimaryGeneratedColumn, UpdateDateColumn } from "typeorm";
-import { Game } from "./game.entity";
-import { User } from "./user.entity";
-import { Team } from "./team.entity";
+import {
+  Column,
+  CreateDateColumn,
+  DeleteDateColumn,
+  Entity,
+  JoinColumn,
+  ManyToOne,
+  PrimaryGeneratedColumn,
+  UpdateDateColumn,
+} from 'typeorm';
+import { Game } from './game.entity';
+import { User } from './user.entity';
+import { Team } from './team.entity';
 
 @Entity()
 export class RegisteredGame {
@@ -26,15 +35,15 @@ export class RegisteredGame {
   @DeleteDateColumn({ type: 'timestamptz' })
   deleted_at: Date;
 
-  @ManyToOne(() => Game)
+  @ManyToOne(() => Game, (game) => game.registeredGames)
   @JoinColumn({ name: 'game_id' })
   game: Game;
 
-  @ManyToOne(() => User)
+  @ManyToOne(() => User, (user) => user.registeredGames)
   @JoinColumn({ name: 'user_id' })
   user: User;
-  
-  @ManyToOne(() => Team)
+
+  @ManyToOne(() => Team, (cheering_team) => cheering_team.registeredGames)
   @JoinColumn({ name: 'cheering_team_id' })
   cheering_team: Team;
 }

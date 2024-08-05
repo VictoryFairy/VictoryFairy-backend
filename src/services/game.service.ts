@@ -3,15 +3,21 @@ import { Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { forkJoin, from, map, Observable, switchMap } from 'rxjs';
 import { Game } from 'src/entities/game.entity';
-import { TGameSchedule, IGameData, ITeamAndScore, TTeam, IRawScheduleList } from 'src/types/crawling-game.type';
-import { isNotTimeFormat, convertDateFormat } from 'src/util/time-format';
+import {
+  TGameSchedule,
+  IGameData,
+  ITeamAndScore,
+  TTeam,
+  IRawScheduleList,
+} from 'src/types/crawling-game.type';
+import { isNotTimeFormat, convertDateFormat } from 'src/utils/time-format';
 import { Repository } from 'typeorm';
 import { TeamService } from './team.service';
 import { StadiumService } from './stadium.service';
-import { teamNameToTeamId } from 'src/util/teamid-mapper';
 import parse from 'node-html-parser';
 import * as moment from 'moment';
 import { BatchUpdateGameDto } from 'src/dtos/batch-update-game.dto';
+import { teamNameToTeamId } from 'src/utils/teamid-mapper';
 
 @Injectable()
 export class GameService {
@@ -36,9 +42,9 @@ export class GameService {
   async getGameTime(gameId: string): Promise<string> {
     const game = await this.gameRepository.findOne({
       where: {
-        id: gameId
+        id: gameId,
       },
-      select: ['time']
+      select: ['time'],
     });
 
     if (!game) {
@@ -48,12 +54,15 @@ export class GameService {
     return game.time;
   }
 
-  async updateCurrentStatus(gameId: string, currentStatus: BatchUpdateGameDto): Promise<void> {
-    return await this.gameRepository.manager.transaction(async manager => {
+  async updateCurrentStatus(
+    gameId: string,
+    currentStatus: BatchUpdateGameDto,
+  ): Promise<void> {
+    return await this.gameRepository.manager.transaction(async (manager) => {
       const game = new Game();
       game.home_team_score = currentStatus.homeScore;
       game.away_team_score = currentStatus.awayScore;
-      
+
       await manager.update(Game, { id: gameId }, game);
     });
   }
@@ -68,7 +77,7 @@ export class GameService {
       select: ['id'],
     });
 
-    return todayGames.map(game => game.id);
+    return todayGames.map((game) => game.id);
   }
 
   getCurrentGameStatus(
@@ -81,70 +90,81 @@ export class GameService {
       const root = parse(htmlString);
       const statusElement = root.querySelector('span.date');
 
-      const status: string | null = (statusElement.innerText.match(/\[(.*?)\]/) || [])[1] ?? null;
+      const status: string | null =
+        (statusElement.innerText.match(/\[(.*?)\]/) || [])[1] ?? null;
 
       return {
-        status
-      }
-    }
+        status,
+      };
+    };
 
     const extractScore = (htmlString: string) => {
       const root = parse(htmlString);
       const homeScoreElement = root.querySelector('.teamHome em');
       const awayScoreElement = root.querySelector('.teamAway em');
 
-      const homeScore: number | null = homeScoreElement ? parseInt(homeScoreElement.innerText) : null;
-      const awayScore: number | null = awayScoreElement ? parseInt(awayScoreElement.innerText) : null;
+      const homeScore: number | null = homeScoreElement
+        ? parseInt(homeScoreElement.innerText)
+        : null;
+      const awayScore: number | null = awayScoreElement
+        ? parseInt(awayScoreElement.innerText)
+        : null;
 
       return {
         homeScore,
         awayScore,
-      }
-    }
+      };
+    };
 
     return forkJoin({
-      scores: this.httpService.post(
-        'https://www.koreabaseball.com/Game/LiveTextView1.aspx',
-        {
-          leagueId,
-          seriesId,
-          gameId,
-          gyear
-        },
-        {
-          headers: {
-            'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8'
+      scores: this.httpService
+        .post(
+          'https://www.koreabaseball.com/Game/LiveTextView1.aspx',
+          {
+            leagueId,
+            seriesId,
+            gameId,
+            gyear,
           },
-        }
-      ).pipe(
-        map(response => extractScore(response.data)) // 점수 추출
-      ),
-      status: this.httpService.post(
-        'https://www.koreabaseball.com/Game/LiveTextView2.aspx',
-        {
-          leagueId,
-          seriesId,
-          gameId,
-          gyear,
-        },
-        {
-          headers: {
-            'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8'
+          {
+            headers: {
+              'Content-Type':
+                'application/x-www-form-urlencoded; charset=UTF-8',
+            },
           },
-        }
-      ).pipe(
-        map(response => extractStatus(response.data)) // 상태 추출
-      )
+        )
+        .pipe(
+          map((response) => extractScore(response.data)), // 점수 추출
+        ),
+      status: this.httpService
+        .post(
+          'https://www.koreabaseball.com/Game/LiveTextView2.aspx',
+          {
+            leagueId,
+            seriesId,
+            gameId,
+            gyear,
+          },
+          {
+            headers: {
+              'Content-Type':
+                'application/x-www-form-urlencoded; charset=UTF-8',
+            },
+          },
+        )
+        .pipe(
+          map((response) => extractStatus(response.data)), // 상태 추출
+        ),
     }).pipe(
       map(({ scores, status }) => ({
         homeScore: scores.homeScore,
         awayScore: scores.awayScore,
-        status: status.status
-      }))
+        status: status.status,
+      })),
     );
   }
 
-  /** 
+  /**
    * 크롤링 관련 로직:
    * Thanks to EvansKJ57
    */
@@ -152,34 +172,39 @@ export class GameService {
     const date = new Date();
     const curYear = date.getFullYear();
 
-    return this.httpService.post<IRawScheduleList>(
-      'https://www.koreabaseball.com/ws/Schedule.asmx/GetScheduleList',
-      {
-        leId: 1, // 1 => 1부 | 2 => 퓨쳐스 리그
-        srIdList: [0, /*9, 6, 3, 4, 5, 7*/].join(','), // 0 => 프로팀 경기 | 1 => 시범경기 | 3,4,5,7 => 포스트 시즌 | 9 => 올스타전 | 6 => 모름
-        seasonId: curYear,
-        gameMonth: date.getMonth() + 1,
-        teamid: '', //LG => LG | 롯데 => LT | 두산 => OB | KIA => HT | 삼성 => SS | SSG => SK | NC => NC | 키움 => WO | KT => KT | 한화 => HH
-      },
-      {
-        headers: {
-          'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8',
+    return this.httpService
+      .post<IRawScheduleList>(
+        'https://www.koreabaseball.com/ws/Schedule.asmx/GetScheduleList',
+        {
+          leId: 1, // 1 => 1부 | 2 => 퓨쳐스 리그
+          srIdList: [0 /*9, 6, 3, 4, 5, 7*/].join(','), // 0 => 프로팀 경기 | 1 => 시범경기 | 3,4,5,7 => 포스트 시즌 | 9 => 올스타전 | 6 => 모름
+          seasonId: curYear,
+          gameMonth: date.getMonth() + 1,
+          teamid: '', //LG => LG | 롯데 => LT | 두산 => OB | KIA => HT | 삼성 => SS | SSG => SK | NC => NC | 키움 => WO | KT => KT | 한화 => HH
         },
-      },
-    ).pipe(
-      switchMap(response => {
-        const convertRowsToArray = response.data.rows.map(row => 
-          this.extractTextFromHtml(row.row)
-        );
-        const refinedGameData: TGameSchedule = this.refineGamesData(convertRowsToArray, curYear);
-        
-        return from(this.createMany(refinedGameData));
-      })
-    );
+        {
+          headers: {
+            'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8',
+          },
+        },
+      )
+      .pipe(
+        switchMap((response) => {
+          const convertRowsToArray = response.data.rows.map((row) =>
+            this.extractTextFromHtml(row.row),
+          );
+          const refinedGameData: TGameSchedule = this.refineGamesData(
+            convertRowsToArray,
+            curYear,
+          );
+
+          return from(this.createMany(refinedGameData));
+        }),
+      );
   }
 
   private async createMany(gameSchedules: TGameSchedule): Promise<void> {
-    await this.gameRepository.manager.transaction(async manager => {
+    await this.gameRepository.manager.transaction(async (manager) => {
       for (const schedule of gameSchedules) {
         // Create or update game entity
         let game = new Game();
@@ -189,35 +214,59 @@ export class GameService {
         game.status = schedule.status;
         game.home_team_score = schedule.homeScore ?? null;
         game.away_team_score = schedule.awayScore ?? null;
-        game.winning_team = schedule.winner ? await this.teamService.findByNameOrCreate(schedule.winner) : null;
-  
+        game.winning_team = schedule.winner
+          ? await this.teamService.findByNameOrCreate(schedule.winner)
+          : null;
+
         // Ensure home_team exists
-        game.home_team = await this.teamService.findByNameOrCreate(schedule.homeTeam);
+        game.home_team = await this.teamService.findByNameOrCreate(
+          schedule.homeTeam,
+        );
         if (!game.home_team) {
-          console.log('홈 팀이 누락되었거나 아직 로드되지 않았습니다:', game, schedule);
+          console.log(
+            '홈 팀이 누락되었거나 아직 로드되지 않았습니다:',
+            game,
+            schedule,
+          );
           continue; // Skip this schedule
         }
-  
+
         // Ensure away_team exists
-        game.away_team = await this.teamService.findByNameOrCreate(schedule.awayTeam);
+        game.away_team = await this.teamService.findByNameOrCreate(
+          schedule.awayTeam,
+        );
         if (!game.away_team) {
-          console.log('원정 팀이 누락되었거나 아직 로드되지 않았습니다:', game, schedule);
+          console.log(
+            '원정 팀이 누락되었거나 아직 로드되지 않았습니다:',
+            game,
+            schedule,
+          );
           continue; // Skip this schedule
         }
-  
+
         // Ensure stadium exists
-        game.stadium = await this.stadiumService.findByNameOrCreate(schedule.stadium);
+        game.stadium = await this.stadiumService.findByNameOrCreate(
+          schedule.stadium,
+        );
         if (!game.stadium) {
-          console.log('구장이 누락되었거나 아직 로드되지 않았습니다:', game, schedule);
+          console.log(
+            '구장이 누락되었거나 아직 로드되지 않았습니다:',
+            game,
+            schedule,
+          );
           continue; // Skip this schedule
         }
-  
+
         // Validate all required fields
         if (!game.date || !game.time || !game.status) {
-          console.log('필수 필드가 누락되었거나 잘못되었습니다:', game, schedule);
+          console.log(
+            '필수 필드가 누락되었거나 잘못되었습니다:',
+            game,
+            schedule,
+          );
           continue; // Skip this schedule
         }
-  
+
         try {
           await manager.upsert(Game, game, ['date', 'time', 'stadium']);
         } catch (error) {
@@ -227,8 +276,10 @@ export class GameService {
       }
     });
   }
-  
-  private extractTextFromHtml(data: IRawScheduleList['rows'][number]['row']): string[] {
+
+  private extractTextFromHtml(
+    data: IRawScheduleList['rows'][number]['row'],
+  ): string[] {
     return data.map((row) => {
       return row.Text.replace(/<[^>]*>/g, '');
     });
@@ -255,16 +306,8 @@ export class GameService {
           status,
         ] = entry;
       } else if (entry.length === 8) {
-        [
-          time,
-          game,
-          review,
-          highlight,
-          channel,
-          empty1,
-          stadium,
-          status
-        ] = entry;
+        [time, game, review, highlight, channel, empty1, stadium, status] =
+          entry;
       } else {
         return; // 예상하지 못한 형식의 데이터는 무시
       }
@@ -278,7 +321,11 @@ export class GameService {
       if (currentDate) {
         const { homeTeam, awayTeam } = this.getTeamAndScore(game);
         const gameData: IGameData = {
-          id: currentDate.replaceAll('-', '') + teamNameToTeamId[homeTeam.name] + teamNameToTeamId[awayTeam.name] + '0', 
+          id:
+            currentDate.replaceAll('-', '') +
+            teamNameToTeamId[homeTeam.name] +
+            teamNameToTeamId[awayTeam.name] +
+            '0',
           date: currentDate,
           time,
           // game,
@@ -305,7 +352,9 @@ export class GameService {
     return groupedData;
   }
 
-  private getTeamAndScore(gameString: string): { [team: string]: ITeamAndScore } {
+  private getTeamAndScore(gameString: string): {
+    [team: string]: ITeamAndScore;
+  } {
     const [awayTeamString, homeTeamString] = gameString.split('vs');
 
     if (!awayTeamString || !homeTeamString) {

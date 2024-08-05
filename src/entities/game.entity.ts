@@ -1,6 +1,17 @@
-import { Column, Entity, JoinColumn, ManyToOne, OneToMany, OneToOne, PrimaryColumn, PrimaryGeneratedColumn, Unique } from "typeorm";
-import { Team } from "./team.entity";
-import { Stadium } from "./stadium.entity";
+import {
+  Column,
+  Entity,
+  JoinColumn,
+  ManyToOne,
+  OneToMany,
+  OneToOne,
+  PrimaryColumn,
+  PrimaryGeneratedColumn,
+  Unique,
+} from 'typeorm';
+import { Team } from './team.entity';
+import { Stadium } from './stadium.entity';
+import { RegisteredGame } from './registered-game.entity';
 
 @Entity()
 @Unique(['date', 'time', 'stadium'])
@@ -34,8 +45,11 @@ export class Game {
   @ManyToOne(() => Team, { nullable: true })
   @JoinColumn({ name: 'winning_team_id' })
   winning_team?: Team | null;
-  
+
   @ManyToOne(() => Stadium)
   @JoinColumn({ name: 'stadium_id' })
   stadium: Stadium;
+
+  @OneToMany(() => RegisteredGame, (registeredGame) => registeredGame.game)
+  registeredGames: RegisteredGame[];
 }

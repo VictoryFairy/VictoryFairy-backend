@@ -3,9 +3,11 @@ import {
   Entity,
   JoinColumn,
   ManyToOne,
+  OneToMany,
   PrimaryGeneratedColumn,
 } from 'typeorm';
 import { Team } from './team.entity';
+import { RegisteredGame } from './registered-game.entity';
 
 @Entity()
 export class User {
@@ -28,6 +30,9 @@ export class User {
   score: number;
 
   @ManyToOne(() => Team, (team) => team.users)
-  @JoinColumn({ name: 'team_id' })
+  @JoinColumn({ name: 'support_team_id' })
   support_team: Team;
+
+  @OneToMany(() => RegisteredGame, (registeredGame) => registeredGame.user)
+  registeredGames: RegisteredGame[];
 }

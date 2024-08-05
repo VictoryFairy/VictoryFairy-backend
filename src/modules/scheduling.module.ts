@@ -1,5 +1,5 @@
 import { Module } from '@nestjs/common';
-import { BatchService } from 'src/services/batch.service';
+import { SchedulingService } from 'src/services/scheduling.service';
 import { ScheduleModule } from '@nestjs/schedule'
 import { GameModule } from './game.module';
 
@@ -8,7 +8,7 @@ import { GameModule } from './game.module';
     ScheduleModule.forRoot(),
     GameModule,
   ],
-  providers: [BatchService],
-  exports: [BatchService],
+  providers: [SchedulingService],
+  exports: [SchedulingService],
 })
-export class BatchModule {}
+export class SchedulingModule {}

@@ -6,8 +6,8 @@ import { CronJob } from "cron";
 import * as moment from "moment-timezone";
 
 @Injectable()
-export class BatchService {
-  private readonly logger = new Logger(BatchService.name);
+export class SchedulingService {
+  private readonly logger = new Logger(SchedulingService.name);
 
   constructor(
     private readonly gameService: GameService,

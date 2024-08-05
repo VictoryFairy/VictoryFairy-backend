@@ -1,7 +1,6 @@
-
-import { ApiProperty, ApiPropertyOptional } from "@nestjs/swagger";
-import { Expose, Transform } from "class-transformer";
-import { IsNumber, IsString } from "class-validator";
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { Exclude, Expose, Transform } from 'class-transformer';
+import { IsNumber, IsString } from 'class-validator';
 
 export class CreateRegisteredGameDto {
   @ApiProperty()
@@ -43,6 +42,7 @@ export class UpdateRegisteredGameDto {
   cheeringTeamId: number;
 }
 
+@Exclude()
 export class RegisteredGameDto {
   @IsNumber()
   @Expose()

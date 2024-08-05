@@ -1,9 +1,32 @@
-import { Controller, Get, Post, Body, Param, Delete, HttpCode, HttpStatus, Put, UnauthorizedException, NotFoundException, UseGuards } from '@nestjs/common';
-import { ApiCreatedResponse, ApiOkResponse, ApiNotFoundResponse, ApiUnauthorizedResponse } from '@nestjs/swagger';
+import {
+  Controller,
+  Get,
+  Post,
+  Body,
+  Param,
+  Delete,
+  HttpCode,
+  HttpStatus,
+  Put,
+  UnauthorizedException,
+  NotFoundException,
+  UseGuards,
+  ParseIntPipe,
+} from '@nestjs/common';
+import {
+  ApiCreatedResponse,
+  ApiOkResponse,
+  ApiNotFoundResponse,
+  ApiUnauthorizedResponse,
+} from '@nestjs/swagger';
 import { AccessTokenGuard } from 'src/auth/guard/access-token.guard';
 import { RefreshTokenGuard } from 'src/auth/guard/refresh-token.guard';
 import { UserDeco } from 'src/decorator/user.decorator';
-import { CreateRegisteredGameDto, RegisteredGameDto, UpdateRegisteredGameDto } from 'src/dtos/registered-game.dto';
+import {
+  CreateRegisteredGameDto,
+  RegisteredGameDto,
+  UpdateRegisteredGameDto,
+} from 'src/dtos/registered-game.dto';
 import { User } from 'src/entities/user.entity';
 import { RegisteredGameService } from 'src/services/registered-game.service';
 
@@ -17,7 +40,7 @@ export class RegisteredGameController {
   @ApiCreatedResponse({ type: RegisteredGameDto })
   async create(
     @Body() createRegisteredGameDto: CreateRegisteredGameDto,
-    @UserDeco() user: User, 
+    @UserDeco() user: User,
   ): Promise<RegisteredGameDto> {
     return this.registeredGameService.create(createRegisteredGameDto, user);
   }
@@ -26,9 +49,7 @@ export class RegisteredGameController {
   @HttpCode(HttpStatus.OK)
   @UseGuards(AccessTokenGuard, RefreshTokenGuard)
   @ApiOkResponse({ type: [RegisteredGameDto] })
-  async findAll(
-    @UserDeco() user: User, 
-  ): Promise<RegisteredGameDto[]> {
+  async findAll(@UserDeco() user: User): Promise<RegisteredGameDto[]> {
     return await this.registeredGameService.findAll(user);
   }
 
@@ -38,8 +59,8 @@ export class RegisteredGameController {
   @ApiOkResponse({ type: RegisteredGameDto })
   @ApiNotFoundResponse()
   async findOne(
-    @Param('id') id: number,
-    @UserDeco() user: User, 
+    @Param('id', ParseIntPipe) id: number,
+    @UserDeco() user: User,
   ): Promise<RegisteredGameDto> {
     return await this.registeredGameService.findOne(id, user);
   }
@@ -50,9 +71,9 @@ export class RegisteredGameController {
   @ApiOkResponse()
   @ApiNotFoundResponse()
   async update(
-    @Param('id') id: number,
+    @Param('id', ParseIntPipe) id: number,
     @Body() updateRegisteredGameDto: UpdateRegisteredGameDto,
-    @UserDeco() user: User, 
+    @UserDeco() user: User,
   ): Promise<void> {
     await this.registeredGameService.update(id, updateRegisteredGameDto, user);
   }
@@ -62,8 +83,8 @@ export class RegisteredGameController {
   @ApiOkResponse()
   @ApiNotFoundResponse()
   async delete(
-    @Param('id') id: number,
-    @UserDeco() user: User, 
+    @Param('id', ParseIntPipe) id: number,
+    @UserDeco() user: User,
   ): Promise<void> {
     await this.registeredGameService.delete(id, user);
   }

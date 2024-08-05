@@ -8,5 +8,5 @@ export const teamSeeder: { name: string }[] = [
   { name: 'LG' },
   { name: '키움' },
   { name: 'KT' },
-  { name: '한화' }
+  { name: '한화' },
 ];

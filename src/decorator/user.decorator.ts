@@ -13,12 +13,12 @@ export const UserDeco = createParamDecorator(
       user.password = 'should be hidden';
       user.nickname = 'nickname example';
       user.profile_image = 'url/to/example/image';
-      user.score = 0;
+      user.score = 1000;
 
-      const exampleCheeringTeam = new Team();
-      exampleCheeringTeam.id = 1;
-      exampleCheeringTeam.name = 'example';
-      user.cheering_team = exampleCheeringTeam;
+      const exampleSupportTeam = new Team();
+      exampleSupportTeam.id = 1;
+      exampleSupportTeam.name = '롯데';
+      user.support_team = exampleSupportTeam;
     } else {
       user = req.user;
     }

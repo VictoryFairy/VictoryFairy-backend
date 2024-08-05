@@ -12,8 +12,8 @@ export class TeamService {
   ) {}
 
   async seed() {
-    await this.teamRepository.manager.transaction(async manager => {
-      const savePromises = teamSeeder.map(seed => {
+    await this.teamRepository.manager.transaction(async (manager) => {
+      const savePromises = teamSeeder.map((seed) => {
         const team = new Team();
         team.name = seed.name;
         return manager.save(team);
@@ -41,9 +41,9 @@ export class TeamService {
     let team = await this.teamRepository.findOneBy({ name: name });
 
     if (!team) {
-        team = new Team();
-        team.name = name;
-        await this.teamRepository.save(team);
+      team = new Team();
+      team.name = name;
+      await this.teamRepository.save(team);
     }
 
     return team;
@@ -52,6 +52,6 @@ export class TeamService {
   async findByNames(names: string[]): Promise<Team[]> {
     return this.teamRepository.findBy({
       name: In(names),
-    })
+    });
   }
 }
