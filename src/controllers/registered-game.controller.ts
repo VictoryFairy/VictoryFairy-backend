@@ -36,7 +36,7 @@ export class RegisteredGameController {
 
   @Post()
   @HttpCode(HttpStatus.CREATED)
-  @UseGuards(AccessTokenGuard, RefreshTokenGuard)
+  @UseGuards(AccessTokenGuard)
   @ApiCreatedResponse({ type: RegisteredGameDto })
   async create(
     @Body() createRegisteredGameDto: CreateRegisteredGameDto,
@@ -47,7 +47,7 @@ export class RegisteredGameController {
 
   @Get()
   @HttpCode(HttpStatus.OK)
-  @UseGuards(AccessTokenGuard, RefreshTokenGuard)
+  @UseGuards(AccessTokenGuard)
   @ApiOkResponse({ type: [RegisteredGameDto] })
   async findAll(@UserDeco() user: User): Promise<RegisteredGameDto[]> {
     return await this.registeredGameService.findAll(user);
@@ -55,7 +55,7 @@ export class RegisteredGameController {
 
   @Get(':id')
   @HttpCode(HttpStatus.OK)
-  @UseGuards(AccessTokenGuard, RefreshTokenGuard)
+  @UseGuards(AccessTokenGuard)
   @ApiOkResponse({ type: RegisteredGameDto })
   @ApiNotFoundResponse()
   async findOne(
@@ -67,7 +67,7 @@ export class RegisteredGameController {
 
   @Put(':id')
   @HttpCode(HttpStatus.OK)
-  @UseGuards(AccessTokenGuard, RefreshTokenGuard)
+  @UseGuards(AccessTokenGuard)
   @ApiOkResponse()
   @ApiNotFoundResponse()
   async update(
