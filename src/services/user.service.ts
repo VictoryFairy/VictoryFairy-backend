@@ -34,7 +34,7 @@ export class UserService {
     exampleCheeringTeam.id = 1;
     exampleCheeringTeam.name = '롯데';
     user.support_team = exampleCheeringTeam;
-    
+
     await this.userRepository.insert(user);
     this.logger.log('test user 1 is created');
   }

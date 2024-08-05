@@ -71,25 +71,27 @@ export class RegisteredGameService {
     const cheeringTeam = await this.teamService.findOne(
       updateRegisteredGameDto.cheeringTeamId,
     );
-    
+
     if (!cheeringTeam) {
-      throw new NotFoundException(`Team with ID ${updateRegisteredGameDto.cheeringTeamId} not found`);
+      throw new NotFoundException(
+        `Team with ID ${updateRegisteredGameDto.cheeringTeamId} not found`,
+      );
     }
-  
+
     const registeredGame = await this.registeredGameRepository.findOne({
       where: { id, user },
       relations: { cheering_team: true, game: true },
     });
-  
+
     if (!registeredGame) {
       throw new NotFoundException(`Registered game with ID ${id} not found`);
     }
-  
+
     registeredGame.cheering_team = cheeringTeam;
     registeredGame.image = updateRegisteredGameDto.image;
     registeredGame.seat = updateRegisteredGameDto.seat;
     registeredGame.review = updateRegisteredGameDto.review;
-  
+
     await this.registeredGameRepository.save(registeredGame);
   }
 
