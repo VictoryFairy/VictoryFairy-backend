@@ -18,6 +18,7 @@ import {
   ApiOkResponse,
   ApiNotFoundResponse,
   ApiUnauthorizedResponse,
+  ApiTags,
 } from '@nestjs/swagger';
 import { AccessTokenGuard } from 'src/auth/guard/access-token.guard';
 import { RefreshTokenGuard } from 'src/auth/guard/refresh-token.guard';
@@ -30,6 +31,7 @@ import {
 import { User } from 'src/entities/user.entity';
 import { RegisteredGameService } from 'src/services/registered-game.service';
 
+@ApiTags('RegisteredGame')
 @Controller('registered-games')
 export class RegisteredGameController {
   constructor(private readonly registeredGameService: RegisteredGameService) {}
