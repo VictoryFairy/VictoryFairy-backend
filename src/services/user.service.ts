@@ -2,6 +2,7 @@ import {
   BadRequestException,
   Injectable,
   InternalServerErrorException,
+  Logger,
 } from '@nestjs/common';
 import * as bcrypt from 'bcrypt';
 import { HASH_ROUND } from 'src/const/user.const';
@@ -10,13 +11,33 @@ import { Repository } from 'typeorm';
 import { User } from 'src/entities/user.entity';
 import { CreateUserDto, LoginUserDto } from 'src/dtos/user-dto';
 import { QueryDeepPartialEntity } from 'typeorm/query-builder/QueryPartialEntity';
+import { Team } from 'src/entities/team.entity';
 
 @Injectable()
 export class UserService {
+  private readonly logger = new Logger(UserService.name);
+
   constructor(
     @InjectRepository(User)
     private readonly userRepository: Repository<User>,
   ) {}
+
+  async seed() {
+    const user = new User();
+    user.email = 'example@example.com';
+    user.password = 'should be hidden';
+    user.nickname = 'nickname example';
+    user.profile_image = 'url/to/example/image';
+    user.score = 1000;
+
+    const exampleCheeringTeam = new Team();
+    exampleCheeringTeam.id = 1;
+    exampleCheeringTeam.name = '롯데';
+    user.support_team = exampleCheeringTeam;
+
+    await this.userRepository.insert(user);
+    this.logger.log('test user 1 is created');
+  }
 
   async isExistEmail(email: string) {
     try {

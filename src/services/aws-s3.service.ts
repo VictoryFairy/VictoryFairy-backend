@@ -25,6 +25,20 @@ export class AwsS3Service {
     return fileUrl;
   }
 
+  async uploadRegisteredGame(file: Buffer, mimeType: string) {
+    const { region, bucketName } = this.getEnv();
+    const uploadName = `registered-game/${uuid4()}-${Date.now()}`;
+    const command = new PutObjectCommand({
+      Bucket: bucketName,
+      Key: uploadName,
+      Body: file,
+      ContentType: mimeType,
+    });
+    await this.s3Client.send(command);
+    const fileUrl = `https://${bucketName}.s3.${region}.amazonaws.com/${uploadName}`;
+    return fileUrl;
+  }
+
   /** 환경변수 게터 함수 */
   private getEnv() {
     const region = this.configService.get<string>('AWS_S3_REGION');

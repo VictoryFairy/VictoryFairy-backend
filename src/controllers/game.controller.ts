@@ -1,8 +1,16 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Body,
+  Patch,
+  Param,
+  Delete,
+} from '@nestjs/common';
 import { firstValueFrom } from 'rxjs';
 import { GameService } from 'src/services/game.service';
 
-@Controller('game')
+@Controller('games')
 export class GameController {
   constructor(private readonly gameService: GameService) {}
 
@@ -13,8 +21,6 @@ export class GameController {
 
   @Get('scores')
   async getScores(): Promise<unknown> {
-    return this.gameService.getCurrentGameStatus(
-      1, 0, '20240801LGSS0', 2024
-    );
+    return this.gameService.getCurrentGameStatus(1, 0, '20240801LGSS0', 2024);
   }
 }

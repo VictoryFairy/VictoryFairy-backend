@@ -1,5 +1,5 @@
 import { HttpService } from '@nestjs/axios';
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { forkJoin, from, map, Observable, switchMap } from 'rxjs';
 import { Game } from 'src/entities/game.entity';
@@ -31,6 +31,14 @@ export class GameService {
     private readonly stadiumService: StadiumService,
   ) {}
 
+  async findOne(gameId: string): Promise<Game> {
+    const game = await this.gameRepository.findOneBy({ id: gameId });
+    if (!game) {
+      throw new NotFoundException(`Game with id ${gameId} not found.`);
+    }
+    return game;
+  }
+
   async getGameTime(gameId: string): Promise<string> {
     const game = await this.gameRepository.findOne({
       where: {
@@ -38,6 +46,10 @@ export class GameService {
       },
       select: ['time'],
     });
+
+    if (!game) {
+      throw new NotFoundException(`Game with id ${gameId} not found.`);
+    }
 
     return game.time;
   }
