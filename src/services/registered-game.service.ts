@@ -68,14 +68,29 @@ export class RegisteredGameService {
     updateRegisteredGameDto: UpdateRegisteredGameDto,
     user: User,
   ): Promise<void> {
+    const cheeringTeam = await this.teamService.findOne(
+      updateRegisteredGameDto.cheeringTeamId,
+    );
+    
+    if (!cheeringTeam) {
+      throw new NotFoundException(`Team with ID ${updateRegisteredGameDto.cheeringTeamId} not found`);
+    }
+  
     const registeredGame = await this.registeredGameRepository.findOne({
       where: { id, user },
       relations: { cheering_team: true, game: true },
     });
+  
     if (!registeredGame) {
       throw new NotFoundException(`Registered game with ID ${id} not found`);
     }
-    await this.registeredGameRepository.update(id, updateRegisteredGameDto);
+  
+    registeredGame.cheering_team = cheeringTeam;
+    registeredGame.image = updateRegisteredGameDto.image;
+    registeredGame.seat = updateRegisteredGameDto.seat;
+    registeredGame.review = updateRegisteredGameDto.review;
+  
+    await this.registeredGameRepository.save(registeredGame);
   }
 
   async delete(id: number, user: User): Promise<void> {
