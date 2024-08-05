@@ -12,8 +12,8 @@ export class StadiumService {
   ) {}
 
   async seed() {
-    await this.stadiumRepository.manager.transaction(async manager => {
-      const savePromises = stadiumSeeder.map(seed => {
+    await this.stadiumRepository.manager.transaction(async (manager) => {
+      const savePromises = stadiumSeeder.map((seed) => {
         const stadium = new Stadium();
         stadium.name = seed.name;
         stadium.address = 'no address';
@@ -36,12 +36,12 @@ export class StadiumService {
     let stadium = await this.stadiumRepository.findOneBy({ name: name });
 
     if (!stadium) {
-        stadium = new Stadium();
-        stadium.name = name;
-        stadium.address = 'no address';
-        stadium.latitude = 0;
-        stadium.longitude = 0;
-        await this.stadiumRepository.save(stadium);
+      stadium = new Stadium();
+      stadium.name = name;
+      stadium.address = 'no address';
+      stadium.latitude = 0;
+      stadium.longitude = 0;
+      await this.stadiumRepository.save(stadium);
     }
 
     return stadium;
@@ -50,6 +50,6 @@ export class StadiumService {
   async findByNames(names: string[]): Promise<Stadium[]> {
     return this.stadiumRepository.findBy({
       name: In(names),
-    })
+    });
   }
 }

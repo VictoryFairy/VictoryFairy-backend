@@ -16,7 +16,7 @@ import { AuthModule } from './auth/auth.module';
 import { MailModule } from './modules/mail.module';
 import { AwsS3Module } from './modules/aws-s3.module';
 import { SeederService } from './services/seeder.service';
-import { BatchModule } from './modules/batch.module';
+import { SchedulingModule } from './modules/scheduling.module';
 
 @Module({
   imports: [
@@ -38,7 +38,7 @@ import { BatchModule } from './modules/batch.module';
     AuthModule,
     MailModule,
     AwsS3Module,
-    BatchModule,
+    SchedulingModule,
   ],
   controllers: [AppController],
   providers: [AppService, SeederService],
