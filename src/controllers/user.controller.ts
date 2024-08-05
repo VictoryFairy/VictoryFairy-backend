@@ -4,7 +4,6 @@ import {
   Body,
   HttpStatus,
   HttpCode,
-  UseGuards,
   Patch,
 } from '@nestjs/common';
 import {
@@ -15,7 +14,7 @@ import {
   ApiResponse,
   ApiTags,
 } from '@nestjs/swagger';
-import { AccessTokenGuard } from 'src/auth/guard/access-token.guard';
+import { JwtAuth } from 'src/decorator/jwt-token.decorator';
 import { UserDeco } from 'src/decorator/user.decorator';
 import {
   CreateUserDto,
@@ -93,7 +92,7 @@ export class UserController {
   /** 유저 프로필 변경 */
   @Patch('/profile')
   @HttpCode(HttpStatus.NO_CONTENT)
-  @UseGuards(AccessTokenGuard)
+  @JwtAuth('access')
   @ApiOperation({ summary: '프로필 변경' })
   @ApiBody({
     description: '사용자 프로필의 특정 필드를 업데이트합니다.',
@@ -122,7 +121,11 @@ export class UserController {
       },
     },
   })
-  @ApiResponse({ status: HttpStatus.NO_CONTENT })
+  @ApiResponse({
+    status: HttpStatus.NO_CONTENT,
+    description: '성공 시 데이터 없이 상태코드만 응답',
+  })
+  @ApiInternalServerErrorResponse({ description: 'DB 업데이트 실패한 경우' })
   async updateUserProfile(
     @Body() body: PatchUserProfileDto,
     @UserDeco() user: User,

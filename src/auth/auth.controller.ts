@@ -6,24 +6,22 @@ import {
   HttpStatus,
   Post,
   Res,
-  UseGuards,
 } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { UserDeco } from 'src/decorator/user.decorator';
 import { User } from 'src/entities/user.entity';
 import {
   ApiBody,
-  ApiCookieAuth,
   ApiInternalServerErrorResponse,
   ApiOperation,
   ApiResponse,
   ApiTags,
   ApiUnauthorizedResponse,
 } from '@nestjs/swagger';
-import { RefreshTokenGuard } from './guard/refresh-token.guard';
 import { CookieOptions, Response } from 'express';
 import { ConfigService } from '@nestjs/config';
 import { EmailDto, EmailWithCodeDto, LoginUserDto } from 'src/dtos/user-dto';
+import { JwtAuth } from 'src/decorator/jwt-token.decorator';
 
 @ApiTags('Auth')
 @Controller('auth')
@@ -65,10 +63,12 @@ export class AuthController {
   /** 유저 로그아웃 */
   @Delete('logout')
   @HttpCode(HttpStatus.OK)
-  @UseGuards(RefreshTokenGuard)
+  @JwtAuth('refresh')
   @ApiOperation({ summary: '로그아웃' })
-  @ApiResponse({ description: '성공 시 데이터 없이 상태코드만 응답' })
-  @ApiUnauthorizedResponse({ description: '유효하지 않은 토큰' })
+  @ApiResponse({
+    status: HttpStatus.OK,
+    description: '성공 시 데이터 없이 상태코드만 응답',
+  })
   logout(@Res() res: Response) {
     const domain = this.configService.get('DOMAIN');
     res.clearCookie('token', {
@@ -80,17 +80,13 @@ export class AuthController {
 
   /** 엑세스 토큰 재발급 */
   @Post('token/issue')
-  @UseGuards(RefreshTokenGuard)
   @HttpCode(HttpStatus.OK)
+  @JwtAuth('refresh')
   @ApiOperation({ summary: '엑세스 토큰 재발급' })
-  @ApiCookieAuth('token')
   @ApiResponse({
     status: HttpStatus.OK,
     schema: { properties: { acToken: { type: 'string' } } },
     description: '새로운 엑세스 토큰 발급',
-  })
-  @ApiUnauthorizedResponse({
-    description: '유효하지 않은 리프레쉬 토큰 제출한 경우',
   })
   async reissueAcToken(@UserDeco() user: User): Promise<{ acToken: string }> {
     const { email, id } = user;
