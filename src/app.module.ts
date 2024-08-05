@@ -15,7 +15,7 @@ import { RankModule } from './modules/rank.module';
 import { AuthModule } from './auth/auth.module';
 import { MailModule } from './modules/mail.module';
 import { AwsS3Module } from './modules/aws-s3.module';
-import { SeederService } from './seeder.service';
+import { SeederService } from './services/seeder.service';
 import { BatchModule } from './modules/batch.module';
 
 @Module({
