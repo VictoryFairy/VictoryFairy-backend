@@ -1,8 +1,8 @@
 import { ApiProperty, ApiPropertyOptional } from "@nestjs/swagger";
 import { Exclude, Expose, Transform } from "class-transformer";
 import { IsNumber, IsString } from "class-validator";
-import { Stadium } from "src/entities/stadium.entity";
-import { Team } from "src/entities/team.entity";
+import { TeamDto } from "./team.dto";
+import { StadiumDto } from "./stadium.dto";
 
 @Exclude()
 export class GameDto {
@@ -30,18 +30,18 @@ export class GameDto {
   @IsString()
   @Expose()
   @Transform(({ obj }) => obj.home_team)
-  homeTeam: Team;
+  homeTeam: TeamDto;
 
   @ApiProperty()
   @IsString()
   @Expose()
   @Transform(({ obj }) => obj.away_team)
-  awayTeam: Team;
+  awayTeam: TeamDto;
 
   @ApiProperty()
   @IsNumber()
   @Expose()
-  stadium: Stadium;
+  stadium: StadiumDto;
 
   @ApiPropertyOptional()
   @IsString()
@@ -58,5 +58,5 @@ export class GameDto {
   @ApiPropertyOptional()
   @IsString()
   @Expose()
-  winningTeam?: Team;
+  winningTeam?: TeamDto;
 }
