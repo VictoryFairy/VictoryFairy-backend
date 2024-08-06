@@ -13,8 +13,9 @@ import { User } from 'src/entities/user.entity';
 import {
   ApiBody,
   ApiInternalServerErrorResponse,
+  ApiNoContentResponse,
+  ApiOkResponse,
   ApiOperation,
-  ApiResponse,
   ApiTags,
   ApiUnauthorizedResponse,
 } from '@nestjs/swagger';
@@ -38,8 +39,7 @@ export class AuthController {
     type: LoginUserDto,
     description: '로그인에 필요한 이메일, 비밀번호',
   })
-  @ApiResponse({
-    status: HttpStatus.OK,
+  @ApiOkResponse({
     schema: {
       properties: { acToken: { type: 'string' } },
     },
@@ -65,10 +65,7 @@ export class AuthController {
   @HttpCode(HttpStatus.OK)
   @JwtAuth('refresh')
   @ApiOperation({ summary: '로그아웃' })
-  @ApiResponse({
-    status: HttpStatus.OK,
-    description: '성공 시 데이터 없이 상태코드만 응답',
-  })
+  @ApiOkResponse({ description: '성공 시 데이터 없이 상태코드만 응답' })
   logout(@Res() res: Response) {
     const domain = this.configService.get('DOMAIN');
     res.clearCookie('token', {
@@ -83,8 +80,7 @@ export class AuthController {
   @HttpCode(HttpStatus.OK)
   @JwtAuth('refresh')
   @ApiOperation({ summary: '엑세스 토큰 재발급' })
-  @ApiResponse({
-    status: HttpStatus.OK,
+  @ApiOkResponse({
     schema: { properties: { acToken: { type: 'string' } } },
     description: '새로운 엑세스 토큰 발급',
   })
@@ -98,10 +94,7 @@ export class AuthController {
   @Post('email-code')
   @HttpCode(HttpStatus.NO_CONTENT)
   @ApiOperation({ summary: '인증 번호 이메일 요청' })
-  @ApiResponse({
-    status: HttpStatus.NO_CONTENT,
-    description: '성공 시 데이터 없이 상태코드만 응답',
-  })
+  @ApiNoContentResponse({ description: '성공 시 데이터 없이 상태코드만 응답' })
   @ApiInternalServerErrorResponse({
     description: '이메일 전송 실패 / 인증 코드 레디스 저장 실패한 경우',
   })
@@ -113,10 +106,7 @@ export class AuthController {
   @Post('verify-email-code')
   @HttpCode(HttpStatus.NO_CONTENT)
   @ApiOperation({ summary: '유저가 제출한 인증번호 확인' })
-  @ApiResponse({
-    status: HttpStatus.NO_CONTENT,
-    description: '성공 시 데이터 없이 상태코드만 응답',
-  })
+  @ApiNoContentResponse({ description: '성공 시 데이터 없이 상태코드만 응답' })
   @ApiUnauthorizedResponse({ description: '인증코드 틀린 경우' })
   @ApiInternalServerErrorResponse({ description: '레디스 관련 문제인 경우' })
   async checkEmailCode(@Body() body: EmailWithCodeDto) {
