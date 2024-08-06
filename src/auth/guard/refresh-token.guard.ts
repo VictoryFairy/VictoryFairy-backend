@@ -14,10 +14,6 @@ export class RefreshTokenGuard implements CanActivate {
     private readonly configService: ConfigService,
   ) {}
   async canActivate(context: ExecutionContext): Promise<boolean> {
-    if (this.configService.get('NODE_ENV') !== 'production') {
-      return true;
-    }
-
     const req = context.switchToHttp().getRequest();
 
     if (!req.cookies?.token) {
