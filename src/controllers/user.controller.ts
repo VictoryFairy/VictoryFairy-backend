@@ -5,6 +5,8 @@ import {
   HttpStatus,
   HttpCode,
   Patch,
+  Delete,
+  Get,
 } from '@nestjs/common';
 import {
   ApiBadRequestResponse,
@@ -16,6 +18,7 @@ import {
   ApiOperation,
   ApiTags,
 } from '@nestjs/swagger';
+import { plainToInstance } from 'class-transformer';
 import { JwtAuth } from 'src/decorator/jwt-token.decorator';
 import { UserDeco } from 'src/decorator/user.decorator';
 import {
@@ -24,6 +27,7 @@ import {
   LoginUserDto,
   NicknameDto,
   PatchUserProfileDto,
+  UserDetailDto,
 } from 'src/dtos/user-dto';
 import { User } from 'src/entities/user.entity';
 import { UserService } from 'src/services/user.service';
@@ -122,5 +126,29 @@ export class UserController {
     @UserDeco() user: User,
   ) {
     await this.userService.changeUserProfile(body, user);
+  }
+
+  /** 본인 정보 가져오기 */
+  @Get('me')
+  @JwtAuth('access')
+  @ApiOkResponse({ type: UserDetailDto })
+  @ApiInternalServerErrorResponse({ description: 'DB 문제인 경우' })
+  async getUserInfo(@UserDeco() user: User) {
+    const findUser = await this.userService.findUserById(user.id, {
+      registeredGames: true,
+      support_team: true,
+    });
+    return plainToInstance(UserDetailDto, findUser);
+  }
+
+  /** 회원 탈퇴 */
+  @Delete('me')
+  @HttpCode(HttpStatus.NO_CONTENT)
+  @JwtAuth('access')
+  @ApiOperation({ summary: '회원탈퇴' })
+  @ApiNoContentResponse({ description: '삭제 성공한 경우 상태코드만 응답' })
+  @ApiInternalServerErrorResponse({ description: 'DB 삭제 실패한 경우' })
+  async deleteUser(@UserDeco() user: User) {
+    await this.userService.deleteUser(user);
   }
 }

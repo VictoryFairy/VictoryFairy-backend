@@ -39,7 +39,9 @@ export class RegisteredGame {
   @JoinColumn({ name: 'game_id' })
   game: Game;
 
-  @ManyToOne(() => User, (user) => user.registeredGames)
+  @ManyToOne(() => User, (user) => user.registeredGames, {
+    onDelete: 'CASCADE',
+  })
   @JoinColumn({ name: 'user_id' })
   user: User;
 
