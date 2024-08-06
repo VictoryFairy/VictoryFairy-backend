@@ -8,6 +8,7 @@ import {
   Query,
 } from '@nestjs/common';
 import { ApiOkResponse, ApiNotFoundResponse } from '@nestjs/swagger';
+import { plainToInstance } from 'class-transformer';
 import { UserDeco } from 'src/decorator/user.decorator';
 import { TeamDto } from 'src/dtos/team.dto';
 import { User } from 'src/entities/user.entity';
@@ -21,7 +22,8 @@ export class TeamController {
   @HttpCode(HttpStatus.OK)
   @ApiOkResponse({ type: [TeamDto] })
   async findAll(@Query('name') name?: string): Promise<TeamDto[]> {
-    return await this.teamService.findAll(name);
+    const teams = await this.teamService.findAll(name);
+    return plainToInstance(TeamDto, teams);
   }
 
   @Get(':id')
@@ -32,6 +34,7 @@ export class TeamController {
     @Param('id', ParseIntPipe) id: number,
     @UserDeco() user: User,
   ): Promise<TeamDto> {
-    return await this.teamService.findOne(id);
+    const team = await this.teamService.findOne(id);
+    return plainToInstance(TeamDto, team);
   }
 }
