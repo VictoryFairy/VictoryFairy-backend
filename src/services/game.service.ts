@@ -215,11 +215,11 @@ export class GameService {
         game.home_team_score = schedule.homeScore ?? null;
         game.away_team_score = schedule.awayScore ?? null;
         game.winning_team = schedule.winner
-          ? await this.teamService.findByNameOrCreate(schedule.winner)
+          ? await this.teamService.findOneByNameOrCreate(schedule.winner)
           : null;
 
         // Ensure home_team exists
-        game.home_team = await this.teamService.findByNameOrCreate(
+        game.home_team = await this.teamService.findOneByNameOrCreate(
           schedule.homeTeam,
         );
         if (!game.home_team) {
@@ -232,7 +232,7 @@ export class GameService {
         }
 
         // Ensure away_team exists
-        game.away_team = await this.teamService.findByNameOrCreate(
+        game.away_team = await this.teamService.findOneByNameOrCreate(
           schedule.awayTeam,
         );
         if (!game.away_team) {
