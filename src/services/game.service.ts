@@ -11,15 +11,13 @@ import {
   IRawScheduleList,
 } from 'src/types/crawling-game.type';
 import { isNotTimeFormat, convertDateFormat } from 'src/utils/time-format';
-import { Between, Repository } from 'typeorm';
+import { Repository } from 'typeorm';
 import { TeamService } from './team.service';
 import { StadiumService } from './stadium.service';
 import parse from 'node-html-parser';
 import * as moment from 'moment';
 import { BatchUpdateGameDto } from 'src/dtos/batch-update-game.dto';
 import { teamNameToTeamId } from 'src/utils/teamid-mapper';
-import { GameDto } from 'src/dtos/game.dto';
-import { plainToInstance } from 'class-transformer';
 import { ConfigService } from '@nestjs/config';
 
 @Injectable()
@@ -32,10 +30,9 @@ export class GameService {
     private readonly gameRepository: Repository<Game>,
     private readonly teamService: TeamService,
     private readonly stadiumService: StadiumService,
-    private readonly configService: ConfigService,
   ) {}
 
-  async findAllDaily(year: number, month: number, day: number): Promise<GameDto[]> {
+  async findAllDaily(year: number, month: number, day: number): Promise<Game[]> {
     const dateString = moment.utc({ year, month: month - 1, day }).format('YYYY-MM-DD');
 
     const games = await this.gameRepository.find({
@@ -45,7 +42,7 @@ export class GameService {
       relations: ['home_team', 'away_team', 'winning_team', 'stadium'],
     });
 
-    return plainToInstance(GameDto, games);
+    return games;
   }
 
 
@@ -79,7 +76,7 @@ export class GameService {
     currentStatus: BatchUpdateGameDto,
   ): Promise<void> {
     return await this.gameRepository.manager.transaction(async (manager) => {
-      const game = new Game();
+      const game = await this.findOne(gameId);
       game.home_team_score = currentStatus.homeScore;
       game.away_team_score = currentStatus.awayScore;
 
@@ -343,8 +340,8 @@ export class GameService {
         const gameData: IGameData = {
           id:
             currentDate.replaceAll('-', '') +
-            teamNameToTeamId[homeTeam.name] +
             teamNameToTeamId[awayTeam.name] +
+            teamNameToTeamId[homeTeam.name] +
             '0',
           date: currentDate,
           time,

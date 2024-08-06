@@ -67,12 +67,12 @@ export class SchedulingService {
     );
 
     // 시작 시간이 현재 시간보다 이전일 경우 실행하지 않습니다.
-    if (startDateTime < now) {
-      this.logger.warn(
-        `Start time ${startDateTime} for game ${gameId} is in the past. Skipping.`,
-      );
-      return;
-    }
+    // if (startDateTime < now) {
+    //   this.logger.warn(
+    //     `Start time ${startDateTime} for game ${gameId} is in the past. Skipping.`,
+    //   );
+    //   return;
+    // }
 
     // 현재 시간과 시작 시간 사이의 차이를 계산합니다.
     const timeUntilStart = startDateTime.diff(now);
@@ -96,6 +96,7 @@ export class SchedulingService {
           );
 
           await this.gameService.updateCurrentStatus(gameId, currentStatus);
+          this.logger.log(`Score for Game ${gameId} updated.`);
 
           if (currentStatus.status === '경기종료') {
             this.schedulerRegistry.deleteCronJob(`batchUpdate${gameId}`);
