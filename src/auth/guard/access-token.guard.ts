@@ -1,5 +1,4 @@
 import {
-  BadRequestException,
   CanActivate,
   ExecutionContext,
   Injectable,
@@ -18,7 +17,7 @@ export class AccessTokenGuard implements CanActivate {
     const req = context.switchToHttp().getRequest();
     const authHeader = req.headers['authorization'];
     if (!authHeader) {
-      throw new BadRequestException('토큰 없음');
+      throw new UnauthorizedException('토큰 없음');
     }
     const token = this.authService.extractTokenFromHeader(authHeader);
     const payload = await this.authService.verifyToken(token, false);

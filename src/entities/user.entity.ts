@@ -33,6 +33,8 @@ export class User {
   @JoinColumn({ name: 'support_team_id' })
   support_team: Team;
 
-  @OneToMany(() => RegisteredGame, (registeredGame) => registeredGame.user)
+  @OneToMany(() => RegisteredGame, (registeredGame) => registeredGame.user, {
+    cascade: true,
+  })
   registeredGames: RegisteredGame[];
 }

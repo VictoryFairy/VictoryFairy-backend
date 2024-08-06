@@ -122,8 +122,12 @@ export class AuthService {
     return token;
   }
 
-  getUser(whereOpt: FindOptionsWhere<User>) {
-    return this.userRepository.findOne({ where: whereOpt });
+  async getUser(whereOpt: FindOptionsWhere<User>) {
+    const findUser = await this.userRepository.findOne({ where: whereOpt });
+    if (!findUser) {
+      throw new UnauthorizedException('해당 유저를 찾을 수 없음');
+    }
+    return findUser;
   }
 
   /** 환경변수 게터 함수 */
