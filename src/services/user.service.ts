@@ -7,7 +7,7 @@ import {
 import * as bcrypt from 'bcrypt';
 import { HASH_ROUND } from 'src/const/user.const';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { FindOptionsRelations, Repository } from 'typeorm';
 import { User } from 'src/entities/user.entity';
 import { CreateUserDto, LoginUserDto } from 'src/dtos/user-dto';
 import { QueryDeepPartialEntity } from 'typeorm/query-builder/QueryPartialEntity';
@@ -55,9 +55,14 @@ export class UserService {
     }
   }
 
-  async findUserById(userId: number) {
+  async findUserById(userId: number, withEntity?: FindOptionsRelations<User>) {
     try {
-      return this.userRepository.findOne({ where: { id: userId } });
+      const findUser = await this.userRepository.findOne({
+        where: { id: userId },
+        relations: withEntity,
+      });
+      console.log(findUser);
+      return findUser;
     } catch (error) {
       throw new InternalServerErrorException('DB<user> 조회 실패');
     }
@@ -125,5 +130,16 @@ export class UserService {
     } catch (error) {
       throw new InternalServerErrorException('유저 프로필 업데이트 실패');
     }
+  }
+
+  async deleteUser(user: User) {
+    const { affected } = await this.userRepository.delete({
+      id: user.id,
+      email: user.email,
+    });
+    if (affected !== 1) {
+      throw new InternalServerErrorException('DB 삭제 실패');
+    }
+    return { affected };
   }
 }

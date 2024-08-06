@@ -4,18 +4,22 @@ import {
   Body,
   HttpStatus,
   HttpCode,
-  UseGuards,
   Patch,
+  Delete,
+  Get,
 } from '@nestjs/common';
 import {
   ApiBadRequestResponse,
   ApiBody,
+  ApiCreatedResponse,
   ApiInternalServerErrorResponse,
+  ApiNoContentResponse,
+  ApiOkResponse,
   ApiOperation,
-  ApiResponse,
   ApiTags,
 } from '@nestjs/swagger';
-import { AccessTokenGuard } from 'src/auth/guard/access-token.guard';
+import { plainToInstance } from 'class-transformer';
+import { JwtAuth } from 'src/decorator/jwt-token.decorator';
 import { UserDeco } from 'src/decorator/user.decorator';
 import {
   CreateUserDto,
@@ -23,6 +27,7 @@ import {
   LoginUserDto,
   NicknameDto,
   PatchUserProfileDto,
+  UserDetailDto,
 } from 'src/dtos/user-dto';
 import { User } from 'src/entities/user.entity';
 import { UserService } from 'src/services/user.service';
@@ -36,10 +41,7 @@ export class UserController {
   @Post('signup')
   @ApiOperation({ summary: '회원가입' })
   @ApiBody({ type: CreateUserDto, description: '회원가입에 필요한 정보' })
-  @ApiResponse({
-    status: HttpStatus.CREATED,
-    description: '성공 시 데이터 없이 상태코드만 응답',
-  })
+  @ApiCreatedResponse({ description: '성공 시 데이터 없이 상태코드만 응답' })
   @ApiInternalServerErrorResponse({ description: 'DB 유저 저장 실패한 경우' })
   async signIn(@Body() body: CreateUserDto) {
     await this.userService.createUser(body);
@@ -48,8 +50,7 @@ export class UserController {
   /** 이메일 중복 확인 */
   @Post('existed-email')
   @ApiOperation({ summary: '이메일 중복 확인' })
-  @ApiResponse({
-    status: HttpStatus.OK,
+  @ApiOkResponse({
     schema: { properties: { isExist: { type: 'boolean' } } },
     description: '없는 경우 false',
   })
@@ -63,8 +64,7 @@ export class UserController {
   /** 닉네임 중복 확인 */
   @Post('existed-nickname')
   @ApiOperation({ summary: '닉네임 중복 확인' })
-  @ApiResponse({
-    status: HttpStatus.OK,
+  @ApiOkResponse({
     schema: { properties: { isExist: { type: 'boolean' } } },
     description: '없는 경우 false',
   })
@@ -78,10 +78,7 @@ export class UserController {
   @Patch('password')
   @HttpCode(HttpStatus.NO_CONTENT)
   @ApiOperation({ summary: '비밀번호 변경' })
-  @ApiResponse({
-    status: HttpStatus.NO_CONTENT,
-    description: '성공 시 데이터 없이 상태코드만 응답',
-  })
+  @ApiNoContentResponse({ description: '성공 시 데이터 없이 상태코드만 응답' })
   @ApiBadRequestResponse({
     description: '해당 이메일로 가입된 계정이 없는 경우',
   })
@@ -93,7 +90,7 @@ export class UserController {
   /** 유저 프로필 변경 */
   @Patch('/profile')
   @HttpCode(HttpStatus.NO_CONTENT)
-  @UseGuards(AccessTokenGuard)
+  @JwtAuth('access')
   @ApiOperation({ summary: '프로필 변경' })
   @ApiBody({
     description: '사용자 프로필의 특정 필드를 업데이트합니다.',
@@ -122,11 +119,36 @@ export class UserController {
       },
     },
   })
-  @ApiResponse({ status: HttpStatus.NO_CONTENT })
+  @ApiNoContentResponse({ description: '성공 시 데이터 없이 상태코드만 응답' })
+  @ApiInternalServerErrorResponse({ description: 'DB 업데이트 실패한 경우' })
   async updateUserProfile(
     @Body() body: PatchUserProfileDto,
     @UserDeco() user: User,
   ) {
     await this.userService.changeUserProfile(body, user);
+  }
+
+  /** 본인 정보 가져오기 */
+  @Get('me')
+  @JwtAuth('access')
+  @ApiOkResponse({ type: UserDetailDto })
+  @ApiInternalServerErrorResponse({ description: 'DB 문제인 경우' })
+  async getUserInfo(@UserDeco() user: User) {
+    const findUser = await this.userService.findUserById(user.id, {
+      registeredGames: true,
+      support_team: true,
+    });
+    return plainToInstance(UserDetailDto, findUser);
+  }
+
+  /** 회원 탈퇴 */
+  @Delete('me')
+  @HttpCode(HttpStatus.NO_CONTENT)
+  @JwtAuth('access')
+  @ApiOperation({ summary: '회원탈퇴' })
+  @ApiNoContentResponse({ description: '삭제 성공한 경우 상태코드만 응답' })
+  @ApiInternalServerErrorResponse({ description: 'DB 삭제 실패한 경우' })
+  async deleteUser(@UserDeco() user: User) {
+    await this.userService.deleteUser(user);
   }
 }

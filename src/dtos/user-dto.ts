@@ -1,5 +1,10 @@
-import { ApiProperty, PickType, OmitType } from '@nestjs/swagger';
-import { Transform } from 'class-transformer';
+import {
+  ApiProperty,
+  PickType,
+  OmitType,
+  ApiPropertyOptional,
+} from '@nestjs/swagger';
+import { Exclude, Expose, Transform } from 'class-transformer';
 import {
   IsEmail,
   IsIn,
@@ -13,27 +18,32 @@ import { CODE_LENGTH } from 'src/const/auth.const';
 
 export class BaseUserDto {
   @ApiProperty()
+  @Expose()
   @IsNotEmpty()
   @IsNumber()
   id: number;
 
   @ApiProperty()
+  @Expose()
   @IsNotEmpty()
   @IsString()
   @IsEmail()
   email: string;
 
   @ApiProperty()
+  @Expose()
   @IsNotEmpty()
   @IsString()
   nickname: string;
 
   @ApiProperty()
+  @Expose()
   @IsNotEmpty()
   @IsString()
   image: string;
 
   @ApiProperty()
+  @Expose()
   @IsNotEmpty()
   @IsNumber()
   teamId: number;
@@ -83,4 +93,33 @@ export class EmailWithCodeDto extends PickType(BaseUserDto, [
   @IsString()
   @Length(CODE_LENGTH, CODE_LENGTH)
   code: string;
+}
+
+@Exclude()
+export class UserDetailDto extends PickType(BaseUserDto, [
+  'email',
+  'image',
+  'nickname',
+]) {
+  @ApiProperty()
+  @Expose()
+  @IsNumber()
+  score: number;
+
+  @ApiPropertyOptional({ type: [Number] })
+  @Expose()
+  @Transform(({ obj }) => {
+    return obj.registeredGames?.map((game) => game.id);
+  })
+  registeredGames?: number[];
+
+  @ApiPropertyOptional()
+  @Expose()
+  @Transform(({ obj }) => obj.support_team?.name)
+  supportTeam?: string;
+
+  @ApiPropertyOptional()
+  @Expose()
+  @Transform(({ obj }) => obj.support_team?.id)
+  supportTeamId?: number;
 }
