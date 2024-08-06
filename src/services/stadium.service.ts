@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Stadium } from 'src/entities/stadium.entity';
 import { stadiumSeeder } from 'src/seeds/stadium.seed';
@@ -26,10 +26,24 @@ export class StadiumService {
     });
   }
 
-  async findByName(name: string): Promise<Stadium> {
-    return this.stadiumRepository.findOneBy({
-      name: name,
+  async findOne(id: number): Promise<Stadium> {
+    const team = await this.stadiumRepository.findOne({
+      where: { id },
     });
+    if (!team) {
+      throw new NotFoundException(`Team with id ${id} is not found`);
+    }
+    return team;
+  }
+
+  async findAll(name?: string): Promise<Stadium[]> {
+    if (name) {
+      return await this.stadiumRepository.find({
+        where: { name },
+      });
+    } else {
+      return await this.stadiumRepository.find();
+    }
   }
 
   async findByNameOrCreate(name: string): Promise<Stadium> {
@@ -45,11 +59,5 @@ export class StadiumService {
     }
 
     return stadium;
-  }
-
-  async findByNames(names: string[]): Promise<Stadium[]> {
-    return this.stadiumRepository.findBy({
-      name: In(names),
-    });
   }
 }
