@@ -26,7 +26,7 @@ export class RegisteredGameService {
   async create(
     createRegisteredGameDto: CreateRegisteredGameDto,
     user: User,
-  ): Promise<RegisteredGameDto> {
+  ): Promise<RegisteredGame> {
     const game = await this.gameService.findOne(createRegisteredGameDto.gameId);
     const cheeringTeam = await this.teamService.findOne(
       createRegisteredGameDto.cheeringTeamId,
@@ -41,18 +41,18 @@ export class RegisteredGameService {
 
     await this.registeredGameRepository.save(registeredGame);
 
-    return plainToInstance(RegisteredGameDto, registeredGame);
+    return registeredGame;
   }
 
-  async findAll(user: User): Promise<RegisteredGameDto[]> {
+  async findAll(user: User): Promise<RegisteredGame[]> {
     const registeredGames = await this.registeredGameRepository.find({
       where: { user },
       relations: { cheering_team: true, game: true },
     });
-    return plainToInstance(RegisteredGameDto, registeredGames);
+    return registeredGames;
   }
 
-  async findAllMonthly(year: number, month: number, user: User): Promise<RegisteredGameDto[]> {
+  async findAllMonthly(year: number, month: number, user: User): Promise<RegisteredGame[]> {
     const startDate = new Date(year, month - 1, 1);
     const endDate = new Date(year, month, 0, 23, 59, 59, 999); // month를 넘어가지 않도록 조정
 
@@ -64,10 +64,10 @@ export class RegisteredGameService {
       relations: { cheering_team: true, game: true },
     });
 
-    return plainToInstance(RegisteredGameDto, registeredGames);
+    return registeredGames;
   }
 
-  async findOne(id: number, user: User): Promise<RegisteredGameDto> {
+  async findOne(id: number, user: User): Promise<RegisteredGame> {
     const registeredGame = await this.registeredGameRepository.findOne({
       where: { id, user },
       relations: { cheering_team: true, game: true },
@@ -75,7 +75,7 @@ export class RegisteredGameService {
     if (!registeredGame) {
       throw new NotFoundException(`Registered game with ID ${id} not found`);
     }
-    return plainToInstance(RegisteredGameDto, registeredGame);
+    return registeredGame;
   }
 
   async update(
