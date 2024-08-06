@@ -11,13 +11,16 @@ import {
   IRawScheduleList,
 } from 'src/types/crawling-game.type';
 import { isNotTimeFormat, convertDateFormat } from 'src/utils/time-format';
-import { Repository } from 'typeorm';
+import { Between, Repository } from 'typeorm';
 import { TeamService } from './team.service';
 import { StadiumService } from './stadium.service';
 import parse from 'node-html-parser';
 import * as moment from 'moment';
 import { BatchUpdateGameDto } from 'src/dtos/batch-update-game.dto';
 import { teamNameToTeamId } from 'src/utils/teamid-mapper';
+import { GameDto } from 'src/dtos/game.dto';
+import { plainToInstance } from 'class-transformer';
+import { ConfigService } from '@nestjs/config';
 
 @Injectable()
 export class GameService {
@@ -29,10 +32,27 @@ export class GameService {
     private readonly gameRepository: Repository<Game>,
     private readonly teamService: TeamService,
     private readonly stadiumService: StadiumService,
+    private readonly configService: ConfigService,
   ) {}
 
+  async findAllDaily(year: number, month: number, day: number): Promise<GameDto[]> {
+    const dateString = moment.utc({ year, month: month - 1, day }).format('YYYY-MM-DD');
+
+    const games = await this.gameRepository.find({
+      where: {
+        date: dateString,
+      },
+      relations: ['home_team', 'away_team', 'winning_team', 'stadium'],
+    });
+
+    return plainToInstance(GameDto, games);
+  }
+
+
   async findOne(gameId: string): Promise<Game> {
-    const game = await this.gameRepository.findOneBy({ id: gameId });
+    const game = await this.gameRepository.findOne({
+      where: { id: gameId },
+    });
     if (!game) {
       throw new NotFoundException(`Game with id ${gameId} not found.`);
     }

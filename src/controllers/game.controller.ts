@@ -1,14 +1,12 @@
 import {
   Controller,
   Get,
-  Post,
-  Body,
-  Patch,
+  HttpCode,
+  HttpStatus,
   Param,
-  Delete,
 } from '@nestjs/common';
-import { ApiTags } from '@nestjs/swagger';
-import { firstValueFrom } from 'rxjs';
+import { ApiOkResponse, ApiTags } from '@nestjs/swagger';
+import { GameDto } from 'src/dtos/game.dto';
 import { GameService } from 'src/services/game.service';
 
 @ApiTags('Game')
@@ -16,13 +14,14 @@ import { GameService } from 'src/services/game.service';
 export class GameController {
   constructor(private readonly gameService: GameService) {}
 
-  @Get('schedules')
-  getGamesSchedule() {
-    return this.gameService.getSchedules();
-  }
-
-  @Get('scores')
-  async getScores(): Promise<unknown> {
-    return this.gameService.getCurrentGameStatus(1, 0, '20240801LGSS0', 2024);
+  @Get('daily/:year/:month/:day')
+  @HttpCode(HttpStatus.OK)
+  @ApiOkResponse({ type: [GameDto] })
+  async findAll(
+    @Param('year') year: number,
+    @Param('month') month: number,
+    @Param('day') day: number,
+  ): Promise<GameDto[]> {
+    return await this.gameService.findAllDaily(year, month, day);
   }
 }
