@@ -8,8 +8,6 @@ import {
   HttpCode,
   HttpStatus,
   Put,
-  UnauthorizedException,
-  NotFoundException,
   UseGuards,
   ParseIntPipe,
 } from '@nestjs/common';
@@ -17,10 +15,9 @@ import {
   ApiCreatedResponse,
   ApiOkResponse,
   ApiNotFoundResponse,
-  ApiUnauthorizedResponse,
 } from '@nestjs/swagger';
+import { plainToInstance } from 'class-transformer';
 import { AccessTokenGuard } from 'src/auth/guard/access-token.guard';
-import { RefreshTokenGuard } from 'src/auth/guard/refresh-token.guard';
 import { UserDeco } from 'src/decorator/user.decorator';
 import {
   CreateRegisteredGameDto,
@@ -42,7 +39,8 @@ export class RegisteredGameController {
     @Body() createRegisteredGameDto: CreateRegisteredGameDto,
     @UserDeco() user: User,
   ): Promise<RegisteredGameDto> {
-    return this.registeredGameService.create(createRegisteredGameDto, user);
+    const registeredGame = await this.registeredGameService.create(createRegisteredGameDto, user);
+    return plainToInstance(RegisteredGameDto, registeredGame);
   }
 
   @Get()
@@ -50,7 +48,21 @@ export class RegisteredGameController {
   @UseGuards(AccessTokenGuard)
   @ApiOkResponse({ type: [RegisteredGameDto] })
   async findAll(@UserDeco() user: User): Promise<RegisteredGameDto[]> {
-    return await this.registeredGameService.findAll(user);
+    const registeredGames =  await this.registeredGameService.findAll(user);
+    return plainToInstance(RegisteredGameDto, registeredGames);
+  }
+
+  @Get('monthly/:year/:month')
+  @HttpCode(HttpStatus.OK)
+  @UseGuards(AccessTokenGuard)
+  @ApiOkResponse({ type: [RegisteredGameDto] })
+  async findAllMonthly(
+    @Param('year', ParseIntPipe) year: number,
+    @Param('month', ParseIntPipe) month: number,
+    @UserDeco() user: User
+  ): Promise<RegisteredGameDto[]> {
+    const registeredGames = await this.registeredGameService.findAllMonthly(year, month, user);
+    return plainToInstance(RegisteredGameDto, registeredGames);
   }
 
   @Get(':id')
@@ -62,7 +74,8 @@ export class RegisteredGameController {
     @Param('id', ParseIntPipe) id: number,
     @UserDeco() user: User,
   ): Promise<RegisteredGameDto> {
-    return await this.registeredGameService.findOne(id, user);
+    const registeredGame = await this.registeredGameService.findOne(id, user);
+    return plainToInstance(RegisteredGameDto, registeredGame);
   }
 
   @Put(':id')
