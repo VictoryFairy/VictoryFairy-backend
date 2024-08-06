@@ -32,9 +32,6 @@ export class RegisteredGame {
   @UpdateDateColumn({ type: 'timestamptz' })
   updated_at: Date;
 
-  @DeleteDateColumn({ type: 'timestamptz' })
-  deleted_at: Date;
-
   @ManyToOne(() => Game, (game) => game.registeredGames)
   @JoinColumn({ name: 'game_id' })
   game: Game;

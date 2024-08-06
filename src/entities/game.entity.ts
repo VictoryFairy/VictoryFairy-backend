@@ -4,9 +4,7 @@ import {
   JoinColumn,
   ManyToOne,
   OneToMany,
-  OneToOne,
   PrimaryColumn,
-  PrimaryGeneratedColumn,
   Unique,
 } from 'typeorm';
 import { Team } from './team.entity';

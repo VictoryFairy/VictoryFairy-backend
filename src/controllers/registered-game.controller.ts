@@ -8,8 +8,6 @@ import {
   HttpCode,
   HttpStatus,
   Put,
-  UnauthorizedException,
-  NotFoundException,
   UseGuards,
   ParseIntPipe,
 } from '@nestjs/common';
@@ -17,10 +15,8 @@ import {
   ApiCreatedResponse,
   ApiOkResponse,
   ApiNotFoundResponse,
-  ApiUnauthorizedResponse,
 } from '@nestjs/swagger';
 import { AccessTokenGuard } from 'src/auth/guard/access-token.guard';
-import { RefreshTokenGuard } from 'src/auth/guard/refresh-token.guard';
 import { UserDeco } from 'src/decorator/user.decorator';
 import {
   CreateRegisteredGameDto,
@@ -51,6 +47,18 @@ export class RegisteredGameController {
   @ApiOkResponse({ type: [RegisteredGameDto] })
   async findAll(@UserDeco() user: User): Promise<RegisteredGameDto[]> {
     return await this.registeredGameService.findAll(user);
+  }
+
+  @Get('monthly/:year/:month')
+  @HttpCode(HttpStatus.OK)
+  @UseGuards(AccessTokenGuard)
+  @ApiOkResponse({ type: [RegisteredGameDto] })
+  async findAllMonthly(
+    @Param('year', ParseIntPipe) year: number,
+    @Param('month', ParseIntPipe) month: number,
+    @UserDeco() user: User
+  ): Promise<RegisteredGameDto[]> {
+    return await this.registeredGameService.findAllMonthly(year, month, user);
   }
 
   @Get(':id')
