@@ -7,11 +7,13 @@ import {
   ParseIntPipe,
   Query,
 } from '@nestjs/common';
+import { ApiTags } from '@nestjs/swagger';
 import { ApiOkResponse, ApiNotFoundResponse } from '@nestjs/swagger';
 import { plainToInstance } from 'class-transformer';
 import { StadiumDto } from 'src/dtos/stadium.dto';
 import { StadiumService } from 'src/services/stadium.service';
 
+@ApiTags('Stadium')
 @Controller('stadiums')
 export class StadiumController {
   constructor(private readonly stadiumService: StadiumService) {}

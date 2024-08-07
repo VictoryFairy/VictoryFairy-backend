@@ -31,8 +31,29 @@ export class GameService {
     private readonly stadiumService: StadiumService,
   ) {}
 
+  async findAllDaily(
+    year: number,
+    month: number,
+    day: number,
+  ): Promise<Game[]> {
+    const dateString = moment
+      .utc({ year, month: month - 1, day })
+      .format('YYYY-MM-DD');
+
+    const games = await this.gameRepository.find({
+      where: {
+        date: dateString,
+      },
+      relations: ['home_team', 'away_team', 'winning_team', 'stadium'],
+    });
+
+    return games;
+  }
+
   async findOne(gameId: string): Promise<Game> {
-    const game = await this.gameRepository.findOneBy({ id: gameId });
+    const game = await this.gameRepository.findOne({
+      where: { id: gameId },
+    });
     if (!game) {
       throw new NotFoundException(`Game with id ${gameId} not found.`);
     }
@@ -59,7 +80,7 @@ export class GameService {
     currentStatus: BatchUpdateGameDto,
   ): Promise<void> {
     return await this.gameRepository.manager.transaction(async (manager) => {
-      const game = new Game();
+      const game = await this.findOne(gameId);
       game.home_team_score = currentStatus.homeScore;
       game.away_team_score = currentStatus.awayScore;
 
@@ -207,7 +228,7 @@ export class GameService {
     await this.gameRepository.manager.transaction(async (manager) => {
       for (const schedule of gameSchedules) {
         // Create or update game entity
-        let game = new Game();
+        const game = new Game();
         game.id = schedule.id;
         game.date = schedule.date;
         game.time = schedule.time;
@@ -323,8 +344,8 @@ export class GameService {
         const gameData: IGameData = {
           id:
             currentDate.replaceAll('-', '') +
-            teamNameToTeamId[homeTeam.name] +
             teamNameToTeamId[awayTeam.name] +
+            teamNameToTeamId[homeTeam.name] +
             '0',
           date: currentDate,
           time,

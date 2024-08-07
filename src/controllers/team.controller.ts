@@ -7,11 +7,13 @@ import {
   ParseIntPipe,
   Query,
 } from '@nestjs/common';
+import { ApiTags } from '@nestjs/swagger';
 import { ApiOkResponse, ApiNotFoundResponse } from '@nestjs/swagger';
 import { plainToInstance } from 'class-transformer';
 import { TeamDto } from 'src/dtos/team.dto';
 import { TeamService } from 'src/services/team.service';
 
+@ApiTags('Team')
 @Controller('teams')
 export class TeamController {
   constructor(private readonly teamService: TeamService) {}

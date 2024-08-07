@@ -1,26 +1,35 @@
 import {
   Controller,
   Get,
-  Post,
-  Body,
-  Patch,
+  HttpCode,
+  HttpStatus,
   Param,
-  Delete,
+  Query,
 } from '@nestjs/common';
-import { firstValueFrom } from 'rxjs';
+import { ApiOkResponse, ApiTags } from '@nestjs/swagger';
+import { plainToInstance } from 'class-transformer';
+import { FindAllDailyQueryDto, GameDto } from 'src/dtos/game.dto';
 import { GameService } from 'src/services/game.service';
 
+@ApiTags('Game')
 @Controller('games')
 export class GameController {
   constructor(private readonly gameService: GameService) {}
 
-  @Get('schedules')
-  getGamesSchedule() {
-    return this.gameService.getSchedules();
+  @Get('daily')
+  @HttpCode(HttpStatus.OK)
+  @ApiOkResponse({ type: [GameDto] })
+  async findAllDaily(@Query() query: FindAllDailyQueryDto): Promise<GameDto[]> {
+    const { year, month, day } = query;
+    const games = await this.gameService.findAllDaily(year, month, day);
+    return plainToInstance(GameDto, games);
   }
 
-  @Get('scores')
-  async getScores(): Promise<unknown> {
-    return this.gameService.getCurrentGameStatus(1, 0, '20240801LGSS0', 2024);
+  @Get(':id')
+  @HttpCode(HttpStatus.OK)
+  @ApiOkResponse({ type: GameDto })
+  async findOne(@Param('id') id: string): Promise<GameDto> {
+    const game = await this.gameService.findOne(id);
+    return plainToInstance(GameDto, game);
   }
 }

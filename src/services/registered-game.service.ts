@@ -3,12 +3,10 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Between, Repository } from 'typeorm';
 import {
   CreateRegisteredGameDto,
-  RegisteredGameDto,
   UpdateRegisteredGameDto,
 } from 'src/dtos/registered-game.dto';
 import { RegisteredGame } from 'src/entities/registered-game.entity';
 import { User } from 'src/entities/user.entity';
-import { plainToInstance } from 'class-transformer';
 import { TeamService } from './team.service';
 import { GameService } from './game.service';
 
@@ -52,14 +50,18 @@ export class RegisteredGameService {
     return registeredGames;
   }
 
-  async findAllMonthly(year: number, month: number, user: User): Promise<RegisteredGame[]> {
+  async findAllMonthly(
+    year: number,
+    month: number,
+    user: User,
+  ): Promise<RegisteredGame[]> {
     const startDate = new Date(year, month - 1, 1);
     const endDate = new Date(year, month, 0, 23, 59, 59, 999); // month를 넘어가지 않도록 조정
 
     const registeredGames = await this.registeredGameRepository.find({
-      where: { 
-        user, 
-        created_at: Between(startDate, endDate)
+      where: {
+        user,
+        created_at: Between(startDate, endDate),
       },
       relations: { cheering_team: true, game: true },
     });

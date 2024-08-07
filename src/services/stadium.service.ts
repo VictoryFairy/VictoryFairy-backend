@@ -2,7 +2,7 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Stadium } from 'src/entities/stadium.entity';
 import { stadiumSeeder } from 'src/seeds/stadium.seed';
-import { In, Repository } from 'typeorm';
+import { Repository } from 'typeorm';
 
 @Injectable()
 export class StadiumService {
