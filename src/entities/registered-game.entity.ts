@@ -6,6 +6,7 @@ import {
   JoinColumn,
   ManyToOne,
   PrimaryGeneratedColumn,
+  Unique,
   UpdateDateColumn,
 } from 'typeorm';
 import { Game } from './game.entity';
@@ -13,6 +14,7 @@ import { User } from './user.entity';
 import { Team } from './team.entity';
 
 @Entity()
+@Unique(['game', 'user'])
 export class RegisteredGame {
   @PrimaryGeneratedColumn()
   id: number;
