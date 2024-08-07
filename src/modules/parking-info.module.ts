@@ -9,5 +9,6 @@ import { StadiumModule } from './stadium.module';
   imports: [TypeOrmModule.forFeature([ParkingInfo]), StadiumModule],
   controllers: [ParkingInfoController],
   providers: [ParkingInfoService],
+  exports: [ParkingInfoService],
 })
 export class ParkingInfoModule {}
