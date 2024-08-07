@@ -1,4 +1,9 @@
-import { ConflictException, Injectable, Logger, NotFoundException } from '@nestjs/common';
+import {
+  ConflictException,
+  Injectable,
+  Logger,
+  NotFoundException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Between, Repository } from 'typeorm';
 import {
@@ -34,10 +39,13 @@ export class RegisteredGameService {
       where: {
         game: game,
         user: user,
-      }
+      },
     });
 
-    if (duplcate) throw new ConflictException('Users cannot register for more than one copy of the same game.');
+    if (duplcate)
+      throw new ConflictException(
+        'Users cannot register for more than one copy of the same game.',
+      );
 
     const registeredGame = this.registeredGameRepository.create({
       ...createRegisteredGameDto,
