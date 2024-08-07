@@ -5,18 +5,30 @@ import {
   HttpStatus,
   Param,
   ParseIntPipe,
+  Query,
   UsePipes,
   ValidationPipe,
 } from '@nestjs/common';
 import { ApiOkResponse, ApiTags } from '@nestjs/swagger';
 import { plainToInstance } from 'class-transformer';
-import { GameDto } from 'src/dtos/game.dto';
+import { FindAllDailyQueryDto, GameDto } from 'src/dtos/game.dto';
 import { GameService } from 'src/services/game.service';
 
 @ApiTags('Game')
 @Controller('games')
 export class GameController {
   constructor(private readonly gameService: GameService) {}
+  
+  @Get('daily')
+  @HttpCode(HttpStatus.OK)
+  @ApiOkResponse({ type: [GameDto] })
+  async findAllDaily(
+    @Query() query: FindAllDailyQueryDto,
+  ): Promise<GameDto[]> {
+    const { year, month, day } = query;
+    const games = await this.gameService.findAllDaily(year, month, day);
+    return plainToInstance(GameDto, games);
+  }
 
   @Get(':id')
   @HttpCode(HttpStatus.OK)
@@ -26,18 +38,5 @@ export class GameController {
   ): Promise<GameDto>{
     const game = await this.gameService.findOne(id);
     return plainToInstance(GameDto, game);
-  }
-  
-  @Get('daily/:year/:month/:day')
-  @HttpCode(HttpStatus.OK)
-  @UsePipes(new ValidationPipe({ transform: true }))
-  @ApiOkResponse({ type: [GameDto] })
-  async findAllDaily(
-    @Param('year', ParseIntPipe) year: number,
-    @Param('month', ParseIntPipe) month: number,
-    @Param('day', ParseIntPipe) day: number,
-  ): Promise<GameDto[]> {
-    const games = await this.gameService.findAllDaily(year, month, day);
-    return plainToInstance(GameDto, games);
   }
 }

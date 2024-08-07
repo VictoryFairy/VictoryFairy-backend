@@ -60,3 +60,17 @@ export class GameDto {
   @Expose()
   winningTeam?: TeamDto;
 }
+
+export class FindAllDailyQueryDto {
+  @ApiProperty()
+  @IsNumber()
+  year: number;
+
+  @ApiProperty()
+  @IsNumber()
+  month: number;
+
+  @ApiProperty()
+  @IsNumber()
+  day: number;
+}
