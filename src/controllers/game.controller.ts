@@ -4,10 +4,7 @@ import {
   HttpCode,
   HttpStatus,
   Param,
-  ParseIntPipe,
   Query,
-  UsePipes,
-  ValidationPipe,
 } from '@nestjs/common';
 import { ApiOkResponse, ApiTags } from '@nestjs/swagger';
 import { plainToInstance } from 'class-transformer';
@@ -18,13 +15,11 @@ import { GameService } from 'src/services/game.service';
 @Controller('games')
 export class GameController {
   constructor(private readonly gameService: GameService) {}
-  
+
   @Get('daily')
   @HttpCode(HttpStatus.OK)
   @ApiOkResponse({ type: [GameDto] })
-  async findAllDaily(
-    @Query() query: FindAllDailyQueryDto,
-  ): Promise<GameDto[]> {
+  async findAllDaily(@Query() query: FindAllDailyQueryDto): Promise<GameDto[]> {
     const { year, month, day } = query;
     const games = await this.gameService.findAllDaily(year, month, day);
     return plainToInstance(GameDto, games);
@@ -33,9 +28,7 @@ export class GameController {
   @Get(':id')
   @HttpCode(HttpStatus.OK)
   @ApiOkResponse({ type: GameDto })
-  async findOne(
-    @Param('id') id: string
-  ): Promise<GameDto>{
+  async findOne(@Param('id') id: string): Promise<GameDto> {
     const game = await this.gameService.findOne(id);
     return plainToInstance(GameDto, game);
   }

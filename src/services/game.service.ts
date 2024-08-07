@@ -18,7 +18,6 @@ import parse from 'node-html-parser';
 import * as moment from 'moment';
 import { BatchUpdateGameDto } from 'src/dtos/batch-update-game.dto';
 import { teamNameToTeamId } from 'src/utils/teamid-mapper';
-import { ConfigService } from '@nestjs/config';
 
 @Injectable()
 export class GameService {
@@ -32,8 +31,14 @@ export class GameService {
     private readonly stadiumService: StadiumService,
   ) {}
 
-  async findAllDaily(year: number, month: number, day: number): Promise<Game[]> {
-    const dateString = moment.utc({ year, month: month - 1, day }).format('YYYY-MM-DD');
+  async findAllDaily(
+    year: number,
+    month: number,
+    day: number,
+  ): Promise<Game[]> {
+    const dateString = moment
+      .utc({ year, month: month - 1, day })
+      .format('YYYY-MM-DD');
 
     const games = await this.gameRepository.find({
       where: {
@@ -44,7 +49,6 @@ export class GameService {
 
     return games;
   }
-
 
   async findOne(gameId: string): Promise<Game> {
     const game = await this.gameRepository.findOne({
@@ -224,7 +228,7 @@ export class GameService {
     await this.gameRepository.manager.transaction(async (manager) => {
       for (const schedule of gameSchedules) {
         // Create or update game entity
-        let game = new Game();
+        const game = new Game();
         game.id = schedule.id;
         game.date = schedule.date;
         game.time = schedule.time;

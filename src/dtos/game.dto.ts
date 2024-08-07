@@ -1,8 +1,8 @@
-import { ApiProperty, ApiPropertyOptional } from "@nestjs/swagger";
-import { Exclude, Expose, Transform } from "class-transformer";
-import { IsNumber, IsString } from "class-validator";
-import { TeamDto } from "./team.dto";
-import { StadiumDto } from "./stadium.dto";
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { Exclude, Expose, Transform } from 'class-transformer';
+import { IsNumber, IsString } from 'class-validator';
+import { TeamDto } from './team.dto';
+import { StadiumDto } from './stadium.dto';
 
 @Exclude()
 export class GameDto {
