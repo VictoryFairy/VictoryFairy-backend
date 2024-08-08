@@ -275,7 +275,7 @@ function refineKiaTeamSong() {
 }
 
 function refineKiaPlayerSong() {
-  const type = 'team_cheer';
+  const type = 'player_cheer';
   const team_name = 'KIA';
 
   const parsedData = kiaPlayerSong.map<ICheeringSongSeed>((elem: any) => ({
