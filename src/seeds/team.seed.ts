@@ -1,4 +1,6 @@
-export const teamSeeder: { name: string }[] = [
+import { TTeam } from "src/types/crawling-game.type";
+
+export const teamSeeder: { name: TTeam }[] = [
   { name: '롯데' },
   { name: '두산' },
   { name: 'KIA' },

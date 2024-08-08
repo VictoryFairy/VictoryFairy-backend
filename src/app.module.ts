@@ -17,6 +17,7 @@ import { MailModule } from './modules/mail.module';
 import { AwsS3Module } from './modules/aws-s3.module';
 import { SeederService } from './services/seeder.service';
 import { SchedulingModule } from './modules/scheduling.module';
+import { CheeringSongModule } from './modules/cheering-song.module';
 
 @Module({
   imports: [
@@ -39,6 +40,7 @@ import { SchedulingModule } from './modules/scheduling.module';
     MailModule,
     AwsS3Module,
     SchedulingModule,
+    CheeringSongModule,
   ],
   controllers: [AppController],
   providers: [AppService, SeederService],

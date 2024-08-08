@@ -17,7 +17,7 @@ export class CheeringSongDto {
   @ApiProperty()
   @IsString()
   @Expose()
-  lyric: string;
+  lyrics: string;
 
   @ApiProperty()
   @IsUrl()

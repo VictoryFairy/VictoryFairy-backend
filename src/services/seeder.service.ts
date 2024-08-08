@@ -21,8 +21,8 @@ export class SeederService implements OnApplicationBootstrap {
     await this.teamService.seed();
     await this.stadiumService.seed();
     await this.userService.seed();
-    // await this.parkingInfoService.seed();
-    // await this.cheeringSongService.seed();
+    await this.parkingInfoService.seed();
+    await this.cheeringSongService.seed();
 
     await this.schedulingService.batchUpdateGames();
   }

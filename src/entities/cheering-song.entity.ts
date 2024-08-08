@@ -1,18 +1,21 @@
-import { Column, Entity, OneToMany, PrimaryGeneratedColumn } from 'typeorm';
-import { User } from './user.entity';
-import { RegisteredGame } from './registered-game.entity';
+import { Column, Entity, JoinColumn, ManyToOne, OneToMany, PrimaryGeneratedColumn } from 'typeorm';
+import { Team } from './team.entity';
 
 @Entity()
 export class CheeringSong {
   @PrimaryGeneratedColumn()
   id: number;
 
-  @Column()
+  @Column({ nullable: true })
   title: string;
 
-  @Column('longtext')
-  lyric: string;
+  @Column('text')
+  lyrics: string;
 
   @Column()
   link: string;
+  
+  @ManyToOne(() => Team)
+  @JoinColumn({ name: 'team_id' })
+  team: Team;
 }
