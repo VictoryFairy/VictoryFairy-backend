@@ -1,12 +1,12 @@
-import { Injectable, Logger, NotFoundException } from "@nestjs/common";
-import { InjectRepository } from "@nestjs/typeorm";
-import * as path from "path";
+import { Injectable, Logger, NotFoundException } from '@nestjs/common';
+import { InjectRepository } from '@nestjs/typeorm';
+import * as path from 'path';
 import * as fs from 'fs';
-import { CheeringSong } from "src/entities/cheering-song.entity";
-import { ICheeringSongSeed } from "src/types/cheering-song-seed.type";
-import { Repository } from "typeorm";
-import { TeamService } from "./team.service";
-import { instanceToPlain } from "class-transformer";
+import { CheeringSong } from 'src/entities/cheering-song.entity';
+import { ICheeringSongSeed } from 'src/types/cheering-song-seed.type';
+import { Repository } from 'typeorm';
+import { TeamService } from './team.service';
+import { instanceToPlain } from 'class-transformer';
 
 @Injectable()
 export class CheeringSongService {
@@ -29,7 +29,7 @@ export class CheeringSongService {
   }
 
   private getCheeringSongData(): ICheeringSongSeed[] {
-    const dirPath = 'src/seeds/refined-cheering-songs'
+    const dirPath = 'src/seeds/refined-cheering-songs';
 
     let combinedData: ICheeringSongSeed[] = [];
 

@@ -1,4 +1,4 @@
-import { TTeam } from "./crawling-game.type";
+import { TTeam } from './crawling-game.type';
 
 export interface ICheeringSongSeed {
   type: 'team_cheer' | 'player_cheer';

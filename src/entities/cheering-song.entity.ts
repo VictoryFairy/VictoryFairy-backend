@@ -1,4 +1,11 @@
-import { Column, Entity, JoinColumn, ManyToOne, OneToMany, PrimaryGeneratedColumn } from 'typeorm';
+import {
+  Column,
+  Entity,
+  JoinColumn,
+  ManyToOne,
+  OneToMany,
+  PrimaryGeneratedColumn,
+} from 'typeorm';
 import { Team } from './team.entity';
 
 @Entity()
@@ -14,7 +21,7 @@ export class CheeringSong {
 
   @Column()
   link: string;
-  
+
   @ManyToOne(() => Team)
   @JoinColumn({ name: 'team_id' })
   team: Team;

@@ -24,7 +24,7 @@ import * as lgTeamSong from './raw-cheering-songs/lg.team.song.json';
 function refineSamsungTeamSong() {
   const type = 'team_cheer';
   const team_name = '삼성';
-  
+
   const parsedData = samsungTeamSong.map<ICheeringSongSeed>((elem: any) => ({
     type,
     team_name,
@@ -32,27 +32,37 @@ function refineSamsungTeamSong() {
     lyrics: elem[type].lyrics,
     link: elem[type].link,
   }));
-  
-  fs.writeFileSync('src/seeds/refined-cheering-songs/samsung.team.song.json', JSON.stringify(parsedData, null, 2), 'utf-8');
+
+  fs.writeFileSync(
+    'src/seeds/refined-cheering-songs/samsung.team.song.json',
+    JSON.stringify(parsedData, null, 2),
+    'utf-8',
+  );
 }
 
 function refineSamsungPlayerSong() {
   const type = 'player_cheer';
   const team_name = '삼성';
 
-  const parsedData = samsungPlayerSong['player_cheers'].map<ICheeringSongSeed>((elem: any) => ({
-    type,
-    team_name,
-    title: elem.player_name + ' 응원가',
-    lyrics: elem.lyrics,
-    link: elem.link,
-    player_name: elem.player_name,
-    jersey_number: elem.jersey_number,
-    throws_bats: elem.throws_bats,
-    position: elem.position,
-  }));
-  
-  fs.writeFileSync('src/seeds/refined-cheering-songs/samsung.player.song.json', JSON.stringify(parsedData, null, 2), 'utf-8');
+  const parsedData = samsungPlayerSong['player_cheers'].map<ICheeringSongSeed>(
+    (elem: any) => ({
+      type,
+      team_name,
+      title: elem.player_name + ' 응원가',
+      lyrics: elem.lyrics,
+      link: elem.link,
+      player_name: elem.player_name,
+      jersey_number: elem.jersey_number,
+      throws_bats: elem.throws_bats,
+      position: elem.position,
+    }),
+  );
+
+  fs.writeFileSync(
+    'src/seeds/refined-cheering-songs/samsung.player.song.json',
+    JSON.stringify(parsedData, null, 2),
+    'utf-8',
+  );
 }
 
 function refineSsgTeamSong() {
@@ -67,26 +77,36 @@ function refineSsgTeamSong() {
     link: elem[type].link,
   }));
 
-  fs.writeFileSync('src/seeds/refined-cheering-songs/ssg.team.song.json', JSON.stringify(parsedData, null, 2), 'utf-8');
+  fs.writeFileSync(
+    'src/seeds/refined-cheering-songs/ssg.team.song.json',
+    JSON.stringify(parsedData, null, 2),
+    'utf-8',
+  );
 }
 
 function refineSsgPlayerSong() {
   const type = 'player_cheer';
   const team_name = 'SSG';
 
-  const parsedData = ssgPlayerSong['player_cheers'].map<ICheeringSongSeed>((elem: any) => ({
-    type,
-    team_name,
-    title: elem.player_name + ' 응원가',
-    lyrics: elem.lyrics,
-    link: elem.link,
-    player_name: elem.player_name,
-    jersey_number: elem.jersey_number,
-    throws_bats: elem.throws_bats,
-    position: elem.position,
-  }));
+  const parsedData = ssgPlayerSong['player_cheers'].map<ICheeringSongSeed>(
+    (elem: any) => ({
+      type,
+      team_name,
+      title: elem.player_name + ' 응원가',
+      lyrics: elem.lyrics,
+      link: elem.link,
+      player_name: elem.player_name,
+      jersey_number: elem.jersey_number,
+      throws_bats: elem.throws_bats,
+      position: elem.position,
+    }),
+  );
 
-  fs.writeFileSync('src/seeds/refined-cheering-songs/ssg.player.song.json', JSON.stringify(parsedData, null, 2), 'utf-8');
+  fs.writeFileSync(
+    'src/seeds/refined-cheering-songs/ssg.player.song.json',
+    JSON.stringify(parsedData, null, 2),
+    'utf-8',
+  );
 }
 
 function refineNcTeamSong() {
@@ -101,7 +121,11 @@ function refineNcTeamSong() {
     link: elem.link,
   }));
 
-  fs.writeFileSync('src/seeds/refined-cheering-songs/nc.team.song.json', JSON.stringify(parsedData, null, 2), 'utf-8');
+  fs.writeFileSync(
+    'src/seeds/refined-cheering-songs/nc.team.song.json',
+    JSON.stringify(parsedData, null, 2),
+    'utf-8',
+  );
 }
 
 function refineNcPlayerSong() {
@@ -120,7 +144,11 @@ function refineNcPlayerSong() {
     position: elem.position,
   }));
 
-  fs.writeFileSync('src/seeds/refined-cheering-songs/nc.player.song.json', JSON.stringify(parsedData, null, 2), 'utf-8');
+  fs.writeFileSync(
+    'src/seeds/refined-cheering-songs/nc.player.song.json',
+    JSON.stringify(parsedData, null, 2),
+    'utf-8',
+  );
 }
 
 function refineLotteTeamSong() {
@@ -135,7 +163,11 @@ function refineLotteTeamSong() {
     link: elem.link,
   }));
 
-  fs.writeFileSync('src/seeds/refined-cheering-songs/lotte.team.song.json', JSON.stringify(parsedData, null, 2), 'utf-8');
+  fs.writeFileSync(
+    'src/seeds/refined-cheering-songs/lotte.team.song.json',
+    JSON.stringify(parsedData, null, 2),
+    'utf-8',
+  );
 }
 
 function refineLottePlayerSong() {
@@ -154,109 +186,149 @@ function refineLottePlayerSong() {
     position: elem.position,
   }));
 
-  fs.writeFileSync('src/seeds/refined-cheering-songs/lotte.player.song.json', JSON.stringify(parsedData, null, 2), 'utf-8');
+  fs.writeFileSync(
+    'src/seeds/refined-cheering-songs/lotte.player.song.json',
+    JSON.stringify(parsedData, null, 2),
+    'utf-8',
+  );
 }
 
 function refineLgTeamSong() {
   const type = 'team_cheer';
   const team_name = 'LG';
 
-  const parsedData = lgTeamSong['team_cheer'].map<ICheeringSongSeed>((elem: any) => ({
-    type,
-    team_name,
-    title: elem.title,
-    lyrics: elem.lyrics,
-    link: elem.link,
-  }));
-  
-  fs.writeFileSync('src/seeds/refined-cheering-songs/lg.team.song.json', JSON.stringify(parsedData, null, 2), 'utf-8');
+  const parsedData = lgTeamSong['team_cheer'].map<ICheeringSongSeed>(
+    (elem: any) => ({
+      type,
+      team_name,
+      title: elem.title,
+      lyrics: elem.lyrics,
+      link: elem.link,
+    }),
+  );
+
+  fs.writeFileSync(
+    'src/seeds/refined-cheering-songs/lg.team.song.json',
+    JSON.stringify(parsedData, null, 2),
+    'utf-8',
+  );
 }
 
 function refineLgPlayerSong() {
   const type = 'player_cheer';
   const team_name = 'LG';
 
-  const parsedData = lgPlayerSong['player_cheers'].map<ICheeringSongSeed>((elem: any) => ({
-    type,
-    team_name,
-    title: elem.player_name + ' 응원가',
-    lyrics: elem.lyrics,
-    link: elem.link,
-    player_name: elem.player_name,
-    jersey_number: elem.jersey_number,
-    throws_bats: elem.throws_bats,
-    position: elem.position,
-  }));
-  
-  fs.writeFileSync('src/seeds/refined-cheering-songs/lg.player.song.json', JSON.stringify(parsedData, null, 2), 'utf-8');
+  const parsedData = lgPlayerSong['player_cheers'].map<ICheeringSongSeed>(
+    (elem: any) => ({
+      type,
+      team_name,
+      title: elem.player_name + ' 응원가',
+      lyrics: elem.lyrics,
+      link: elem.link,
+      player_name: elem.player_name,
+      jersey_number: elem.jersey_number,
+      throws_bats: elem.throws_bats,
+      position: elem.position,
+    }),
+  );
+
+  fs.writeFileSync(
+    'src/seeds/refined-cheering-songs/lg.player.song.json',
+    JSON.stringify(parsedData, null, 2),
+    'utf-8',
+  );
 }
 
 function refineKtTeamSong() {
   const type = 'team_cheer';
   const team_name = 'KT';
 
-  const parsedData = ktTeamSong['team_cheer'].map<ICheeringSongSeed>((elem: any) => ({
-    type,
-    team_name,
-    title: elem.title,
-    lyrics: elem.lyrics,
-    link: elem.link,
-  }));
-  
-  fs.writeFileSync('src/seeds/refined-cheering-songs/kt.team.song.json', JSON.stringify(parsedData, null, 2), 'utf-8');
+  const parsedData = ktTeamSong['team_cheer'].map<ICheeringSongSeed>(
+    (elem: any) => ({
+      type,
+      team_name,
+      title: elem.title,
+      lyrics: elem.lyrics,
+      link: elem.link,
+    }),
+  );
+
+  fs.writeFileSync(
+    'src/seeds/refined-cheering-songs/kt.team.song.json',
+    JSON.stringify(parsedData, null, 2),
+    'utf-8',
+  );
 }
 
 function refineKtPlayerSong() {
   const type = 'player_cheer';
   const team_name = 'KT';
 
-  const parsedData = ktPlayerSong['player_cheers'].map<ICheeringSongSeed>((elem: any) => ({
-    type,
-    team_name,
-    title: elem.player_name + ' 응원가',
-    lyrics: elem.lyrics,
-    link: elem.link,
-    player_name: elem.player_name,
-    jersey_number: elem.jersey_number,
-    throws_bats: elem.throws_bats,
-    position: elem.position,
-  }));
-  
-  fs.writeFileSync('src/seeds/refined-cheering-songs/kt.player.song.json', JSON.stringify(parsedData, null, 2), 'utf-8');
+  const parsedData = ktPlayerSong['player_cheers'].map<ICheeringSongSeed>(
+    (elem: any) => ({
+      type,
+      team_name,
+      title: elem.player_name + ' 응원가',
+      lyrics: elem.lyrics,
+      link: elem.link,
+      player_name: elem.player_name,
+      jersey_number: elem.jersey_number,
+      throws_bats: elem.throws_bats,
+      position: elem.position,
+    }),
+  );
+
+  fs.writeFileSync(
+    'src/seeds/refined-cheering-songs/kt.player.song.json',
+    JSON.stringify(parsedData, null, 2),
+    'utf-8',
+  );
 }
 
 function refineKiwoomTeamSong() {
   const type = 'team_cheer';
   const team_name = '키움';
 
-  const parsedData = kiwoomTeamSong['team_cheer'].map<ICheeringSongSeed>((elem: any) => ({
-    type,
-    team_name,
-    title: elem.title,
-    lyrics: elem.lyrics,
-    link: elem.link,
-  }));
-  
-  fs.writeFileSync('src/seeds/refined-cheering-songs/kiwoom.team.song.json', JSON.stringify(parsedData, null, 2), 'utf-8');
+  const parsedData = kiwoomTeamSong['team_cheer'].map<ICheeringSongSeed>(
+    (elem: any) => ({
+      type,
+      team_name,
+      title: elem.title,
+      lyrics: elem.lyrics,
+      link: elem.link,
+    }),
+  );
+
+  fs.writeFileSync(
+    'src/seeds/refined-cheering-songs/kiwoom.team.song.json',
+    JSON.stringify(parsedData, null, 2),
+    'utf-8',
+  );
 }
 
 function refineKiwoomPlayerSong() {
   const type = 'player_cheer';
   const team_name = '키움';
 
-  const parsedData = kiwoomPlayerSong['player_cheers'].map<ICheeringSongSeed>((elem: any) => ({
-    type,
-    team_name,
-    title: elem.player_name + ' 응원가',
-    lyrics: elem.lyrics,
-    link: elem.link,
-    player_name: elem.player_name,
-    jersey_number: elem.jersey_number,
-    throws_bats: elem.throws_bats,
-    position: elem.position,
-  }));
-  
-  fs.writeFileSync('src/seeds/refined-cheering-songs/kiwoom.player.song.json', JSON.stringify(parsedData, null, 2), 'utf-8');
+  const parsedData = kiwoomPlayerSong['player_cheers'].map<ICheeringSongSeed>(
+    (elem: any) => ({
+      type,
+      team_name,
+      title: elem.player_name + ' 응원가',
+      lyrics: elem.lyrics,
+      link: elem.link,
+      player_name: elem.player_name,
+      jersey_number: elem.jersey_number,
+      throws_bats: elem.throws_bats,
+      position: elem.position,
+    }),
+  );
+
+  fs.writeFileSync(
+    'src/seeds/refined-cheering-songs/kiwoom.player.song.json',
+    JSON.stringify(parsedData, null, 2),
+    'utf-8',
+  );
 }
 
 function refineKiaTeamSong() {
@@ -271,7 +343,11 @@ function refineKiaTeamSong() {
     link: elem.link,
   }));
 
-  fs.writeFileSync('src/seeds/refined-cheering-songs/kia.team.song.json', JSON.stringify(parsedData, null, 2), 'utf-8');
+  fs.writeFileSync(
+    'src/seeds/refined-cheering-songs/kia.team.song.json',
+    JSON.stringify(parsedData, null, 2),
+    'utf-8',
+  );
 }
 
 function refineKiaPlayerSong() {
@@ -290,7 +366,11 @@ function refineKiaPlayerSong() {
     position: elem.position,
   }));
 
-  fs.writeFileSync('src/seeds/refined-cheering-songs/kia.player.song.json', JSON.stringify(parsedData, null, 2), 'utf-8');
+  fs.writeFileSync(
+    'src/seeds/refined-cheering-songs/kia.player.song.json',
+    JSON.stringify(parsedData, null, 2),
+    'utf-8',
+  );
 }
 
 function refineHanhwaTeamSong() {
@@ -304,61 +384,83 @@ function refineHanhwaTeamSong() {
     lyrics: elem[type].lyrics,
     link: elem[type].link,
   }));
-  
-  fs.writeFileSync('src/seeds/refined-cheering-songs/hanhwa.team.song.json', JSON.stringify(parsedData, null, 2), 'utf-8');
+
+  fs.writeFileSync(
+    'src/seeds/refined-cheering-songs/hanhwa.team.song.json',
+    JSON.stringify(parsedData, null, 2),
+    'utf-8',
+  );
 }
 
 function refineHanhwaPlayerSong() {
   const type = 'player_cheer';
   const team_name = '한화';
 
-  const parsedData = hanhwaPlayerSong['player_cheers'].map<ICheeringSongSeed>((elem: any) => ({
-    type,
-    team_name,
-    title: elem.player_name + ' 응원가',
-    lyrics: elem.lyrics,
-    link: elem.link,
-    player_name: elem.player_name,
-    jersey_number: elem.jersey_number,
-    throws_bats: elem.throws_bats,
-    position: elem.position,
-  }));
-  
-  fs.writeFileSync('src/seeds/refined-cheering-songs/hanhwa.player.song.json', JSON.stringify(parsedData, null, 2), 'utf-8');
+  const parsedData = hanhwaPlayerSong['player_cheers'].map<ICheeringSongSeed>(
+    (elem: any) => ({
+      type,
+      team_name,
+      title: elem.player_name + ' 응원가',
+      lyrics: elem.lyrics,
+      link: elem.link,
+      player_name: elem.player_name,
+      jersey_number: elem.jersey_number,
+      throws_bats: elem.throws_bats,
+      position: elem.position,
+    }),
+  );
+
+  fs.writeFileSync(
+    'src/seeds/refined-cheering-songs/hanhwa.player.song.json',
+    JSON.stringify(parsedData, null, 2),
+    'utf-8',
+  );
 }
 
 function refineDoosanTeamSong() {
   const type = 'team_cheer';
   const team_name = '두산';
 
-  const parsedData = doosanTeamSong['team_cheer'].map<ICheeringSongSeed>((elem: any) => ({
-    type,
-    team_name,
-    title: elem.title,
-    lyrics: elem.lyrics,
-    link: elem.link,
-  }));
-  
-  fs.writeFileSync('src/seeds/refined-cheering-songs/doosan.team.song.json', JSON.stringify(parsedData, null, 2), 'utf-8');
+  const parsedData = doosanTeamSong['team_cheer'].map<ICheeringSongSeed>(
+    (elem: any) => ({
+      type,
+      team_name,
+      title: elem.title,
+      lyrics: elem.lyrics,
+      link: elem.link,
+    }),
+  );
+
+  fs.writeFileSync(
+    'src/seeds/refined-cheering-songs/doosan.team.song.json',
+    JSON.stringify(parsedData, null, 2),
+    'utf-8',
+  );
 }
 
 function refineDoosanPlayerSong() {
   const type = 'player_cheer';
   const team_name = '두산';
 
-  const parsedData = doosanPlayerSong['player_cheers'].map<ICheeringSongSeed>((elem: any) => ({
-    type,
-    team_name,
-    title: elem.player_name + ' 응원가',
-    lyrics: elem.lyrics,
-    link: elem.link,
-    player_name: elem.player_name,
-    jersey_number: elem.jersey_number,
-    throws_bats: elem.throws_bats,
-    position: elem.position,
-  }));
-  
-  fs.writeFileSync('src/seeds/refined-cheering-songs/doosan.player.song.json', JSON.stringify(parsedData, null, 2), 'utf-8');
+  const parsedData = doosanPlayerSong['player_cheers'].map<ICheeringSongSeed>(
+    (elem: any) => ({
+      type,
+      team_name,
+      title: elem.player_name + ' 응원가',
+      lyrics: elem.lyrics,
+      link: elem.link,
+      player_name: elem.player_name,
+      jersey_number: elem.jersey_number,
+      throws_bats: elem.throws_bats,
+      position: elem.position,
+    }),
+  );
+
+  fs.writeFileSync(
+    'src/seeds/refined-cheering-songs/doosan.player.song.json',
+    JSON.stringify(parsedData, null, 2),
+    'utf-8',
+  );
 }
 
 refineSamsungTeamSong();

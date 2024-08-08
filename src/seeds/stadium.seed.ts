@@ -1,4 +1,4 @@
-import { TStadium } from "src/types/crawling-game.type";
+import { TStadium } from 'src/types/crawling-game.type';
 
 export const stadiumSeeder: { name: TStadium }[] = [
   { name: '잠실' },
