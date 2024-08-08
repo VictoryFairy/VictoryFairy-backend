@@ -1,0 +1,27 @@
+services:
+  postgres:
+    container_name: ${DB_CONTAINER_NAME}
+    image: postgres:alpine
+    restart: always
+    shm_size: 128mb
+    ports:
+      - '${DB_TCP_PORT}:${DB_TCP_PORT}'
+    environment:
+      - POSTGRES_USER=${DB_USER}
+      - POSTGRES_PASSWORD=${DB_PASSWORD}
+      - POSTGRES_DB=${DB_DATABASE_NAME}
+    volumes:
+      - ./db_data:/var/lib/postgresql/data
+  redis-server:
+    container_name: ${REDIS_CONTAINER}
+    image: redis:alpine
+    ports:
+      - '${REDIS_TCP_PORT}:${REDIS_TCP_PORT}'
+    command: >
+      redis-server
+      --port ${REDIS_TCP_PORT}
+      --requirepass ${REDIS_PASSWORD}
+      --save ""
+      --appendonly no
+      --maxmemory 1gb
+      --maxmemory-policy allkeys-lru

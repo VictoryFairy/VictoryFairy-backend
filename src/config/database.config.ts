@@ -8,7 +8,7 @@ export const getDatabaseConfig = (
 
   return {
     type: 'postgres',
-    host: configService.get<string>('DB_CONTAINER_NAME'),
+    host: configService.get<string>('DB_CONTAINER_NAME') || 'localhost',
     port: configService.get<number>('DB_TCP_PORT'),
     database: configService.get<string>('DB_DATABASE_NAME'),
     username: configService.get<string>('DB_USER'),
