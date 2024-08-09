@@ -3,10 +3,11 @@ import {
   Entity,
   JoinColumn,
   ManyToOne,
-  OneToMany,
+  OneToOne,
   PrimaryGeneratedColumn,
 } from 'typeorm';
 import { Team } from './team.entity';
+import { Player } from './player.entity';
 
 @Entity()
 export class CheeringSong {
@@ -22,7 +23,10 @@ export class CheeringSong {
   @Column()
   link: string;
 
-  @ManyToOne(() => Team)
+  @ManyToOne(() => Team, (team) => team.cheeringSongs)
   @JoinColumn({ name: 'team_id' })
   team: Team;
+
+  @OneToOne(() => Player, (player) => player.cheeringSong, { nullable: true })
+  player?: Player;
 }

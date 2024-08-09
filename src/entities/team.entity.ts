@@ -1,6 +1,8 @@
 import { Column, Entity, OneToMany, PrimaryGeneratedColumn } from 'typeorm';
 import { User } from './user.entity';
 import { RegisteredGame } from './registered-game.entity';
+import { CheeringSong } from './cheering-song.entity';
+import { Player } from './player.entity';
 
 @Entity()
 export class Team {
@@ -18,4 +20,10 @@ export class Team {
     (registeredGame) => registeredGame.cheering_team,
   )
   registeredGames: RegisteredGame[];
+
+  @OneToMany(() => CheeringSong, (cheeringSong) => cheeringSong.team)
+  cheeringSongs: CheeringSong[];
+
+  @OneToMany(() => Player, (player) => player.team)
+  players: Player[];
 }

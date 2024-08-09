@@ -7,6 +7,7 @@ import { ICheeringSongSeed } from 'src/types/cheering-song-seed.type';
 import { Repository } from 'typeorm';
 import { TeamService } from './team.service';
 import { instanceToPlain } from 'class-transformer';
+import { Player } from 'src/entities/player.entity';
 
 @Injectable()
 export class CheeringSongService {
@@ -62,11 +63,21 @@ export class CheeringSongService {
         const team = await this.teamService.findOneByName(seed.team_name);
         cheeringSong.team = team;
 
-        if (team.name === '롯데') {
-          this.logger.debug(instanceToPlain(team));
-          this.logger.debug(seed.team_name);
-        }
+        await manager.save(cheeringSong);
 
+        if (seed.player_name) {
+          const player = new Player();
+          player.name = seed.player_name;
+          player.jersey_number = seed.jersey_number;
+          player.position = seed.position;
+          player.throws_bats = seed.throws_bats;
+          player.team = team;
+
+          cheeringSong.player = player;
+          player.cheeringSong = cheeringSong;
+
+          manager.insert(Player, player);
+        }
         return manager.save(cheeringSong);
       });
 
