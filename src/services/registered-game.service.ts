@@ -137,17 +137,15 @@ export class RegisteredGameService {
     }
   }
 
-  async batchBulkUpdateToday(): Promise<void> {
-    const todayString = moment().format('YYYY-MM-DD');
-    // const registeredGames = await this.registeredGameRepository.find({
-    //   where: {
-    //     game: {
-    //       date: todayString,
-    //     },
-    //   },
-    //   relations: { cheering_team: true, game: true },
-    // });
-    const registeredGames = await this.registeredGameRepository.find();
+  async batchBulkUpdateByGameId(gameId: string): Promise<void> {
+    const game = await this.gameService.findOne(gameId);
+    const registeredGames = await this.registeredGameRepository.find({
+      where: {
+        game,
+      },
+      relations: { cheering_team: true, game: true },
+    });
+    // const registeredGames = await this.registeredGameRepository.find();
 
     const promises = registeredGames.map(async (registeredGame) => {
       const game = registeredGame.game;

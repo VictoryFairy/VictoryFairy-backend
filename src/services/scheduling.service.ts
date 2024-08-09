@@ -26,7 +26,6 @@ export class SchedulingService {
       complete: () => {
         this.logger.log('Game Data Saved Successfully.');
         this.batchUpdateTodayGames();
-        this.registeredGameService.batchBulkUpdateToday();
       },
       error: (error) => {
         this.logger.error('Error in batchUpdateGames', error.stack);
