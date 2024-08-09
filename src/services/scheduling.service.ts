@@ -95,12 +95,17 @@ export class SchedulingService {
             ),
           );
 
+          this.logger.log(`Current game status is ${currentStatus.status}.`);
           await this.gameService.updateCurrentStatus(gameId, currentStatus);
           this.logger.log(`Score for Game ${gameId} updated.`);
 
           if (currentStatus.status === '경기종료') {
             this.schedulerRegistry.deleteCronJob(`batchUpdate${gameId}`);
             this.logger.log(`Game ${gameId} ended. Stopping updates.`);
+            intervalJob.stop(); // Updates stopped
+          } else if (/.*취소$/.test(currentStatus.status)) {
+            this.schedulerRegistry.deleteCronJob(`batchUpdate${gameId}`);
+            this.logger.log(`Game ${gameId} cancled. Stopping updates.`);
             intervalJob.stop(); // Updates stopped
           }
         },
