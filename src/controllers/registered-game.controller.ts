@@ -8,7 +8,6 @@ import {
   HttpCode,
   HttpStatus,
   Put,
-  UseGuards,
   ParseIntPipe,
 } from '@nestjs/common';
 import {
@@ -16,9 +15,11 @@ import {
   ApiOkResponse,
   ApiNotFoundResponse,
   ApiTags,
+  ApiOperation,
+  ApiNoContentResponse,
 } from '@nestjs/swagger';
 import { plainToInstance } from 'class-transformer';
-import { AccessTokenGuard } from 'src/auth/guard/access-token.guard';
+import { JwtAuth } from 'src/decorator/jwt-token.decorator';
 import { UserDeco } from 'src/decorator/user.decorator';
 import {
   CreateRegisteredGameDto,
@@ -35,8 +36,12 @@ export class RegisteredGameController {
 
   @Post()
   @HttpCode(HttpStatus.CREATED)
-  @UseGuards(AccessTokenGuard)
-  @ApiCreatedResponse({ type: RegisteredGameDto })
+  @JwtAuth('access')
+  @ApiOperation({ summary: '직관 경기 등록' })
+  @ApiCreatedResponse({
+    type: RegisteredGameDto,
+    description: '등록한 직관 경기의 정보',
+  })
   async create(
     @Body() createRegisteredGameDto: CreateRegisteredGameDto,
     @UserDeco() user: User,
@@ -50,8 +55,12 @@ export class RegisteredGameController {
 
   @Get()
   @HttpCode(HttpStatus.OK)
-  @UseGuards(AccessTokenGuard)
-  @ApiOkResponse({ type: [RegisteredGameDto] })
+  @JwtAuth('access')
+  @ApiOperation({ summary: '유저가 등록한 모든 직관 경기 반환' })
+  @ApiOkResponse({
+    type: [RegisteredGameDto],
+    description: '유저가 등록한 직관 경기가 없을 경우에는 빈 배열 반환',
+  })
   async findAll(@UserDeco() user: User): Promise<RegisteredGameDto[]> {
     const registeredGames = await this.registeredGameService.findAll(user);
     return plainToInstance(RegisteredGameDto, registeredGames);
@@ -59,8 +68,13 @@ export class RegisteredGameController {
 
   @Get('monthly/:year/:month')
   @HttpCode(HttpStatus.OK)
-  @UseGuards(AccessTokenGuard)
-  @ApiOkResponse({ type: [RegisteredGameDto] })
+  @JwtAuth('access')
+  @ApiOperation({ summary: '해당 달에 유저가 등록한 모든 직관 경기 반환' })
+  @ApiOkResponse({
+    type: [RegisteredGameDto],
+    description:
+      '해당 달에 유저가 등록한 직관 경기가 없을 경우에는 빈 배열 반환',
+  })
   async findAllMonthly(
     @Param('year', ParseIntPipe) year: number,
     @Param('month', ParseIntPipe) month: number,
@@ -76,9 +90,11 @@ export class RegisteredGameController {
 
   @Get(':id')
   @HttpCode(HttpStatus.OK)
-  @UseGuards(AccessTokenGuard)
-  @ApiOkResponse({ type: RegisteredGameDto })
-  @ApiNotFoundResponse()
+  @JwtAuth('access')
+  @ApiOperation({ summary: '유저가 등록한 해당하는 ID의 직관 경기 반환' })
+  @ApiNotFoundResponse({
+    description: '유저가 등록한 해당하는 ID의 직관 경기가 없을 경우',
+  })
   async findOne(
     @Param('id', ParseIntPipe) id: number,
     @UserDeco() user: User,
@@ -89,9 +105,14 @@ export class RegisteredGameController {
 
   @Put(':id')
   @HttpCode(HttpStatus.OK)
-  @UseGuards(AccessTokenGuard)
-  @ApiOkResponse()
-  @ApiNotFoundResponse()
+  @JwtAuth('access')
+  @ApiOperation({ summary: '유저가 등록한 해당하는 ID의 직관 경기 수정' })
+  @ApiNoContentResponse({
+    description: '성공 시 별 다른 데이터를 반환하지 않음',
+  })
+  @ApiNotFoundResponse({
+    description: '유저가 등록한 해당하는 ID의 직관 경기가 없을 경우',
+  })
   async update(
     @Param('id', ParseIntPipe) id: number,
     @Body() updateRegisteredGameDto: UpdateRegisteredGameDto,
@@ -102,8 +123,13 @@ export class RegisteredGameController {
 
   @Delete(':id')
   @HttpCode(HttpStatus.OK)
-  @ApiOkResponse()
-  @ApiNotFoundResponse()
+  @ApiOperation({ summary: '유저가 등록한 해당하는 ID의 직관 경기 삭제' })
+  @ApiNoContentResponse({
+    description: '성공 시 별 다른 데이터를 반환하지 않음',
+  })
+  @ApiNotFoundResponse({
+    description: '유저가 등록한 해당하는 ID의 직관 경기가 없을 경우',
+  })
   async delete(
     @Param('id', ParseIntPipe) id: number,
     @UserDeco() user: User,

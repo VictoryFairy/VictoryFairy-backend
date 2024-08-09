@@ -6,7 +6,13 @@ import {
   Param,
   ParseIntPipe,
 } from '@nestjs/common';
-import { ApiOkResponse, ApiTags } from '@nestjs/swagger';
+import {
+  ApiNotFoundResponse,
+  ApiOkResponse,
+  ApiOperation,
+  ApiParam,
+  ApiTags,
+} from '@nestjs/swagger';
 import { plainToInstance } from 'class-transformer';
 import { ParkingInfoDto } from 'src/dtos/parking-info.dto';
 import { ParkingInfoService } from 'src/services/parking-info.service';
@@ -18,7 +24,15 @@ export class ParkingInfoController {
 
   @Get('stadium/:id')
   @HttpCode(HttpStatus.OK)
-  @ApiOkResponse({ type: [ParkingInfoDto] })
+  @ApiOperation({ summary: '경기장 ID로 주변 주차장 반환' })
+  @ApiParam({ name: 'id', type: Number, description: '경기장 ID' })
+  @ApiOkResponse({
+    type: [ParkingInfoDto],
+    description: '경기장 ID가 유효하면 주차장 정보가 없어도 빈 배열은 반환',
+  })
+  @ApiNotFoundResponse({
+    description: '주어진 ID에 해당하는 경기장이 없을 경우',
+  })
   async findByStadiumId(
     @Param('id', ParseIntPipe) id: number,
   ): Promise<ParkingInfoDto[]> {
@@ -28,7 +42,11 @@ export class ParkingInfoController {
 
   @Get()
   @HttpCode(HttpStatus.OK)
-  @ApiOkResponse({ type: [ParkingInfoDto] })
+  @ApiOperation({ summary: '모든 주차장 반환' })
+  @ApiOkResponse({
+    type: [ParkingInfoDto],
+    description: '주차장 정보가 없어도 빈 배열은 반환',
+  })
   async findAll(): Promise<ParkingInfoDto[]> {
     const parkingInfos = await this.parkingInfoService.findAll();
     return plainToInstance(ParkingInfoDto, parkingInfos);
