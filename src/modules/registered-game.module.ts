@@ -16,5 +16,6 @@ import { AuthModule } from 'src/auth/auth.module';
   ],
   controllers: [RegisteredGameController],
   providers: [RegisteredGameService],
+  exports: [RegisteredGameService],
 })
 export class RegisteredGameModule {}

@@ -4,6 +4,7 @@ import { GameService } from './game.service';
 import { firstValueFrom } from 'rxjs';
 import { CronJob } from 'cron';
 import * as moment from 'moment-timezone';
+import { RegisteredGameService } from './registered-game.service';
 
 @Injectable()
 export class SchedulingService {
@@ -11,6 +12,7 @@ export class SchedulingService {
 
   constructor(
     private readonly gameService: GameService,
+    private readonly registeredGameService: RegisteredGameService,
     private readonly schedulerRegistry: SchedulerRegistry,
   ) {}
 
@@ -102,10 +104,12 @@ export class SchedulingService {
           if (currentStatus.status === '경기종료') {
             this.schedulerRegistry.deleteCronJob(`batchUpdate${gameId}`);
             this.logger.log(`Game ${gameId} ended. Stopping updates.`);
+            this.registeredGameService.batchBulkUpdateByGameId(gameId);
             intervalJob.stop(); // Updates stopped
           } else if (/.*취소$/.test(currentStatus.status)) {
             this.schedulerRegistry.deleteCronJob(`batchUpdate${gameId}`);
             this.logger.log(`Game ${gameId} cancled. Stopping updates.`);
+            this.registeredGameService.batchBulkUpdateByGameId(gameId);
             intervalJob.stop(); // Updates stopped
           }
         },

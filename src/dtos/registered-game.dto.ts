@@ -1,6 +1,7 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { Exclude, Expose, Transform } from 'class-transformer';
 import { IsNumber, IsString } from 'class-validator';
+import { TRegisteredGameStatus } from 'src/types/registered-game-status.type';
 
 export class CreateRegisteredGameDto {
   @ApiProperty()
@@ -62,6 +63,11 @@ export class RegisteredGameDto {
   @IsString()
   @Expose()
   review: string;
+
+  @ApiProperty()
+  @IsString()
+  @Expose()
+  status: TRegisteredGameStatus;
 
   @ApiProperty()
   @IsString()
