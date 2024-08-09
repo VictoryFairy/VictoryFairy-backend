@@ -1,0 +1,189 @@
+[
+  {
+    "type": "team_cheer",
+    "team_name": "NC",
+    "title": "안중열 응원가",
+    "lyrics": "다이노스 안중열~ 거침없이 가자 가자 안~중열~ (안중열 안타!)\n다이노스 안중열~ 거침없이 안타 안타 안~중열~ (안중열 안타!)",
+    "link": "https://youtu.be/wuqsZ_Wjymo",
+    "player_name": "안중열",
+    "jersey_number": "1",
+    "throws_bats": "우투우타",
+    "position": "포수"
+  },
+  {
+    "type": "team_cheer",
+    "team_name": "NC",
+    "title": "박세혁 응원가",
+    "lyrics": "워어우워어어 NC 박세혁 워어우워어어 NC 박세혁\n워우워~ 안방마님 박세혁! 워우워~ 다이노스 박세혁!",
+    "link": "https://youtu.be/co08QIacru8",
+    "player_name": "박세혁",
+    "jersey_number": "10",
+    "throws_bats": "우투좌타",
+    "position": "포수"
+  },
+  {
+    "type": "team_cheer",
+    "team_name": "NC",
+    "title": "김형준 응원가",
+    "lyrics": "오오오 NC 김형준! 오~오 오오오오\n다이노스 승리를 위~해 NC 김형준 (김!형!준!) X2",
+    "link": "https://youtu.be/8QM6lnJb1BI",
+    "player_name": "김형준",
+    "jersey_number": "25",
+    "throws_bats": "우투우타",
+    "position": "포수"
+  },
+  {
+    "type": "team_cheer",
+    "team_name": "NC",
+    "title": "박민우 응원가",
+    "lyrics": "오오오 박민우 오오오 박민우 오오오 날려버려 (안타!)",
+    "link": "https://youtu.be/JiMy5C6EAtg",
+    "player_name": "박민우",
+    "jersey_number": "2",
+    "throws_bats": "우투좌타",
+    "position": "2루수"
+  },
+  {
+    "type": "team_cheer",
+    "team_name": "NC",
+    "title": "서호철 응원가",
+    "lyrics": "다이노스 서호철 워어어 워어~ 안! 타! 다이노스 서호철 승리를 위해~ 안! 타!구단 자작곡",
+    "link": "https://youtu.be/TpmN7af9diI",
+    "player_name": "서호철",
+    "jersey_number": "5",
+    "throws_bats": "우투우타",
+    "position": "3루수, 2루수"
+  },
+  {
+    "type": "team_cheer",
+    "team_name": "NC",
+    "title": "김주원 응원가",
+    "lyrics": "다이노 김주원~\n오~ NC 김주원 힘차게 달려 라랄랄라 오오오~ NC 김주원 승리를 위해 라랄라\n오~ NC 김주원 힘차게 달려 라랄랄라 오오오~ NC 김주원 승리를 위해 라랄라\n다이노스~ 김! 주! 원!",
+    "link": "https://youtu.be/qi__U-aVeGw",
+    "player_name": "김주원",
+    "jersey_number": "7",
+    "throws_bats": "우투양타",
+    "position": "유격수, 2루수"
+  },
+  {
+    "type": "team_cheer",
+    "team_name": "NC",
+    "title": "최정원 응원가",
+    "lyrics": "다이노스 NC 최정원 안타 안타 날려버려 다이노스 NC 최정원 안타 오오오\n최! 정! 원!",
+    "link": "https://youtu.be/ZArriYgjUJc",
+    "player_name": "최정원",
+    "jersey_number": "14",
+    "throws_bats": "우투좌타",
+    "position": "2루수, 중견수"
+  },
+  {
+    "type": "team_cheer",
+    "team_name": "NC",
+    "title": "도태훈 응원가",
+    "lyrics": "다이노스 도태훈 안타 오! 오오오오~ 다이노스 도태훈 안타 오! 오오오오~",
+    "link": "https://youtu.be/PGpJnO3GdWA",
+    "player_name": "도태훈",
+    "jersey_number": "16",
+    "throws_bats": "우투좌타",
+    "position": "내야 유틸리티"
+  },
+  {
+    "type": "team_cheer",
+    "team_name": "NC",
+    "title": "데이비슨 응원가",
+    "lyrics": "데이비슨 오오오 데이비슨 워어어어 데이비슨 오오오 NC 다이노스 데 이 비 슨!",
+    "link": "https://youtu.be/5qk4bJLMqNQ",
+    "player_name": "데이비슨",
+    "jersey_number": "24",
+    "throws_bats": "우투우타",
+    "position": "내야수"
+  },
+  {
+    "type": "team_cheer",
+    "team_name": "NC",
+    "title": "오영수 응원가",
+    "lyrics": "오! 오영수 NC 다이노스 오영수\n안타를 (쌔리라!) 홈런을 (쌔리라!) 다! 이! 노! 스! 오! 영! 수!",
+    "link": "https://youtu.be/lRsMcTysOQI",
+    "player_name": "오영수",
+    "jersey_number": "34",
+    "throws_bats": "우투좌타",
+    "position": "1루수, 3루수, 우익수"
+  },
+  {
+    "type": "team_cheer",
+    "team_name": "NC",
+    "title": "김휘집 응원가",
+    "lyrics": "안타 안타 날려버려~ 다이노스 김휘집~ (예!)",
+    "link": "https://youtu.be/_sMRmreHc3k",
+    "player_name": "김휘집",
+    "jersey_number": "44",
+    "throws_bats": "우투우타",
+    "position": "내야 유틸리티"
+  },
+  {
+    "type": "team_cheer",
+    "team_name": "NC",
+    "title": "윤형준 응원가",
+    "lyrics": "아~ NC의 윤형준~ (윤! 형! 준!) 힘차게~ 거침없이 홈런~ (윤! 형! 준!)",
+    "link": "https://youtu.be/F4lcNumylrE",
+    "player_name": "윤형준",
+    "jersey_number": "52",
+    "throws_bats": "우투우타",
+    "position": "1루수, 좌익수, 우익수"
+  },
+  {
+    "type": "team_cheer",
+    "team_name": "NC",
+    "title": "손아섭 응원가",
+    "lyrics": "오! 다이노스 손아섭 NC 승리 위해! 오! 오오오~ 다! 이! 노! 스! 손! 아! 섭!",
+    "link": "https://youtu.be/4sZ2_kB_i-E",
+    "player_name": "손아섭",
+    "jersey_number": "31",
+    "throws_bats": "우투좌타",
+    "position": "우익수, 좌익수, 지명타자"
+  },
+  {
+    "type": "team_cheer",
+    "team_name": "NC",
+    "title": "한석현 응원가",
+    "lyrics": "NC 한석현 NC 한석현 NC 한석현 거침없이 가! 자! NC 한석현 NC 한석현 NC 한석현 승리위해 안! 타!\nNC 한석현 NC 한석현 NC 한석현 오오오오 안! 타! NC 한석현 NC 한석현 NC 한석현 다이노스 한! 석! 현!",
+    "link": "https://youtu.be/7ZKbU0yXMNA",
+    "player_name": "한석현",
+    "jersey_number": "33",
+    "throws_bats": "좌투좌타",
+    "position": "외야수"
+  },
+  {
+    "type": "team_cheer",
+    "team_name": "NC",
+    "title": "권희동 응원가",
+    "lyrics": "다이노스 오~ 권희동\nNC 오! 권희동 오! 권희동 권희동 안타~ NC 오! 권희동 오! 권희동 오~ 오오오~ 권! 희! 동!\nNC 오! 권희동 오! 권희동 권희동 안타~ NC 오! 권희동 오! 권희동 오~ 오오오~ 권! 희! 동!",
+    "link": "https://youtu.be/rlXZHdw4U8s",
+    "player_name": "권희동",
+    "jersey_number": "36",
+    "throws_bats": "우투우타",
+    "position": "외야수"
+  },
+  {
+    "type": "team_cheer",
+    "team_name": "NC",
+    "title": "박건우 응원가",
+    "lyrics": "워어어 NC 박건우 워어어 NC 박건우 언제나 거침없이 넌 달려왔지\n쎄리라 NC 박건우 쎄리라 NC 박건우 절대 멈추지 않아 승리를 향해 박건우~",
+    "link": "https://youtu.be/cDwR01RmHls",
+    "player_name": "박건우",
+    "jersey_number": "37",
+    "throws_bats": "우투우타",
+    "position": "외야수, 지명타자"
+  },
+  {
+    "type": "team_cheer",
+    "team_name": "NC",
+    "title": "김성욱 응원가",
+    "lyrics": "NC 김성욱 다이노스 김성욱\nNC 김성욱 다이노스 승리를 위해",
+    "link": "https://youtu.be/yvIXIoHr8ZY",
+    "player_name": "김성욱",
+    "jersey_number": "38",
+    "throws_bats": "우투우타",
+    "position": "외야수, 3루수"
+  }
+]

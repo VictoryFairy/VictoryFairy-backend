@@ -1,4 +1,6 @@
-export const stadiumSeeder: { name: string }[] = [
+import { TStadium } from 'src/types/crawling-game.type';
+
+export const stadiumSeeder: { name: TStadium }[] = [
   { name: '잠실' },
   { name: '창원' },
   { name: '고척' },

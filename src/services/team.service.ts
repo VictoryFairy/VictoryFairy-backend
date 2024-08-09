@@ -44,15 +44,21 @@ export class TeamService {
   }
 
   async findOneByNameOrCreate(name: string): Promise<Team> {
-    let team = await this.teamRepository.findOne({
-      where: { name },
-    });
+    let team = await this.findOneByName(name);
 
     if (!team) {
       team = new Team();
       team.name = name;
       await this.teamRepository.save(team);
     }
+
+    return team;
+  }
+
+  async findOneByName(name: string): Promise<Team> {
+    const team = await this.teamRepository.findOne({
+      where: { name },
+    });
 
     return team;
   }
