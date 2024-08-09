@@ -1,0 +1,178 @@
+[
+  {
+    "type": "player_cheer",
+    "team_name": "LG",
+    "title": "구본혁 응원가",
+    "lyrics": "당차고 시~원하게 달려라 LG 구본혁\n언제나 너!!의 옆에 우리가 함께\n당차고 시~원하게 날려라 LG 구본혁\n언제나 너!! 영원히 사랑할게",
+    "link": "https://www.youtube.com/watch?v=mi4QA_Pdk-4",
+    "player_name": "구본혁",
+    "jersey_number": 6,
+    "throws_bats": "우투우투",
+    "position": "내야수"
+  },
+  {
+    "type": "player_cheer",
+    "team_name": "LG",
+    "title": "김현수 응원가",
+    "lyrics": "오 LG의 김현수\n오 LG의 김현수\n오 승리를 위하여\n오 힘차게 날려라~\n오 LG의 김현수\n오 LG의 김현수\n오 승리를 위하여\n무적 LG 김현수!",
+    "link": "https://www.youtube.com/watch?v=SrXNLHJmcfM",
+    "player_name": "김현수",
+    "jersey_number": 22,
+    "throws_bats": "우투좌타",
+    "position": "외야수"
+  },
+  {
+    "type": "player_cheer",
+    "team_name": "LG",
+    "title": "신민재 응원가",
+    "lyrics": "날려버려 날려버려\n안!타! 신민재\n날려버려 날려버려\n안!타! 신민재\n날려버려 날려버려\n안!타! 신민재\n날려버려 날려버려\n안!타! 신민재",
+    "link": "https://www.youtube.com/watch?v=18wX8dcHZOE",
+    "player_name": "신민재",
+    "jersey_number": 4,
+    "throws_bats": "우투좌타",
+    "position": "내야수"
+  },
+  {
+    "type": "player_cheer",
+    "team_name": "LG",
+    "title": "홍창기 응원가",
+    "lyrics": "홍창기 안타 안타 날려 홍창기\n홍창기 안타 날려버려라~\n홍창기 안타 안타 날려 홍창기\n무적 LG의 승리를 위해\n홍창기 안타 안타 날려 홍창기\n홍창기 안타 날려버려라~\n홍창기 안타 안타 날려 홍창기\n무적 LG의 승리를 위해",
+    "link": "https://www.youtube.com/watch?v=u3qiN8-UxeY",
+    "player_name": "홍창기",
+    "jersey_number": 51,
+    "throws_bats": "우투좌타",
+    "position": "외야수"
+  },
+  {
+    "type": "player_cheer",
+    "team_name": "LG",
+    "title": "문보경 응원가",
+    "lyrics": "무적엘지 승리위해 날려버려라~\n엘지의 문보경 안타!\n엘지의 문보경 홈런!\n무적엘지 승리위해 날려버려라~\n엘지의 문보경 안타!\n엘지의 문보경 홈런!",
+    "link": "https://www.youtube.com/watch?v=ASfssEWM5Mc",
+    "player_name": "문보경",
+    "jersey_number": 2,
+    "throws_bats": "우투좌타",
+    "position": "내야수"
+  },
+  {
+    "type": "player_cheer",
+    "team_name": "LG",
+    "title": "안익훈 응원가",
+    "lyrics": "날려버려~ LG의 안익훈\n승리위해~ 힘차게 날려라\n날려버려~ LG의 안익훈\n승리를 위해\n날려버려~ LG의 안익훈\n승리위해~ 힘차게 날려라\n날려버려~ LG의 안익훈\n무적 LG 안익훈!",
+    "link": "https://www.youtube.com/watch?v=zpyo2CJN5Ew",
+    "player_name": "안익훈",
+    "jersey_number": 15,
+    "throws_bats": "좌투좌타",
+    "position": "외야수"
+  },
+  {
+    "type": "player_cheer",
+    "team_name": "LG",
+    "title": "이영빈 응원가",
+    "lyrics": "달려라 LG의 이영빈\n날려라 LG의 이영빈\nLG의 승리를 위하여~\n오! 이영빈\n달려라 LG의 이영빈\n날려라 LG의 이영빈\nLG의 승리를 위하여~\n오! 이영빈",
+    "link": "https://www.youtube.com/watch?v=-rquuXMFq_0",
+    "player_name": "이영빈",
+    "jersey_number": 7,
+    "throws_bats": "우투좌타",
+    "position": "내야수"
+  },
+  {
+    "type": "player_cheer",
+    "team_name": "LG",
+    "title": "박해민 응원가",
+    "lyrics": "날려버려 안타 박해민~\n오오오오오~ 박해민~\n무!적!L!G! 박!해!민!\n날려버려 안타 박해민~\n오오오오오~ 박해민~\n무!적!L!G! 박!해!민!",
+    "link": "https://www.youtube.com/watch?v=p2SvRcOthVc",
+    "player_name": "박해민",
+    "jersey_number": 17,
+    "throws_bats": "우투좌타",
+    "position": "외야수"
+  },
+  {
+    "type": "player_cheer",
+    "team_name": "LG",
+    "title": "문성주 응원가",
+    "lyrics": "무적 LG 오! 문성주 날려버려라\n무적 LG 오! 문성주 날려버려라~\n랄랄라라 랄랄라라 랄랄랄라라\n랄랄라라 랄랄라라 랄랄랄라라\n무적 LG 오! 문성주 날려버려라\n무적 LG 오! 문성주 날려버려라~\n랄랄라라 랄랄라라 랄랄랄라라\n랄랄라라 랄랄라라 랄랄랄라라",
+    "link": "https://www.youtube.com/watch?v=V_ow4FPacjk",
+    "player_name": "문성주",
+    "jersey_number": 8,
+    "throws_bats": "좌투좌타",
+    "position": "외야수"
+  },
+  {
+    "type": "player_cheer",
+    "team_name": "LG",
+    "title": "송찬의 응원가",
+    "lyrics": "LG의 송찬의~ LG의 송찬의~\n무적 LG 승리 위해 날려버려라\n\nLG의 송찬의~ LG의 송찬의~\n무적 LG 승리 위해 날려버려라",
+    "link": "https://www.youtube.com/watch?v=a8ky06MJsU4",
+    "player_name": "송찬의",
+    "jersey_number": 14,
+    "throws_bats": "우투우타",
+    "position": "내야수"
+  },
+  {
+    "type": "player_cheer",
+    "team_name": "LG",
+    "title": "허도환 응원가",
+    "lyrics": "오오오오~ LG의 허도환~\n오오오오~ LG의 허도환~\n오오오오~ LG의 허도환~\n무적 LG의 허도환~~\n\n오오오오~ LG의 허도환~\n오오오오~ LG의 허도환~\n오오오오~ LG의 허도환~\n무적 LG의 허도환~~",
+    "link": "https://www.youtube.com/watch?v=3-4QqoKnnnk",
+    "player_name": "허도환",
+    "jersey_number": 30,
+    "throws_bats": "우투우타",
+    "position": "포수"
+  },
+  {
+    "type": "player_cheer",
+    "team_name": "LG",
+    "title": "박동원 응원가",
+    "lyrics": "시원하게(쏴) 쏘아올려(쏴)\n무적 LG 박동원~ (안타)\n승리 위해! 저 끝까지 날려버려 박동원~ (홈런)\n\n시원하게(쏴) 쏘아올려(쏴)\n무적 LG 박동원~ (안타)\n승리 위해! 저 끝까지 날려버려 박동원~ (홈런)",
+    "link": "https://www.youtube.com/watch?v=A4wU4vFdS78",
+    "player_name": "박동원",
+    "jersey_number": 27,
+    "throws_bats": "우투우타",
+    "position": "박동원"
+  },
+  {
+    "type": "player_cheer",
+    "team_name": "LG",
+    "title": "오스틴 응원가",
+    "lyrics": "무적 LG의~ 오스~틴 딘!\n날려버려라 오!스틴 딘!\n무적 LG의~ 오스~틴 딘!\n날려버려라 오!스틴 딘!\n\n무적 LG의~ 오스~틴 딘!\n날려버려라 오!스틴 딘!\n무적 LG의~ 오스~틴 딘!\n날려버려라 오!스틴 딘!",
+    "link": "https://www.youtube.com/watch?v=QtER0JijFGY",
+    "player_name": "오스틴",
+    "jersey_number": 23,
+    "throws_bats": "우투우타",
+    "position": "내야수"
+  },
+  {
+    "type": "player_cheer",
+    "team_name": "LG",
+    "title": "김범석 응원가",
+    "lyrics": "LG의 김범석~~ LG의 김범석~~\nLG의 승~리 위하여 날려라 김범석~~\nLG의 김범석~~ LG의 김범석~~\nLG의 승~리 위하여 날려라 김범석~~",
+    "link": "https://www.youtube.com/watch?v=xfWVzD-qzac",
+    "player_name": "김범석",
+    "jersey_number": 55,
+    "throws_bats": "우투우타",
+    "position": "포수"
+  },
+  {
+    "type": "player_cheer",
+    "team_name": "LG",
+    "title": "김민수 응원가",
+    "lyrics": "안타안타 LG 김민수\n안타안타 LG 김민수\n안타안타 LG 김민수\n오! 김민수~",
+    "link": "https://www.youtube.com/watch?v=8MK7LCzK_LY",
+    "player_name": "김민수",
+    "jersey_number": 53,
+    "throws_bats": "우투우타",
+    "position": "내야수"
+  },
+  {
+    "type": "player_cheer",
+    "team_name": "LG",
+    "title": "최승민 응원가",
+    "lyrics": "오! 달려라 오! 달려라\n날쌘돌이 최승민~\n오! 달려라 오! 달려라\n날쌘돌이 최승민~",
+    "link": "https://www.youtube.com/watch?v=MzesLnEauP0",
+    "player_name": "최승민",
+    "jersey_number": 62,
+    "throws_bats": "우투좌타",
+    "position": "외야수"
+  }
+]

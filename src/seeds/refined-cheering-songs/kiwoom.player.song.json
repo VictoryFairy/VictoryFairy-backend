@@ -1,0 +1,233 @@
+[
+  {
+    "type": "player_cheer",
+    "team_name": "키움",
+    "title": "김웅빈 응원가",
+    "lyrics": "김웅빈 김웅빈~ 히어로즈 김웅빈~\n히어로즈 승리를 위하여 날려버려 저멀리~x2",
+    "link": "https://www.youtube.com/watch?v=KiPAOwhCLsI",
+    "player_name": "김웅빈",
+    "jersey_number": 10,
+    "throws_bats": "우투좌타",
+    "position": "내야수"
+  },
+  {
+    "type": "player_cheer",
+    "team_name": "키움",
+    "title": "김재현 응원가",
+    "lyrics": "오! 김재현 다함께 외쳐라 라라랄라라라 랄랄라라 안타 김재현 (안타!)x2",
+    "link": "https://www.youtube.com/watch?v=P9tUny7l2gQ",
+    "player_name": "김재현",
+    "jersey_number": 32,
+    "throws_bats": "우투우타",
+    "position": "포수"
+  },
+  {
+    "type": "player_cheer",
+    "team_name": "키움",
+    "title": "김주형 응원가",
+    "lyrics": "히어로 김주형 히어로 김주형\n승리를 위하여 예이예에~x2",
+    "link": "https://www.youtube.com/watch?v=PQbh2570rtE",
+    "player_name": "김주형",
+    "jersey_number": 6,
+    "throws_bats": "우투우타",
+    "position": "내야수"
+  },
+  {
+    "type": "player_cheer",
+    "team_name": "키움",
+    "title": "김태진 응원가",
+    "lyrics": "키움 김태진 워어어어 (안!타! 김!태!진!)\n키움 김태진 워어어어 (안!타! 김!태!진!)x2",
+    "link": "https://www.youtube.com/watch?v=eCfMYSphv48",
+    "player_name": "김태진",
+    "jersey_number": 1,
+    "throws_bats": "우투좌타",
+    "position": "내야수"
+  },
+  {
+    "type": "player_cheer",
+    "team_name": "키움",
+    "title": "김혜성 응원가",
+    "lyrics": "김혜성! 히어로즈 김혜성 저 멀리 날려라 워어어\n김혜성! 히어로즈 김혜성 저 하늘 빛나는 혜성처럼!\n안타 안타 안타 안타 예~ (김!혜!성!) 안타 안타 안타 안타 예~ (김!혜!성!)",
+    "link": "https://www.youtube.com/watch?v=k0KZVCb85bk",
+    "player_name": "김혜성",
+    "jersey_number": 3,
+    "throws_bats": "우투좌타",
+    "position": "내야수"
+  },
+  {
+    "type": "player_cheer",
+    "team_name": "키움",
+    "title": "박주홍 응원가",
+    "lyrics": "워어~ 워어~ 히어로즈 박주홍!\n워어~ 워어~ 히어로즈 박주홍~x2",
+    "link": "https://www.youtube.com/watch?v=xO2hazu-sC8",
+    "player_name": "박주홍",
+    "jersey_number": 57,
+    "throws_bats": "좌투좌타",
+    "position": "외야수"
+  },
+  {
+    "type": "player_cheer",
+    "team_name": "키움",
+    "title": "박찬혁 응원가",
+    "lyrics": "히어로 박찬혁 워어어어~\n히어로 박찬혁 워어어어~x2",
+    "link": "https://www.youtube.com/watch?v=T-C_v2wx3gM",
+    "player_name": "박찬혁",
+    "jersey_number": 48,
+    "throws_bats": "우투우타",
+    "position": "외야수"
+  },
+  {
+    "type": "player_cheer",
+    "team_name": "키움",
+    "title": "송성문 응원가",
+    "lyrics": "날!려!라! 키움의 송성문 승리의 문을 열자 랄!랄!라!\n날!려!라! 키움의 송성문 승리의 문을 열자 (송!성!문!)x2",
+    "link": "https://www.youtube.com/watch?v=acAjBK4Cohk",
+    "player_name": "송성문",
+    "jersey_number": 24,
+    "throws_bats": "우투좌타",
+    "position": "내야수"
+  },
+  {
+    "type": "player_cheer",
+    "team_name": "키움",
+    "title": "이용규 응원가",
+    "lyrics": "히어로즈 승리위해 안타 이용규\n히어로즈 승리를 위하여 이용규 YOU! YOU! YOU!x2",
+    "link": "https://www.youtube.com/watch?v=xhfJYQY_AKw",
+    "player_name": "이용규",
+    "jersey_number": 15,
+    "throws_bats": "좌투좌타",
+    "position": "외야수"
+  },
+  {
+    "type": "player_cheer",
+    "team_name": "키움",
+    "title": "이형종 응원가",
+    "lyrics": "히어로즈 이~형종 워어어 워어어어x3",
+    "link": "https://www.youtube.com/watch?v=66VXcSQpBW8",
+    "player_name": "이형종",
+    "jersey_number": 36,
+    "throws_bats": "우투우타",
+    "position": "외야수"
+  },
+  {
+    "type": "player_cheer",
+    "team_name": "키움",
+    "title": "임병욱 응원가",
+    "lyrics": "임~병욱 (짝짝짝짝!) 임~병욱 (짝짝짝짝!)\n히어로즈 승리를 위하여 하나되어 외쳐보자x2",
+    "link": "https://www.youtube.com/watch?v=b8GMq2Fxr1k",
+    "player_name": "임병욱",
+    "jersey_number": 35,
+    "throws_bats": "우투좌타",
+    "position": "외야수"
+  },
+  {
+    "type": "player_cheer",
+    "team_name": "키움",
+    "title": "임지열 응원가",
+    "lyrics": "히어로즈 임지열 히어로즈 임지열\n히어로즈 바모스! 임지열 워어어어어x2",
+    "link": "https://www.youtube.com/watch?v=myOXo-0fK48",
+    "player_name": "임지열",
+    "jersey_number": 29,
+    "throws_bats": "우투우타",
+    "position": "내야수"
+  },
+  {
+    "type": "player_cheer",
+    "team_name": "키움",
+    "title": "김동헌 응원가",
+    "lyrics": "히어로 김 (김!) 동 (동!) 헌 (헌!) 오오오 오오오~\n히어로 김 (김!) 동 (동!) 헌 (헌!) 오오오 오오오~",
+    "link": "https://www.youtube.com/watch?v=6hCxGfizQLg",
+    "player_name": "김동헌",
+    "jersey_number": 22,
+    "throws_bats": "우투우타",
+    "position": "포수"
+  },
+  {
+    "type": "player_cheer",
+    "team_name": "키움",
+    "title": "이원석 응원가",
+    "lyrics": "히어로즈 이원석 (안타!)\n히어로즈 이원석~ (안타!)\n히어로즈 이원석~ 오오오오~ 이원석",
+    "link": "https://www.youtube.com/watch?v=MetZg_qQWME",
+    "player_name": "이원석",
+    "jersey_number": 17,
+    "throws_bats": "우투우타",
+    "position": "내야수"
+  },
+  {
+    "type": "player_cheer",
+    "team_name": "키움",
+    "title": "로니 도슨 응원가",
+    "lyrics": "로니 도슨 워어어어~ 로니 도슨 워어어어~\n승리의 그 이름 로니 도슨 워어어어~x2",
+    "link": "https://www.youtube.com/watch?v=1bpsDvPsIAU",
+    "player_name": "로니 도슨",
+    "jersey_number": 27,
+    "throws_bats": "우투좌타",
+    "position": "외야수"
+  },
+  {
+    "type": "player_cheer",
+    "team_name": "키움",
+    "title": "박수종 응원가",
+    "lyrics": "박수 박수 박수종!\n박~수 박수 박수종 (안타!)\n안~타 안타 박수종 (안타!)\n승리를 위하여 파이팅 (파이팅!)\n키움 히어로 박수종\n박~수 박수 박수종 (안타!)\n안~타 안타 박수종 (안타!)\n승리를 위하여 파이팅 (파이팅!)\n키움 히어로 박수종",
+    "link": "https://www.youtube.com/watch?v=h36YaoIZ-Rs",
+    "player_name": "박수종",
+    "jersey_number": 14,
+    "throws_bats": "우투우타",
+    "position": "외야수"
+  },
+  {
+    "type": "player_cheer",
+    "team_name": "키움",
+    "title": "이주형 응원가",
+    "lyrics": "이주형 워어어 이주형 워어어\n저 높이 날아올라 빛이 되리라 히어로즈 이주형x2",
+    "link": "https://www.youtube.com/watch?v=yNpzQ5pEkUs",
+    "player_name": "이주형",
+    "jersey_number": 2,
+    "throws_bats": "우투좌타",
+    "position": "외야수"
+  },
+  {
+    "type": "player_cheer",
+    "team_name": "키움",
+    "title": "최주환 응원가",
+    "lyrics": "최주환 히어로즈의 최주환 안타 날려버려 워어어~x4",
+    "link": "https://www.youtube.com/watch?v=dZf54N-Izw8",
+    "player_name": "최주환",
+    "jersey_number": 53,
+    "throws_bats": "우투우타",
+    "position": "내야수"
+  },
+  {
+    "type": "player_cheer",
+    "team_name": "키움",
+    "title": "고영우 응원가",
+    "lyrics": "고!영우 승리위해 안타 날려버려\n고!영우 승리를 위해\n오오오 고영우 오오오 고영우 오오오 고영우 워어어어x4",
+    "link": "https://www.youtube.com/watch?v=ofkNjAVEGxo",
+    "player_name": "고영우",
+    "jersey_number": 44,
+    "throws_bats": "우투우타",
+    "position": "내야수"
+  },
+  {
+    "type": "player_cheer",
+    "team_name": "키움",
+    "title": "김건희 응원가",
+    "lyrics": "안타! 안타! 안타! 김건희!\n키움 히어로즈 김건희 오 히어로즈 김건희\n안방마님 김건희 오오오~ (김건희!)x2",
+    "link": "https://www.youtube.com/watch?v=E_AHbZIzpGg",
+    "player_name": "김건희",
+    "jersey_number": 12,
+    "throws_bats": "우투우타",
+    "position": "내야수"
+  },
+  {
+    "type": "player_cheer",
+    "team_name": "키움",
+    "title": "장재영 응원가",
+    "lyrics": "오 히어로 장재영 오 히어로 장재영\n오 승리를 위하여 날아올라라\n히어로 장~재영 히어로 장~ 재영\n히어로는 바로 너! 장재영~ (장재영!)x2",
+    "link": "https://www.youtube.com/watch?v=m87rX0vpTBk",
+    "player_name": "장재영",
+    "jersey_number": 61,
+    "throws_bats": "우투우타",
+    "position": "투수"
+  }
+]
