@@ -10,11 +10,13 @@ import {
 import { ApiOperation, ApiQuery, ApiTags } from '@nestjs/swagger';
 import { ApiOkResponse, ApiNotFoundResponse } from '@nestjs/swagger';
 import { plainToInstance } from 'class-transformer';
+import { JwtAuth } from 'src/decorator/jwt-token.decorator';
 import { StadiumDto } from 'src/dtos/stadium.dto';
 import { StadiumService } from 'src/services/stadium.service';
 
 @ApiTags('Stadium')
 @Controller('stadiums')
+@JwtAuth('access')
 export class StadiumController {
   constructor(private readonly stadiumService: StadiumService) {}
 

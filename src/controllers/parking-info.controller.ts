@@ -14,11 +14,13 @@ import {
   ApiTags,
 } from '@nestjs/swagger';
 import { plainToInstance } from 'class-transformer';
+import { JwtAuth } from 'src/decorator/jwt-token.decorator';
 import { ParkingInfoDto } from 'src/dtos/parking-info.dto';
 import { ParkingInfoService } from 'src/services/parking-info.service';
 
 @ApiTags('ParkingInfo')
 @Controller('parking-infos')
+@JwtAuth('access')
 export class ParkingInfoController {
   constructor(private readonly parkingInfoService: ParkingInfoService) {}
 

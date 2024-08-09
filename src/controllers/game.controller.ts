@@ -15,11 +15,13 @@ import {
   ApiTags,
 } from '@nestjs/swagger';
 import { plainToInstance } from 'class-transformer';
+import { JwtAuth } from 'src/decorator/jwt-token.decorator';
 import { FindAllDailyQueryDto, GameDto } from 'src/dtos/game.dto';
 import { GameService } from 'src/services/game.service';
 
 @ApiTags('Game')
 @Controller('games')
+@JwtAuth('access')
 export class GameController {
   constructor(private readonly gameService: GameService) {}
 

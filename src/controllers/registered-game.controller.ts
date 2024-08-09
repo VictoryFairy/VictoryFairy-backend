@@ -34,12 +34,12 @@ import { RegisteredGameService } from 'src/services/registered-game.service';
 
 @ApiTags('RegisteredGame')
 @Controller('registered-games')
+@JwtAuth('access')
 export class RegisteredGameController {
   constructor(private readonly registeredGameService: RegisteredGameService) {}
 
   @Post()
   @HttpCode(HttpStatus.CREATED)
-  @JwtAuth('access')
   @ApiOperation({ summary: '직관 경기 등록' })
   @ApiCreatedResponse({
     type: RegisteredGameDto,
@@ -58,7 +58,6 @@ export class RegisteredGameController {
 
   @Get()
   @HttpCode(HttpStatus.OK)
-  @JwtAuth('access')
   @ApiOperation({ summary: '유저가 등록한 모든 직관 경기 반환' })
   @ApiOkResponse({
     type: [RegisteredGameDto],
@@ -71,7 +70,6 @@ export class RegisteredGameController {
 
   @Get('monthly')
   @HttpCode(HttpStatus.OK)
-  @JwtAuth('access')
   @ApiOperation({ summary: '해당 달에 유저가 등록한 모든 직관 경기 반환' })
   @ApiQuery({
     name: 'year',
@@ -105,7 +103,6 @@ export class RegisteredGameController {
 
   @Get(':id')
   @HttpCode(HttpStatus.OK)
-  @JwtAuth('access')
   @ApiOperation({ summary: '유저가 등록한 해당하는 ID의 직관 경기 반환' })
   @ApiNotFoundResponse({
     description: '유저가 등록한 해당하는 ID의 직관 경기가 없을 경우',
@@ -138,6 +135,7 @@ export class RegisteredGameController {
 
   @Delete(':id')
   @HttpCode(HttpStatus.OK)
+  @JwtAuth('access')
   @ApiOperation({ summary: '유저가 등록한 해당하는 ID의 직관 경기 삭제' })
   @ApiNoContentResponse({
     description: '성공 시 별 다른 데이터를 반환하지 않음',
