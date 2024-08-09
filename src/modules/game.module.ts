@@ -6,6 +6,7 @@ import { Game } from 'src/entities/game.entity';
 import { HttpModule } from '@nestjs/axios';
 import { TeamModule } from './team.module';
 import { StadiumModule } from './stadium.module';
+import { AuthModule } from 'src/auth/auth.module';
 
 @Module({
   imports: [
@@ -13,6 +14,7 @@ import { StadiumModule } from './stadium.module';
     TypeOrmModule.forFeature([Game]),
     TeamModule,
     StadiumModule,
+    AuthModule,
   ],
   controllers: [GameController],
   providers: [GameService],

@@ -4,27 +4,42 @@ import { IsNumber, IsString } from 'class-validator';
 
 @Exclude()
 export class StadiumDto {
-  @ApiProperty()
+  @ApiProperty({
+    description: '경기장 ID',
+    example: 1,
+  })
   @IsNumber()
   @Expose()
   id: number;
 
-  @ApiProperty()
+  @ApiProperty({
+    description: '경기장 이름',
+    example: '잠실'
+  })
   @IsString()
   @Expose()
   name: string;
 
-  @ApiProperty()
+  @ApiProperty({
+    description: '경기장 위도',
+    example: 0,
+  })
   @IsNumber()
   @Expose()
   latitude: number;
 
-  @ApiProperty()
+  @ApiProperty({
+    description: '경기장 경도',
+    example: 0,
+  })
   @IsNumber()
   @Expose()
   longitude: number;
 
-  @ApiProperty()
+  @ApiProperty({
+    description: '경기장 주소',
+    example: 'no address',
+  })
   @IsString()
   @Expose()
   address: string;

@@ -23,19 +23,14 @@ export class UserService {
   ) {}
 
   async seed() {
-    const user = new User();
+    const user = new CreateUserDto();
     user.email = 'example@example.com';
     user.password = 'should be hidden';
     user.nickname = 'nickname example';
-    user.profile_image = 'url/to/example/image';
-    user.score = 1000;
+    user.teamId = 1;
+    user.image = 'http://example.com/example.jpg';
 
-    const exampleCheeringTeam = new Team();
-    exampleCheeringTeam.id = 1;
-    exampleCheeringTeam.name = '롯데';
-    user.support_team = exampleCheeringTeam;
-
-    await this.userRepository.insert(user);
+    await this.createUser(user);
     this.logger.log('test user 1 is created');
   }
 

@@ -8,20 +8,24 @@ import {
   HttpCode,
   HttpStatus,
   Put,
-  UseGuards,
   ParseIntPipe,
+  Query,
 } from '@nestjs/common';
 import {
   ApiCreatedResponse,
   ApiOkResponse,
   ApiNotFoundResponse,
   ApiTags,
+  ApiOperation,
+  ApiNoContentResponse,
+  ApiQuery,
 } from '@nestjs/swagger';
 import { plainToInstance } from 'class-transformer';
-import { AccessTokenGuard } from 'src/auth/guard/access-token.guard';
+import { JwtAuth } from 'src/decorator/jwt-token.decorator';
 import { UserDeco } from 'src/decorator/user.decorator';
 import {
   CreateRegisteredGameDto,
+  FindAllMonthlyQueryDto,
   RegisteredGameDto,
   UpdateRegisteredGameDto,
 } from 'src/dtos/registered-game.dto';
@@ -30,13 +34,17 @@ import { RegisteredGameService } from 'src/services/registered-game.service';
 
 @ApiTags('RegisteredGame')
 @Controller('registered-games')
+@JwtAuth('access')
 export class RegisteredGameController {
   constructor(private readonly registeredGameService: RegisteredGameService) {}
 
   @Post()
   @HttpCode(HttpStatus.CREATED)
-  @UseGuards(AccessTokenGuard)
-  @ApiCreatedResponse({ type: RegisteredGameDto })
+  @ApiOperation({ summary: '직관 경기 등록' })
+  @ApiCreatedResponse({
+    type: RegisteredGameDto,
+    description: '등록한 직관 경기의 정보',
+  })
   async create(
     @Body() createRegisteredGameDto: CreateRegisteredGameDto,
     @UserDeco() user: User,
@@ -50,22 +58,41 @@ export class RegisteredGameController {
 
   @Get()
   @HttpCode(HttpStatus.OK)
-  @UseGuards(AccessTokenGuard)
-  @ApiOkResponse({ type: [RegisteredGameDto] })
+  @ApiOperation({ summary: '유저가 등록한 모든 직관 경기 반환' })
+  @ApiOkResponse({
+    type: [RegisteredGameDto],
+    description: '유저가 등록한 직관 경기가 없을 경우에는 빈 배열 반환',
+  })
   async findAll(@UserDeco() user: User): Promise<RegisteredGameDto[]> {
     const registeredGames = await this.registeredGameService.findAll(user);
     return plainToInstance(RegisteredGameDto, registeredGames);
   }
 
-  @Get('monthly/:year/:month')
+  @Get('monthly')
   @HttpCode(HttpStatus.OK)
-  @UseGuards(AccessTokenGuard)
-  @ApiOkResponse({ type: [RegisteredGameDto] })
+  @ApiOperation({ summary: '해당 달에 유저가 등록한 모든 직관 경기 반환' })
+  @ApiQuery({
+    name: 'year',
+    type: Number,
+    description: '년도',
+    example: 2024,
+  })
+  @ApiQuery({
+    name: 'month',
+    type: Number,
+    description: '월',
+    example: 8,
+  })
+  @ApiOkResponse({
+    type: [RegisteredGameDto],
+    description:
+      '해당 달에 유저가 등록한 직관 경기가 없을 경우에는 빈 배열 반환',
+  })
   async findAllMonthly(
-    @Param('year', ParseIntPipe) year: number,
-    @Param('month', ParseIntPipe) month: number,
+    @Query() query: FindAllMonthlyQueryDto,
     @UserDeco() user: User,
   ): Promise<RegisteredGameDto[]> {
+    const { year, month } = query;
     const registeredGames = await this.registeredGameService.findAllMonthly(
       year,
       month,
@@ -76,9 +103,10 @@ export class RegisteredGameController {
 
   @Get(':id')
   @HttpCode(HttpStatus.OK)
-  @UseGuards(AccessTokenGuard)
-  @ApiOkResponse({ type: RegisteredGameDto })
-  @ApiNotFoundResponse()
+  @ApiOperation({ summary: '유저가 등록한 해당하는 ID의 직관 경기 반환' })
+  @ApiNotFoundResponse({
+    description: '유저가 등록한 해당하는 ID의 직관 경기가 없을 경우',
+  })
   async findOne(
     @Param('id', ParseIntPipe) id: number,
     @UserDeco() user: User,
@@ -89,9 +117,14 @@ export class RegisteredGameController {
 
   @Put(':id')
   @HttpCode(HttpStatus.OK)
-  @UseGuards(AccessTokenGuard)
-  @ApiOkResponse()
-  @ApiNotFoundResponse()
+  @JwtAuth('access')
+  @ApiOperation({ summary: '유저가 등록한 해당하는 ID의 직관 경기 수정' })
+  @ApiNoContentResponse({
+    description: '성공 시 별 다른 데이터를 반환하지 않음',
+  })
+  @ApiNotFoundResponse({
+    description: '유저가 등록한 해당하는 ID의 직관 경기가 없을 경우',
+  })
   async update(
     @Param('id', ParseIntPipe) id: number,
     @Body() updateRegisteredGameDto: UpdateRegisteredGameDto,
@@ -102,8 +135,14 @@ export class RegisteredGameController {
 
   @Delete(':id')
   @HttpCode(HttpStatus.OK)
-  @ApiOkResponse()
-  @ApiNotFoundResponse()
+  @JwtAuth('access')
+  @ApiOperation({ summary: '유저가 등록한 해당하는 ID의 직관 경기 삭제' })
+  @ApiNoContentResponse({
+    description: '성공 시 별 다른 데이터를 반환하지 않음',
+  })
+  @ApiNotFoundResponse({
+    description: '유저가 등록한 해당하는 ID의 직관 경기가 없을 경우',
+  })
   async delete(
     @Param('id', ParseIntPipe) id: number,
     @UserDeco() user: User,

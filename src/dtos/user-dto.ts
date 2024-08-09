@@ -17,32 +17,42 @@ import {
 import { CODE_LENGTH } from 'src/const/auth.const';
 
 export class BaseUserDto {
-  @ApiProperty()
+  @ApiProperty({
+    example: 1
+  })
   @Expose()
   @IsNotEmpty()
   @IsNumber()
   id: number;
 
-  @ApiProperty()
+  @ApiProperty({
+    example: 'example@example.com'
+  })
   @Expose()
   @IsNotEmpty()
   @IsString()
   @IsEmail()
   email: string;
 
-  @ApiProperty()
+  @ApiProperty({
+    example: 'nickanme example'
+  })
   @Expose()
   @IsNotEmpty()
   @IsString()
   nickname: string;
 
-  @ApiProperty()
+  @ApiProperty({
+    example: 'url/to/example/image'
+  })
   @Expose()
   @IsNotEmpty()
   @IsString()
   image: string;
 
-  @ApiProperty()
+  @ApiProperty({
+    example: 1
+  })
   @Expose()
   @IsNotEmpty()
   @IsNumber()
@@ -50,13 +60,17 @@ export class BaseUserDto {
 }
 
 export class CreateUserDto extends OmitType(BaseUserDto, ['id']) {
-  @ApiProperty()
+  @ApiProperty({
+    example: 'should be hidden'
+  })
   @IsString()
   password: string;
 }
 
 export class LoginUserDto extends PickType(BaseUserDto, ['email']) {
-  @ApiProperty()
+  @ApiProperty({
+    example: 'should be hidden'
+  })
   @IsString()
   password: string;
 }
