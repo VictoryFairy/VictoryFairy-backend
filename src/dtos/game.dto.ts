@@ -38,17 +38,38 @@ export class GameDto {
   @Expose()
   status: string;
 
-  @ApiProperty()
+  @ApiProperty({
+    description: '홈 팀 정보',
+    example: {
+      id: 7,
+      name: 'LG',
+    }
+  })
   @Expose()
   @Transform(({ obj }) => obj.home_team)
   homeTeam: TeamDto;
 
-  @ApiProperty()
+  @ApiProperty({
+    description: '어웨이 팀 정보',
+    example: {
+      id: 4,
+      name: '삼성'
+    }
+  })
   @Expose()
   @Transform(({ obj }) => obj.away_team)
   awayTeam: TeamDto;
 
-  @ApiProperty()
+  @ApiProperty({
+    description: '경기가 이루어진 경기장 정보',
+    example: {
+      id: 1,
+      name: '잠실',
+      latitude: 0,
+      longitude: 0,
+      address: 'no address'
+    }
+  })
   @Expose()
   stadium: StadiumDto;
 
@@ -56,21 +77,27 @@ export class GameDto {
     description: '홈 팀 점수',
     example: 0,
   })
-  @IsString()
+  @IsNumber()
   @Expose()
   @Transform(({ obj }) => obj.home_team_score)
-  homeTeamScore?: string;
+  homeTeamScore?: number;
 
   @ApiPropertyOptional({
     description: '어웨이 팀 점수',
     example: 7,
   })
-  @IsString()
+  @IsNumber()
   @Expose()
   @Transform(({ obj }) => obj.away_team_score)
-  awayTeamScore?: string;
+  awayTeamScore?: number;
 
-  @ApiPropertyOptional()
+  @ApiPropertyOptional({
+    description: '승리 팀 정보',
+    example: {
+      id: 4,
+      name: '삼성'
+    }
+  })
   @Expose()
   winningTeam?: TeamDto;
 }
