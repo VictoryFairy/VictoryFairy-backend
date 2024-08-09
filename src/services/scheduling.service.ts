@@ -4,6 +4,7 @@ import { GameService } from './game.service';
 import { firstValueFrom } from 'rxjs';
 import { CronJob } from 'cron';
 import * as moment from 'moment-timezone';
+import { RegisteredGameService } from './registered-game.service';
 
 @Injectable()
 export class SchedulingService {
@@ -11,6 +12,7 @@ export class SchedulingService {
 
   constructor(
     private readonly gameService: GameService,
+    private readonly registeredGameService: RegisteredGameService,
     private readonly schedulerRegistry: SchedulerRegistry,
   ) {}
 
@@ -24,6 +26,7 @@ export class SchedulingService {
       complete: () => {
         this.logger.log('Game Data Saved Successfully.');
         this.batchUpdateTodayGames();
+        this.registeredGameService.batchBulkUpdateToday();
       },
       error: (error) => {
         this.logger.error('Error in batchUpdateGames', error.stack);
