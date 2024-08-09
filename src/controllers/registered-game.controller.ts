@@ -9,6 +9,7 @@ import {
   HttpStatus,
   Put,
   ParseIntPipe,
+  Query,
 } from '@nestjs/common';
 import {
   ApiCreatedResponse,
@@ -17,12 +18,14 @@ import {
   ApiTags,
   ApiOperation,
   ApiNoContentResponse,
+  ApiQuery,
 } from '@nestjs/swagger';
 import { plainToInstance } from 'class-transformer';
 import { JwtAuth } from 'src/decorator/jwt-token.decorator';
 import { UserDeco } from 'src/decorator/user.decorator';
 import {
   CreateRegisteredGameDto,
+  FindAllMonthlyQueryDto,
   RegisteredGameDto,
   UpdateRegisteredGameDto,
 } from 'src/dtos/registered-game.dto';
@@ -66,20 +69,32 @@ export class RegisteredGameController {
     return plainToInstance(RegisteredGameDto, registeredGames);
   }
 
-  @Get('monthly/:year/:month')
+  @Get('monthly')
   @HttpCode(HttpStatus.OK)
   @JwtAuth('access')
   @ApiOperation({ summary: '해당 달에 유저가 등록한 모든 직관 경기 반환' })
+  @ApiQuery({
+    name: 'year',
+    type: Number,
+    description: '년도',
+    example: 2024,
+  })
+  @ApiQuery({
+    name: 'month',
+    type: Number,
+    description: '월',
+    example: 8,
+  })
   @ApiOkResponse({
     type: [RegisteredGameDto],
     description:
       '해당 달에 유저가 등록한 직관 경기가 없을 경우에는 빈 배열 반환',
   })
   async findAllMonthly(
-    @Param('year', ParseIntPipe) year: number,
-    @Param('month', ParseIntPipe) month: number,
+    @Query() query: FindAllMonthlyQueryDto,
     @UserDeco() user: User,
   ): Promise<RegisteredGameDto[]> {
+    const { year, month } = query;
     const registeredGames = await this.registeredGameService.findAllMonthly(
       year,
       month,

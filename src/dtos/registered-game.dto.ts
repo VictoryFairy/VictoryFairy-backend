@@ -75,3 +75,13 @@ export class RegisteredGameDto {
   @Transform(({ obj }) => obj.cheering_team.id)
   cheeringTeamId: number;
 }
+
+export class FindAllMonthlyQueryDto {
+  @ApiProperty()
+  @IsNumber()
+  year: number;
+
+  @ApiProperty()
+  @IsNumber()
+  month: number;
+}
