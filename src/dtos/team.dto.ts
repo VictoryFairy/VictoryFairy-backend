@@ -4,12 +4,18 @@ import { IsNumber, IsString } from 'class-validator';
 
 @Exclude()
 export class TeamDto {
-  @ApiProperty()
+  @ApiProperty({
+    description: '팀 ID',
+    example: 1,
+  })
   @IsNumber()
   @Expose()
   id: number;
 
-  @ApiProperty()
+  @ApiProperty({
+    description: '팀 이름',
+    example: '롯데'
+  })
   @IsString()
   @Expose()
   name: string;
