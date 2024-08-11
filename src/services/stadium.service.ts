@@ -31,7 +31,7 @@ export class StadiumService {
       where: { id },
     });
     if (!team) {
-      throw new NotFoundException(`Team with id ${id} is not found`);
+      throw new NotFoundException(`Stadium with id ${id} is not found`);
     }
     return team;
   }

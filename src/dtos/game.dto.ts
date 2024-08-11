@@ -6,57 +6,98 @@ import { StadiumDto } from './stadium.dto';
 
 @Exclude()
 export class GameDto {
-  @ApiProperty()
+  @ApiProperty({
+    description: '경기 ID',
+    example: '20240801SSLG0'
+  })
   @IsNumber()
   @Expose()
-  id: number;
+  id: string;
 
-  @ApiProperty()
+  @ApiProperty({
+    description: '경기 일자',
+    example: '2024-08-01',
+  })
   @IsString()
   @Expose()
-  date: Date;
+  date: string;
 
-  @ApiProperty()
+  @ApiProperty({
+    description: '경기 시작 시간',
+    example: '18:30:00',
+  })
   @IsString()
   @Expose()
   time: string;
 
-  @ApiProperty()
+  @ApiProperty({
+    description: '경기 상태',
+    example: '경기 종료',
+  })
   @IsString()
   @Expose()
   status: string;
 
-  @ApiProperty()
-  @IsString()
+  @ApiProperty({
+    description: '홈 팀 정보',
+    example: {
+      id: 7,
+      name: 'LG',
+    }
+  })
   @Expose()
   @Transform(({ obj }) => obj.home_team)
   homeTeam: TeamDto;
 
-  @ApiProperty()
-  @IsString()
+  @ApiProperty({
+    description: '어웨이 팀 정보',
+    example: {
+      id: 4,
+      name: '삼성'
+    }
+  })
   @Expose()
   @Transform(({ obj }) => obj.away_team)
   awayTeam: TeamDto;
 
-  @ApiProperty()
-  @IsNumber()
+  @ApiProperty({
+    description: '경기가 이루어진 경기장 정보',
+    example: {
+      id: 1,
+      name: '잠실',
+      latitude: 0,
+      longitude: 0,
+      address: 'no address'
+    }
+  })
   @Expose()
   stadium: StadiumDto;
 
-  @ApiPropertyOptional()
-  @IsString()
+  @ApiPropertyOptional({
+    description: '홈 팀 점수',
+    example: 0,
+  })
+  @IsNumber()
   @Expose()
   @Transform(({ obj }) => obj.home_team_score)
-  homeTeamScore?: string;
+  homeTeamScore?: number;
 
-  @ApiPropertyOptional()
-  @IsString()
+  @ApiPropertyOptional({
+    description: '어웨이 팀 점수',
+    example: 7,
+  })
+  @IsNumber()
   @Expose()
   @Transform(({ obj }) => obj.away_team_score)
-  awayTeamScore?: string;
+  awayTeamScore?: number;
 
-  @ApiPropertyOptional()
-  @IsString()
+  @ApiPropertyOptional({
+    description: '승리 팀 정보',
+    example: {
+      id: 4,
+      name: '삼성'
+    }
+  })
   @Expose()
   winningTeam?: TeamDto;
 }
