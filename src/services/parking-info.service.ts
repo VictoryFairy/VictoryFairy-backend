@@ -15,18 +15,21 @@ export class ParkingInfoService {
 
   async seed() {
     await this.parkingInfoRepository.manager.transaction(async (manager) => {
-      const savePromises = parkingInfoSeeder.map(async (seed) => {
-        const parkingInfo = new ParkingInfo();
-        parkingInfo.name = seed.name;
-        parkingInfo.is_free = seed.is_free;
-        parkingInfo.latitude = seed.latitude;
-        parkingInfo.longitude = seed.longitude;
-        parkingInfo.address = seed.address;
-        parkingInfo.stadium = await this.stadiumService.findOne(seed.stadiumId);
-        return manager.save(parkingInfo);
-      });
+      for (const seed of parkingInfoSeeder) {
+        const stadium = await this.stadiumService.findByName(seed.stadium);
 
-      await Promise.all(savePromises);
+        await manager.getRepository(ParkingInfo).upsert(
+          {
+            name: seed.name,
+            latitude: seed.position.lat,
+            longitude: seed.position.lng,
+            address: seed.address,
+            link: seed.link,
+            stadium: stadium,
+          },
+          ['name'],
+        ); // Specify the unique columns
+      }
     });
   }
 

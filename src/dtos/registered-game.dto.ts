@@ -1,4 +1,9 @@
-import { ApiProperty, ApiPropertyOptional, OmitType, PartialType } from '@nestjs/swagger';
+import {
+  ApiProperty,
+  ApiPropertyOptional,
+  OmitType,
+  PartialType,
+} from '@nestjs/swagger';
 import { Exclude, Expose, Transform } from 'class-transformer';
 import { IsNumber, IsString } from 'class-validator';
 import { TRegisteredGameStatus } from 'src/types/registered-game-status.type';
@@ -17,7 +22,7 @@ export class RegisteredGameDto {
 
   @ApiProperty({
     description: '',
-    example: 'http://example.com/url/to/image.jpg'
+    example: 'http://example.com/url/to/image.jpg',
   })
   @IsString()
   @Expose()
@@ -25,7 +30,7 @@ export class RegisteredGameDto {
 
   @ApiProperty({
     description: '좌석 상세',
-    example: '115블록 2열 13번'
+    example: '115블록 2열 13번',
   })
   @IsString()
   @Expose()
@@ -33,7 +38,7 @@ export class RegisteredGameDto {
 
   @ApiProperty({
     description: '감상평',
-    example: '좋았다'
+    example: '좋았다',
   })
   @IsString()
   @Expose()
@@ -63,7 +68,12 @@ export class RegisteredGameDto {
   cheeringTeam: TeamDto;
 }
 
-export class CreateRegisteredGameDto extends OmitType(RegisteredGameDto, ['id', 'status', 'game', 'cheeringTeam'] as const) {
+export class CreateRegisteredGameDto extends OmitType(RegisteredGameDto, [
+  'id',
+  'status',
+  'game',
+  'cheeringTeam',
+] as const) {
   @ApiProperty({
     description: '연결된 경기의 ID',
     example: '20240801SSLG0',
@@ -81,7 +91,9 @@ export class CreateRegisteredGameDto extends OmitType(RegisteredGameDto, ['id', 
   cheeringTeamId: number;
 }
 
-export class UpdateRegisteredGameDto extends PartialType(OmitType(CreateRegisteredGameDto, ['gameId'] as const)) {}
+export class UpdateRegisteredGameDto extends PartialType(
+  OmitType(CreateRegisteredGameDto, ['gameId'] as const),
+) {}
 
 export class FindAllMonthlyQueryDto {
   @ApiProperty({

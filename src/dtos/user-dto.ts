@@ -18,7 +18,7 @@ import { CODE_LENGTH } from 'src/const/auth.const';
 
 export class BaseUserDto {
   @ApiProperty({
-    example: 1
+    example: 1,
   })
   @Expose()
   @IsNotEmpty()
@@ -26,7 +26,7 @@ export class BaseUserDto {
   id: number;
 
   @ApiProperty({
-    example: 'example@example.com'
+    example: 'example@example.com',
   })
   @Expose()
   @IsNotEmpty()
@@ -35,7 +35,7 @@ export class BaseUserDto {
   email: string;
 
   @ApiProperty({
-    example: 'nickanme example'
+    example: 'nickanme example',
   })
   @Expose()
   @IsNotEmpty()
@@ -43,7 +43,7 @@ export class BaseUserDto {
   nickname: string;
 
   @ApiProperty({
-    example: 'url/to/example/image'
+    example: 'url/to/example/image',
   })
   @Expose()
   @IsNotEmpty()
@@ -51,7 +51,7 @@ export class BaseUserDto {
   image: string;
 
   @ApiProperty({
-    example: 1
+    example: 1,
   })
   @Expose()
   @IsNotEmpty()
@@ -61,7 +61,7 @@ export class BaseUserDto {
 
 export class CreateUserDto extends OmitType(BaseUserDto, ['id']) {
   @ApiProperty({
-    example: 'should be hidden'
+    example: 'should be hidden',
   })
   @IsString()
   password: string;
@@ -69,7 +69,7 @@ export class CreateUserDto extends OmitType(BaseUserDto, ['id']) {
 
 export class LoginUserDto extends PickType(BaseUserDto, ['email']) {
   @ApiProperty({
-    example: 'should be hidden'
+    example: 'should be hidden',
   })
   @IsString()
   password: string;

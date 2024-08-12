@@ -1,10 +1,17 @@
-import { Column, Entity, OneToMany, PrimaryGeneratedColumn } from 'typeorm';
+import {
+  Column,
+  Entity,
+  OneToMany,
+  PrimaryGeneratedColumn,
+  Unique,
+} from 'typeorm';
 import { User } from './user.entity';
 import { RegisteredGame } from './registered-game.entity';
 import { CheeringSong } from './cheering-song.entity';
 import { Player } from './player.entity';
 
 @Entity()
+@Unique(['name'])
 export class Team {
   @PrimaryGeneratedColumn()
   id: number;

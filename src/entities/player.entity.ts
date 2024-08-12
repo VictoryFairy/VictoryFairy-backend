@@ -6,11 +6,13 @@ import {
   OneToMany,
   OneToOne,
   PrimaryGeneratedColumn,
+  Unique,
 } from 'typeorm';
 import { Team } from './team.entity';
 import { CheeringSong } from './cheering-song.entity';
 
 @Entity()
+@Unique(['name', 'jersey_number'])
 export class Player {
   @PrimaryGeneratedColumn()
   id: number;
@@ -31,7 +33,6 @@ export class Player {
   @JoinColumn({ name: 'team_id' })
   team: Team;
 
-  @OneToOne(() => CheeringSong, (cheeringSong) => cheeringSong)
-  @JoinColumn({ name: 'cheering_song_id' })
-  cheeringSong: CheeringSong;
+  @OneToMany(() => CheeringSong, (cheeringSong) => cheeringSong.player)
+  cheeringSongs: CheeringSong[];
 }

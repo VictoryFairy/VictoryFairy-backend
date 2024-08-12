@@ -13,16 +13,17 @@ export class StadiumService {
 
   async seed() {
     await this.stadiumRepository.manager.transaction(async (manager) => {
-      const savePromises = stadiumSeeder.map((seed) => {
-        const stadium = new Stadium();
-        stadium.name = seed.name;
-        stadium.address = 'no address';
-        stadium.latitude = 0;
-        stadium.longitude = 0;
-        return manager.save(stadium);
-      });
-
-      await Promise.all(savePromises);
+      for (const seed of stadiumSeeder) {
+        await manager.getRepository(Stadium).upsert(
+          {
+            name: seed.name,
+            full_name: seed.full_name,
+            latitude: seed.lat,
+            longitude: seed.lng,
+          },
+          ['name'],
+        );
+      }
     });
   }
 
@@ -47,17 +48,24 @@ export class StadiumService {
   }
 
   async findByNameOrCreate(name: string): Promise<Stadium> {
-    let stadium = await this.stadiumRepository.findOneBy({ name: name });
+    let stadium = await this.findByName(name);
 
     if (!stadium) {
       stadium = new Stadium();
       stadium.name = name;
-      stadium.address = 'no address';
+      stadium.full_name = '등록되어 있지 않은 경기장';
       stadium.latitude = 0;
       stadium.longitude = 0;
       await this.stadiumRepository.save(stadium);
     }
 
+    return stadium;
+  }
+
+  async findByName(name: string): Promise<Stadium> {
+    const stadium = await this.stadiumRepository.findOne({
+      where: { name },
+    });
     return stadium;
   }
 }

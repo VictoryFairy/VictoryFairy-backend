@@ -6,7 +6,12 @@ import { AuthModule } from 'src/auth/auth.module';
 import { RegisteredGameModule } from './registered-game.module';
 
 @Module({
-  imports: [ScheduleModule.forRoot(), GameModule, AuthModule, RegisteredGameModule],
+  imports: [
+    ScheduleModule.forRoot(),
+    GameModule,
+    AuthModule,
+    RegisteredGameModule,
+  ],
   providers: [SchedulingService],
   exports: [SchedulingService],
 })
