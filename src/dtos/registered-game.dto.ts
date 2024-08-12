@@ -68,7 +68,12 @@ export class RegisteredGameDto {
   cheeringTeam: TeamDto;
 }
 
-export class CreateRegisteredGameDto extends OmitType(RegisteredGameDto, ['id', 'status', 'game', 'cheeringTeam'] as const) {
+export class CreateRegisteredGameDto extends OmitType(RegisteredGameDto, [
+  'id',
+  'status',
+  'game',
+  'cheeringTeam',
+] as const) {
   @ApiProperty({
     description: '연결된 경기의 ID',
     example: '20240801SSLG0',

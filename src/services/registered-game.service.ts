@@ -152,7 +152,8 @@ export class RegisteredGameService {
 
       if (game.status === '경기 종료') {
         if (game.winning_team) {
-          registeredGame.status = registeredGame.cheering_team === game.winning_team ? '승' : '패';
+          registeredGame.status =
+            registeredGame.cheering_team === game.winning_team ? '승' : '패';
         } else {
           registeredGame.status = '무';
         }

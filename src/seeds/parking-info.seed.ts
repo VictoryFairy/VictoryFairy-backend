@@ -443,9 +443,9 @@ export const parkingInfoSeeder: IParkingInfoSeed[] = [
     name: '탄천 공영 주차장',
     position: {
       lat: 37.50886839010873,
-      lng: 127.06834773507624
+      lng: 127.06834773507624,
     },
-    link: 'https://map.naver.com/p/search/탄천 공영 주차장?c=15.00,0,0,0,dh'
+    link: 'https://map.naver.com/p/search/탄천 공영 주차장?c=15.00,0,0,0,dh',
   },
   {
     stadium: '잠실',
@@ -453,9 +453,9 @@ export const parkingInfoSeeder: IParkingInfoSeed[] = [
     name: '잠실 한강공원 4주차장',
     position: {
       lat: 37.51811316856449,
-      lng: 127.0776568427959
+      lng: 127.0776568427959,
     },
-    link: 'https://map.naver.com/p/search/잠실 한강공원 4주차장/place/18844046?c=15.00,0,0,0,dh&isCorrectAnswer=true'
+    link: 'https://map.naver.com/p/search/잠실 한강공원 4주차장/place/18844046?c=15.00,0,0,0,dh&isCorrectAnswer=true',
   },
   {
     stadium: '잠실',
@@ -463,9 +463,9 @@ export const parkingInfoSeeder: IParkingInfoSeed[] = [
     name: '아시아공원 공영 주차장',
     position: {
       lat: 37.5101873,
-      lng: 127.0783176
+      lng: 127.0783176,
     },
-    link: 'https://map.naver.com/p/search/아시아공원 공영 주차장/place/18848839?c=15.00,0,0,0,dh&isCorrectAnswer=true'
+    link: 'https://map.naver.com/p/search/아시아공원 공영 주차장/place/18848839?c=15.00,0,0,0,dh&isCorrectAnswer=true',
   },
   {
     stadium: '창원',
@@ -473,9 +473,9 @@ export const parkingInfoSeeder: IParkingInfoSeed[] = [
     name: '양덕 공영주차장',
     position: {
       lat: 35.2245981486501,
-      lng: 128.582658675348
+      lng: 128.582658675348,
     },
-    link: 'https://naver.me/FQ5VkiKc'
+    link: 'https://naver.me/FQ5VkiKc',
   },
   {
     stadium: '창원',
@@ -483,9 +483,9 @@ export const parkingInfoSeeder: IParkingInfoSeed[] = [
     name: '롯데마트 양덕점',
     position: {
       lat: 35.2236728605877,
-      lng: 128.584565894733
+      lng: 128.584565894733,
     },
-    link: 'https://naver.me/5JJVUy51'
+    link: 'https://naver.me/5JJVUy51',
   },
   {
     stadium: '창원',
@@ -493,9 +493,9 @@ export const parkingInfoSeeder: IParkingInfoSeed[] = [
     name: '양지주차장',
     position: {
       lat: 35.2200817797462,
-      lng: 128.584195927909
+      lng: 128.584195927909,
     },
-    link: 'https://naver.me/xqfuuH3P'
+    link: 'https://naver.me/xqfuuH3P',
   },
   {
     stadium: '창원',
@@ -503,9 +503,9 @@ export const parkingInfoSeeder: IParkingInfoSeed[] = [
     name: 'nc주차장',
     position: {
       lat: 35.2202608294802,
-      lng: 128.586358441367
+      lng: 128.586358441367,
     },
-    link: 'https://naver.me/FQ5VkiKc'
+    link: 'https://naver.me/FQ5VkiKc',
   },
   {
     stadium: '창원',
@@ -513,9 +513,9 @@ export const parkingInfoSeeder: IParkingInfoSeed[] = [
     name: '알뜰주차장',
     position: {
       lat: 35.2187677,
-      lng: 128.5811666
+      lng: 128.5811666,
     },
-    link: 'https://naver.me/FoRH1BoQ'
+    link: 'https://naver.me/FoRH1BoQ',
   },
   {
     stadium: '광주',
@@ -523,9 +523,9 @@ export const parkingInfoSeeder: IParkingInfoSeed[] = [
     name: '중흥파크뒤 노상 공영 주차장',
     position: {
       lat: 35.1711454,
-      lng: 126.8918308
+      lng: 126.8918308,
     },
-    link: 'https://map.naver.com/p/search/광주 북구 서암대로 66 중흥파크'
+    link: 'https://map.naver.com/p/search/광주 북구 서암대로 66 중흥파크',
   },
   {
     stadium: '광주',
@@ -533,9 +533,9 @@ export const parkingInfoSeeder: IParkingInfoSeed[] = [
     name: '대승 민영 주차장',
     position: {
       lat: 35.1713198,
-      lng: 126.8911536
+      lng: 126.8911536,
     },
-    link: 'https://map.naver.com/p/search/광주 북구 운암동 산 1-36'
+    link: 'https://map.naver.com/p/search/광주 북구 운암동 산 1-36',
   },
   {
     stadium: '광주',
@@ -543,8 +543,8 @@ export const parkingInfoSeeder: IParkingInfoSeed[] = [
     name: '임동쌈지 공영 주차장',
     position: {
       lat: 35.1661297476239,
-      lng: 126.894102627012
+      lng: 126.894102627012,
     },
-    link: 'https://map.naver.com/p/search/광주 북구 임동 132-25'
-  }
+    link: 'https://map.naver.com/p/search/광주 북구 임동 132-25',
+  },
 ];

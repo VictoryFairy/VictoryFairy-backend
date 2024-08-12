@@ -21,7 +21,9 @@ export class ParkingInfoService {
         parkingInfo.latitude = seed.position.lat;
         parkingInfo.longitude = seed.position.lng;
         parkingInfo.address = seed.address;
-        parkingInfo.stadium = await this.stadiumService.findByName(seed.stadium);
+        parkingInfo.stadium = await this.stadiumService.findByName(
+          seed.stadium,
+        );
         return manager.save(parkingInfo);
       });
 

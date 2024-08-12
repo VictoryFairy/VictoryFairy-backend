@@ -373,10 +373,10 @@ export class GameService {
         if (review === '리뷰') {
           gameData['winner'] =
             homeTeam.score > awayTeam.score
-            ? homeTeam.name
-            : homeTeam.score < awayTeam.score
-            ? awayTeam.name
-            : null;
+              ? homeTeam.name
+              : homeTeam.score < awayTeam.score
+                ? awayTeam.name
+                : null;
           gameData['homeScore'] = homeTeam.score;
           gameData['awayScore'] = awayTeam.score;
           gameData['status'] = '경기 종료';
