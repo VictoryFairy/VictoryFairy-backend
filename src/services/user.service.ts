@@ -1,5 +1,6 @@
 import {
   BadRequestException,
+  Inject,
   Injectable,
   InternalServerErrorException,
   Logger,
@@ -7,19 +8,35 @@ import {
 import * as bcrypt from 'bcrypt';
 import { HASH_ROUND } from 'src/const/user.const';
 import { InjectRepository } from '@nestjs/typeorm';
-import { FindOptionsRelations, Repository } from 'typeorm';
+import { FindOptionsRelations, FindOptionsSelect, Repository } from 'typeorm';
 import { User } from 'src/entities/user.entity';
 import { CreateUserDto, LoginUserDto } from 'src/dtos/user-dto';
 import { QueryDeepPartialEntity } from 'typeorm/query-builder/QueryPartialEntity';
+import { Redis } from 'ioredis';
 
 @Injectable()
 export class UserService {
   private readonly logger = new Logger(UserService.name);
-
   constructor(
     @InjectRepository(User)
     private readonly userRepository: Repository<User>,
+    @Inject('REDIS_CLIENT')
+    private readonly redisClient: Redis,
   ) {}
+
+  async initCacheUsers() {
+    try {
+      const users = await this.userRepository.find();
+      const cachingPromises = users.map((user) => this.cachingUser(user.id));
+      await Promise.all(cachingPromises);
+    } catch (error) {
+      this.logger.error(
+        `redis userInfo warming failed : ${error.message}`,
+        error.stack,
+      );
+      throw new InternalServerErrorException('redis userInfo warming failed');
+    }
+  }
 
   async isExistEmail(email: string) {
     try {
@@ -37,13 +54,17 @@ export class UserService {
     }
   }
 
-  async findUserById(userId: number, withEntity?: FindOptionsRelations<User>) {
+  async findUserById(
+    userId: number,
+    withEntity?: FindOptionsRelations<User>,
+    select?: FindOptionsSelect<User>,
+  ) {
     try {
       const findUser = await this.userRepository.findOne({
         where: { id: userId },
+        select,
         relations: withEntity,
       });
-      console.log(findUser);
       return findUser;
     } catch (error) {
       throw new InternalServerErrorException('DB<user> 조회 실패');
@@ -70,8 +91,12 @@ export class UserService {
         nickname,
         password: hashPw,
       });
-      return { id: result.identifiers[0].id };
+      const createdUserId = result.identifiers[0].id;
+      //redis caching
+      await this.cachingUser(createdUserId);
+      return { id: createdUserId };
     } catch (error) {
+      this.logger.error(`유저 생성 실패 : ${error.message}`, error.stack);
       throw new InternalServerErrorException('유저 생성 실패');
     }
   }
@@ -109,6 +134,10 @@ export class UserService {
       }
 
       await this.userRepository.update({ id: user.id }, condition);
+      // redis caching
+      if (field === 'image' || field === 'nickname') {
+        await this.cachingUser(user.id);
+      }
     } catch (error) {
       throw new InternalServerErrorException('유저 프로필 업데이트 실패');
     }
@@ -122,6 +151,43 @@ export class UserService {
     if (affected !== 1) {
       throw new InternalServerErrorException('DB 삭제 실패');
     }
+    // redis caching 동기화
+    await this.redisClient.hdel('userInfo', user.id.toString());
     return { affected };
+  }
+
+  // --------------------- redis 관련 ------------------------
+  async cachingUser(id: number) {
+    const userInfo = await this.findUserById(
+      id,
+      {},
+      {
+        id: true,
+        nickname: true,
+        profile_image: true,
+      },
+    );
+    try {
+      const cached = await this.redisClient.hset(
+        'userInfo',
+        userInfo.id.toString(),
+        JSON.stringify(userInfo),
+      );
+      return cached;
+    } catch (error) {
+      throw new InternalServerErrorException('Redis userInfo 캐싱 실패');
+    }
+  }
+
+  async getCachedUsers() {
+    const userInfo = await this.redisClient.hgetall('userInfo');
+    const cachedUsers = Object.entries(userInfo).reduce(
+      (acc, [id, userInfoString]) => {
+        acc[parseInt(id)] = JSON.parse(userInfoString);
+        return acc;
+      },
+      {},
+    );
+    return cachedUsers;
   }
 }
