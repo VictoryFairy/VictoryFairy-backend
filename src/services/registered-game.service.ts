@@ -14,6 +14,7 @@ import { RegisteredGame } from 'src/entities/registered-game.entity';
 import { User } from 'src/entities/user.entity';
 import { TeamService } from './team.service';
 import { GameService } from './game.service';
+import * as moment from 'moment';
 
 @Injectable()
 export class RegisteredGameService {
@@ -134,5 +135,36 @@ export class RegisteredGameService {
     if (result.affected === 0) {
       throw new NotFoundException(`Registered game with ID ${id} not found`);
     }
+  }
+
+  async batchBulkUpdateByGameId(gameId: string): Promise<void> {
+    const game = await this.gameService.findOne(gameId);
+    const registeredGames = await this.registeredGameRepository.find({
+      where: {
+        game,
+      },
+      relations: { cheering_team: true, game: true },
+    });
+    // const registeredGames = await this.registeredGameRepository.find();
+
+    const promises = registeredGames.map(async (registeredGame) => {
+      const game = registeredGame.game;
+
+      if (game.status === '경기 종료') {
+        if (game.winning_team) {
+          registeredGame.status = registeredGame.cheering_team === game.winning_team ? '승' : '패';
+        } else {
+          registeredGame.status = '무';
+        }
+      } else if (/.*취소$/.test(game.status)) {
+        registeredGame.status = '취';
+      } else {
+        registeredGame.status = null;
+      }
+
+      return this.registeredGameRepository.save(registeredGame);
+    });
+
+    await Promise.all(promises);
   }
 }

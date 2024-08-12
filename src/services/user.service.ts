@@ -11,7 +11,6 @@ import { FindOptionsRelations, Repository } from 'typeorm';
 import { User } from 'src/entities/user.entity';
 import { CreateUserDto, LoginUserDto } from 'src/dtos/user-dto';
 import { QueryDeepPartialEntity } from 'typeorm/query-builder/QueryPartialEntity';
-import { Team } from 'src/entities/team.entity';
 
 @Injectable()
 export class UserService {
@@ -21,18 +20,6 @@ export class UserService {
     @InjectRepository(User)
     private readonly userRepository: Repository<User>,
   ) {}
-
-  async seed() {
-    const user = new CreateUserDto();
-    user.email = 'example@example.com';
-    user.password = 'should be hidden';
-    user.nickname = 'nickname example';
-    user.teamId = 1;
-    user.image = 'http://example.com/example.jpg';
-
-    await this.createUser(user);
-    this.logger.log('test user 1 is created');
-  }
 
   async isExistEmail(email: string) {
     try {

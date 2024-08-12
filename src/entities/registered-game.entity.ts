@@ -1,7 +1,6 @@
 import {
   Column,
   CreateDateColumn,
-  DeleteDateColumn,
   Entity,
   JoinColumn,
   ManyToOne,
@@ -12,6 +11,7 @@ import {
 import { Game } from './game.entity';
 import { User } from './user.entity';
 import { Team } from './team.entity';
+import { TRegisteredGameStatus } from 'src/types/registered-game-status.type';
 
 @Entity()
 @Unique(['game', 'user'])
@@ -27,6 +27,9 @@ export class RegisteredGame {
 
   @Column('text')
   review: string;
+
+  @Column({ nullable: true })
+  status?: TRegisteredGameStatus;
 
   @CreateDateColumn({ type: 'timestamptz' })
   created_at: Date;
