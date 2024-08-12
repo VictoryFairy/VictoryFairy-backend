@@ -14,14 +14,15 @@ export class TeamService {
   async seed() {
     await this.teamRepository.manager.transaction(async (manager) => {
       for (const seed of teamSeeder) {
-        await manager.getRepository(Team).upsert({
-          name: seed.name,
-        }, ['name']);
+        await manager.getRepository(Team).upsert(
+          {
+            name: seed.name,
+          },
+          ['name'],
+        );
       }
     });
   }
-  
-  
 
   async findOne(id: number): Promise<Team> {
     const team = await this.teamRepository.findOne({

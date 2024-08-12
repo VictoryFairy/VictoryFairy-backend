@@ -53,13 +53,13 @@ export class CheeringSongService {
 
   async seed() {
     const cheeringSongSeeder = this.getCheeringSongData();
-  
+
     await this.cheeringSongRepository.manager.transaction(async (manager) => {
       for (const seed of cheeringSongSeeder) {
         const team = await this.teamService.findOneByName(seed.team_name);
-  
+
         let player: Player | undefined;
-  
+
         if (seed.player_name) {
           player = await manager.getRepository(Player).findOne({
             where: {
@@ -67,7 +67,7 @@ export class CheeringSongService {
               jersey_number: seed.jersey_number,
             },
           });
-  
+
           if (!player) {
             player = this.playerRepository.create({
               name: seed.player_name,
@@ -76,22 +76,25 @@ export class CheeringSongService {
               throws_bats: seed.throws_bats,
               team: team,
             });
-            await manager.getRepository(Player).upsert(player, ['name', 'jersey_number']);
+            await manager
+              .getRepository(Player)
+              .upsert(player, ['name', 'jersey_number']);
           }
         }
-  
-        await manager.getRepository(CheeringSong).upsert({
-          title: seed.title,
-          lyrics: seed.lyrics,
-          link: seed.link,
-          team: team,
-          player: player,
-        }, ['link']);
+
+        await manager.getRepository(CheeringSong).upsert(
+          {
+            title: seed.title,
+            lyrics: seed.lyrics,
+            link: seed.link,
+            team: team,
+            player: player,
+          },
+          ['link'],
+        );
       }
     });
   }
-  
-  
 
   async findOne(id: number): Promise<CheeringSong> {
     const team = await this.cheeringSongRepository.findOne({

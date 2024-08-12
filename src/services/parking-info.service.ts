@@ -17,20 +17,21 @@ export class ParkingInfoService {
     await this.parkingInfoRepository.manager.transaction(async (manager) => {
       for (const seed of parkingInfoSeeder) {
         const stadium = await this.stadiumService.findByName(seed.stadium);
-  
-        await manager.getRepository(ParkingInfo).upsert({
-          name: seed.name,
-          latitude: seed.position.lat,
-          longitude: seed.position.lng,
-          address: seed.address,
-          link: seed.link,
-          stadium: stadium,
-        }, ['name']); // Specify the unique columns
+
+        await manager.getRepository(ParkingInfo).upsert(
+          {
+            name: seed.name,
+            latitude: seed.position.lat,
+            longitude: seed.position.lng,
+            address: seed.address,
+            link: seed.link,
+            stadium: stadium,
+          },
+          ['name'],
+        ); // Specify the unique columns
       }
     });
   }
-  
-  
 
   async findByStadiumId(stadiumId: number): Promise<ParkingInfo[]> {
     const stadium = await this.stadiumService.findOne(stadiumId);

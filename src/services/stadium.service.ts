@@ -14,17 +14,18 @@ export class StadiumService {
   async seed() {
     await this.stadiumRepository.manager.transaction(async (manager) => {
       for (const seed of stadiumSeeder) {
-        await manager.getRepository(Stadium).upsert({
-          name: seed.name,
-          full_name: seed.full_name,
-          latitude: seed.lat,
-          longitude: seed.lng,
-        }, ['name']);
+        await manager.getRepository(Stadium).upsert(
+          {
+            name: seed.name,
+            full_name: seed.full_name,
+            latitude: seed.lat,
+            longitude: seed.lng,
+          },
+          ['name'],
+        );
       }
     });
   }
-  
-  
 
   async findOne(id: number): Promise<Stadium> {
     const team = await this.stadiumRepository.findOne({

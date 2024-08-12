@@ -1,4 +1,10 @@
-import { Column, Entity, OneToMany, PrimaryGeneratedColumn, Unique } from 'typeorm';
+import {
+  Column,
+  Entity,
+  OneToMany,
+  PrimaryGeneratedColumn,
+  Unique,
+} from 'typeorm';
 import { User } from './user.entity';
 import { RegisteredGame } from './registered-game.entity';
 import { CheeringSong } from './cheering-song.entity';
