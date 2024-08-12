@@ -10,9 +10,6 @@ export class ParkingInfo {
   name: string;
 
   @Column()
-  is_free: boolean;
-
-  @Column()
   latitude: number;
 
   @Column()
@@ -20,6 +17,9 @@ export class ParkingInfo {
 
   @Column()
   address: string;
+
+  @Column()
+  link: string;
 
   @ManyToOne(() => Stadium)
   stadium: Stadium;

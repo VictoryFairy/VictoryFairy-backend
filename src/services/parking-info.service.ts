@@ -18,11 +18,10 @@ export class ParkingInfoService {
       const savePromises = parkingInfoSeeder.map(async (seed) => {
         const parkingInfo = new ParkingInfo();
         parkingInfo.name = seed.name;
-        parkingInfo.is_free = seed.is_free;
-        parkingInfo.latitude = seed.latitude;
-        parkingInfo.longitude = seed.longitude;
+        parkingInfo.latitude = seed.position.lat;
+        parkingInfo.longitude = seed.position.lng;
         parkingInfo.address = seed.address;
-        parkingInfo.stadium = await this.stadiumService.findOne(seed.stadiumId);
+        parkingInfo.stadium = await this.stadiumService.findByName(seed.stadium);
         return manager.save(parkingInfo);
       });
 

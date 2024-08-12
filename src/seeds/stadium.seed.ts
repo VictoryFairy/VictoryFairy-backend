@@ -1,11 +1,6 @@
-import { TStadium } from 'src/types/crawling-game.type';
+import { IStadiumSeed } from 'src/types/seed.type';
 
-export const stadiumSeeder: {
-  name: TStadium;
-  full_name: string;
-  lat: number;
-  lng: number;
-}[] = [
+export const stadiumSeeder: IStadiumSeed[] = [
   {
     name: '잠실',
     full_name: '잠실종합운동장잠실야구장',

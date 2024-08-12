@@ -47,7 +47,7 @@ export class StadiumService {
   }
 
   async findByNameOrCreate(name: string): Promise<Stadium> {
-    let stadium = await this.stadiumRepository.findOneBy({ name: name });
+    let stadium = await this.findByName(name);
 
     if (!stadium) {
       stadium = new Stadium();
@@ -58,6 +58,13 @@ export class StadiumService {
       await this.stadiumRepository.save(stadium);
     }
 
+    return stadium;
+  }
+
+  async findByName(name: string): Promise<Stadium> {
+    const stadium = await this.stadiumRepository.findOne({
+      where: { name },
+    });
     return stadium;
   }
 }

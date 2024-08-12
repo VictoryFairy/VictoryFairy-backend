@@ -14,7 +14,7 @@ export class StadiumDto {
 
   @ApiProperty({
     description: '간단한 경기장 이름',
-    example: '잠실'
+    example: '잠실',
   })
   @IsString()
   @Expose()
@@ -30,7 +30,7 @@ export class StadiumDto {
 
   @ApiProperty({
     description: '경기장 위도',
-    example: 0,
+    example: 37.511985800000055,
   })
   @IsNumber()
   @Expose()
@@ -38,7 +38,7 @@ export class StadiumDto {
 
   @ApiProperty({
     description: '경기장 경도',
-    example: 0,
+    example: 127.0676545539383,
   })
   @IsNumber()
   @Expose()
