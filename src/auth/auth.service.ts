@@ -14,7 +14,7 @@ import { createRandomCode } from 'src/utils/random-code.util';
 import { CODE_LENGTH, CODE_LIMIT_TIME } from 'src/const/auth.const';
 import { InjectRepository } from '@nestjs/typeorm';
 import { User } from 'src/entities/user.entity';
-import { FindOptionsWhere, Repository } from 'typeorm';
+import { FindOptionsRelations, FindOptionsWhere, Repository } from 'typeorm';
 import { EmailWithCodeDto, LoginUserDto } from 'src/dtos/user-dto';
 
 @Injectable()
@@ -30,7 +30,10 @@ export class AuthService {
   ) {}
 
   async loginUser(dto: LoginUserDto) {
-    const user = await this.getUser({ email: dto.email });
+    const user = await this.getUser(
+      { email: dto.email },
+      { support_team: true },
+    );
     if (!user) {
       throw new UnauthorizedException('아이디 또는 비밀번호가 틀림');
     }
@@ -43,7 +46,7 @@ export class AuthService {
       this.issueToken({ id, email }, true),
       this.issueToken({ id, email }, false),
     ];
-    return { rfToken, acToken };
+    return { user, rfToken, acToken };
   }
 
   async makeCodeAndSendMail(email: string) {
@@ -122,8 +125,14 @@ export class AuthService {
     return token;
   }
 
-  async getUser(whereOpt: FindOptionsWhere<User>) {
-    const findUser = await this.userRepository.findOne({ where: whereOpt });
+  async getUser(
+    whereOpt: FindOptionsWhere<User>,
+    relations?: FindOptionsRelations<User>,
+  ) {
+    const findUser = await this.userRepository.findOne({
+      where: whereOpt,
+      relations,
+    });
     if (!findUser) {
       throw new UnauthorizedException('해당 유저를 찾을 수 없음');
     }
