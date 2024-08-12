@@ -70,7 +70,6 @@ export class CreateRegisteredGameDto extends OmitType(RegisteredGameDto, ['id', 
   })
   @IsString()
   @Expose()
-  @Transform(({ obj }) => obj.gameId)
   gameId: string;
 
   @ApiProperty({
