@@ -1,7 +1,7 @@
 import { TStadium, TTeam } from './crawling-game.type';
 
 export interface ICheeringSongSeed {
-  type: 'team_cheer' | 'player_cheer';
+  type: TCheeringSongType
   team_name: TTeam;
   title: string;
   lyrics: string;
@@ -12,6 +12,8 @@ export interface ICheeringSongSeed {
   throws_bats?: string;
   position?: string;
 }
+
+export type TCheeringSongType = 'team' | 'player';
 
 export interface IParkingInfoSeed {
   stadium: TStadium;

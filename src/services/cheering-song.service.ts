@@ -3,10 +3,12 @@ import { InjectRepository } from '@nestjs/typeorm';
 import * as path from 'path';
 import * as fs from 'fs';
 import { CheeringSong } from 'src/entities/cheering-song.entity';
-import { ICheeringSongSeed } from 'src/types/seed.type';
+import { ICheeringSongSeed, TCheeringSongType } from 'src/types/seed.type';
 import { Repository } from 'typeorm';
 import { TeamService } from './team.service';
 import { Player } from 'src/entities/player.entity';
+import { TTeam } from 'src/types/crawling-game.type';
+import { Team } from 'src/entities/team.entity';
 
 @Injectable()
 export class CheeringSongService {
@@ -60,7 +62,7 @@ export class CheeringSongService {
 
         let player: Player | undefined;
 
-        if (seed.player_name) {
+        if (seed.type === 'player') {
           player = await manager.getRepository(Player).findOne({
             where: {
               name: seed.player_name,
@@ -84,6 +86,7 @@ export class CheeringSongService {
 
         await manager.getRepository(CheeringSong).upsert(
           {
+            type: seed.type,
             title: seed.title,
             lyrics: seed.lyrics,
             link: seed.link,
@@ -108,5 +111,17 @@ export class CheeringSongService {
 
   async findAll(): Promise<CheeringSong[]> {
     return await this.cheeringSongRepository.find();
+  }
+
+  async findByTeamIdAndName(teamId: number, type: TCheeringSongType, q?: string): Promise<CheeringSong[]> {
+    const team = await this.teamService.findOne(teamId);
+    const cheeringSongs = this.cheeringSongRepository.find({
+      where: {
+        team,
+        type,
+      }
+    });
+
+    return cheeringSongs;
   }
 }

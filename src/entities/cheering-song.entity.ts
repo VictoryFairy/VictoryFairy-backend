@@ -16,6 +16,9 @@ export class CheeringSong {
   @PrimaryGeneratedColumn()
   id: number;
 
+  @Column()
+  type: string;
+
   @Column({ nullable: true })
   title: string;
 
