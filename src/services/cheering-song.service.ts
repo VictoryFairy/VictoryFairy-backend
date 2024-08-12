@@ -15,6 +15,8 @@ export class CheeringSongService {
   constructor(
     @InjectRepository(CheeringSong)
     private readonly cheeringSongRepository: Repository<CheeringSong>,
+    @InjectRepository(Player)
+    private readonly playerRepository: Repository<Player>,
     private readonly teamService: TeamService,
   ) {}
 
@@ -51,38 +53,45 @@ export class CheeringSongService {
 
   async seed() {
     const cheeringSongSeeder = this.getCheeringSongData();
-
+  
     await this.cheeringSongRepository.manager.transaction(async (manager) => {
-      const savePromises = cheeringSongSeeder.map(async (seed) => {
-        const cheeringSong = new CheeringSong();
-        cheeringSong.title = seed.title;
-        cheeringSong.lyrics = seed.lyrics;
-        cheeringSong.link = seed.link;
-
+      for (const seed of cheeringSongSeeder) {
         const team = await this.teamService.findOneByName(seed.team_name);
-        cheeringSong.team = team;
-
-        await manager.save(cheeringSong);
-
+  
+        let player: Player | undefined;
+  
         if (seed.player_name) {
-          const player = new Player();
-          player.name = seed.player_name;
-          player.jersey_number = seed.jersey_number;
-          player.position = seed.position;
-          player.throws_bats = seed.throws_bats;
-          player.team = team;
-
-          cheeringSong.player = player;
-          player.cheeringSong = cheeringSong;
-
-          manager.insert(Player, player);
+          player = await manager.getRepository(Player).findOne({
+            where: {
+              name: seed.player_name,
+              jersey_number: seed.jersey_number,
+            },
+          });
+  
+          if (!player) {
+            player = this.playerRepository.create({
+              name: seed.player_name,
+              jersey_number: seed.jersey_number,
+              position: seed.position,
+              throws_bats: seed.throws_bats,
+              team: team,
+            });
+            await manager.getRepository(Player).upsert(player, ['name', 'jersey_number']);
+          }
         }
-        return manager.save(cheeringSong);
-      });
-
-      await Promise.all(savePromises);
+  
+        await manager.getRepository(CheeringSong).upsert({
+          title: seed.title,
+          lyrics: seed.lyrics,
+          link: seed.link,
+          team: team,
+          player: player,
+        }, ['link']);
+      }
     });
   }
+  
+  
 
   async findOne(id: number): Promise<CheeringSong> {
     const team = await this.cheeringSongRepository.findOne({

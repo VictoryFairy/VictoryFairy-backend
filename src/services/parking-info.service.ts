@@ -15,22 +15,22 @@ export class ParkingInfoService {
 
   async seed() {
     await this.parkingInfoRepository.manager.transaction(async (manager) => {
-      const savePromises = parkingInfoSeeder.map(async (seed) => {
-        const parkingInfo = new ParkingInfo();
-        parkingInfo.name = seed.name;
-        parkingInfo.latitude = seed.position.lat;
-        parkingInfo.longitude = seed.position.lng;
-        parkingInfo.address = seed.address;
-        parkingInfo.link = seed.link;
-        parkingInfo.stadium = await this.stadiumService.findByName(
-          seed.stadium,
-        );
-        return manager.save(parkingInfo);
-      });
-
-      await Promise.all(savePromises);
+      for (const seed of parkingInfoSeeder) {
+        const stadium = await this.stadiumService.findByName(seed.stadium);
+  
+        await manager.getRepository(ParkingInfo).upsert({
+          name: seed.name,
+          latitude: seed.position.lat,
+          longitude: seed.position.lng,
+          address: seed.address,
+          link: seed.link,
+          stadium: stadium,
+        }, ['name']); // Specify the unique columns
+      }
     });
   }
+  
+  
 
   async findByStadiumId(stadiumId: number): Promise<ParkingInfo[]> {
     const stadium = await this.stadiumService.findOne(stadiumId);
