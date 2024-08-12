@@ -5,11 +5,13 @@ import {
   ManyToOne,
   OneToOne,
   PrimaryGeneratedColumn,
+  Unique,
 } from 'typeorm';
 import { Team } from './team.entity';
 import { Player } from './player.entity';
 
 @Entity()
+@Unique(['link'])
 export class CheeringSong {
   @PrimaryGeneratedColumn()
   id: number;
@@ -27,6 +29,7 @@ export class CheeringSong {
   @JoinColumn({ name: 'team_id' })
   team: Team;
 
-  @OneToOne(() => Player, (player) => player.cheeringSong, { nullable: true })
+  @ManyToOne(() => Player, (player) => player.cheeringSongs, { nullable: true })
+  @JoinColumn({ name: 'player_id' })
   player?: Player;
 }
