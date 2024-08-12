@@ -9,11 +9,11 @@ export class Stadium {
   name: string;
 
   @Column()
+  full_name: string;
+
+  @Column()
   latitude: number;
 
   @Column()
   longitude: number;
-
-  @Column()
-  address: string;
 }

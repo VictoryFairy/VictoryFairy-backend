@@ -16,9 +16,9 @@ export class StadiumService {
       const savePromises = stadiumSeeder.map((seed) => {
         const stadium = new Stadium();
         stadium.name = seed.name;
-        stadium.address = 'no address';
-        stadium.latitude = 0;
-        stadium.longitude = 0;
+        stadium.full_name = seed.full_name;
+        stadium.latitude = seed.lat;
+        stadium.longitude = seed.lng;
         return manager.save(stadium);
       });
 
@@ -52,7 +52,7 @@ export class StadiumService {
     if (!stadium) {
       stadium = new Stadium();
       stadium.name = name;
-      stadium.address = 'no address';
+      stadium.full_name = '등록되어 있지 않은 경기장';
       stadium.latitude = 0;
       stadium.longitude = 0;
       await this.stadiumRepository.save(stadium);

@@ -14,7 +14,7 @@ export class TeamDto {
 
   @ApiProperty({
     description: '팀 이름',
-    example: '롯데'
+    example: '롯데',
   })
   @IsString()
   @Expose()

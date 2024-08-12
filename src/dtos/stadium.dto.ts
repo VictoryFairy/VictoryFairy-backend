@@ -13,12 +13,20 @@ export class StadiumDto {
   id: number;
 
   @ApiProperty({
-    description: '경기장 이름',
+    description: '간단한 경기장 이름',
     example: '잠실'
   })
   @IsString()
   @Expose()
   name: string;
+
+  @ApiProperty({
+    description: '경기장 풀네임',
+    example: '잠실종합운동장잠실야구장',
+  })
+  @IsString()
+  @Expose()
+  full_name: string;
 
   @ApiProperty({
     description: '경기장 위도',
@@ -35,12 +43,4 @@ export class StadiumDto {
   @IsNumber()
   @Expose()
   longitude: number;
-
-  @ApiProperty({
-    description: '경기장 주소',
-    example: 'no address',
-  })
-  @IsString()
-  @Expose()
-  address: string;
 }

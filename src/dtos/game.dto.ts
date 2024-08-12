@@ -8,7 +8,7 @@ import { StadiumDto } from './stadium.dto';
 export class GameDto {
   @ApiProperty({
     description: '경기 ID',
-    example: '20240801SSLG0'
+    example: '20240801SSLG0',
   })
   @IsNumber()
   @Expose()
@@ -43,7 +43,7 @@ export class GameDto {
     example: {
       id: 7,
       name: 'LG',
-    }
+    },
   })
   @Expose()
   @Transform(({ obj }) => obj.home_team)
@@ -53,8 +53,8 @@ export class GameDto {
     description: '어웨이 팀 정보',
     example: {
       id: 4,
-      name: '삼성'
-    }
+      name: '삼성',
+    },
   })
   @Expose()
   @Transform(({ obj }) => obj.away_team)
@@ -67,8 +67,8 @@ export class GameDto {
       name: '잠실',
       latitude: 0,
       longitude: 0,
-      address: 'no address'
-    }
+      address: 'no address',
+    },
   })
   @Expose()
   stadium: StadiumDto;
@@ -95,8 +95,8 @@ export class GameDto {
     description: '승리 팀 정보',
     example: {
       id: 4,
-      name: '삼성'
-    }
+      name: '삼성',
+    },
   })
   @Expose()
   winningTeam?: TeamDto;
