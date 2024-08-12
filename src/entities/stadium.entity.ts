@@ -1,6 +1,7 @@
-import { Column, Entity, PrimaryGeneratedColumn } from 'typeorm';
+import { Column, Entity, PrimaryGeneratedColumn, Unique } from 'typeorm';
 
 @Entity()
+@Unique(['name'])
 export class Stadium {
   @PrimaryGeneratedColumn()
   id: number;
@@ -11,9 +12,9 @@ export class Stadium {
   @Column()
   full_name: string;
 
-  @Column()
+  @Column('double precision')
   latitude: number;
 
-  @Column()
+  @Column('double precision')
   longitude: number;
 }

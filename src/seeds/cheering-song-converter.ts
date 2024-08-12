@@ -1,5 +1,5 @@
 import * as fs from 'fs';
-import { ICheeringSongSeed } from 'src/types/cheering-song-seed.type';
+import { ICheeringSongSeed } from 'src/types/seed.type';
 import * as samsungTeamSong from './raw-cheering-songs/samsung.team.song.json';
 import * as samsungPlayerSong from './raw-cheering-songs/samsung.player.song.json';
 import * as ssgTeamSong from './raw-cheering-songs/ssg.team.song.json';

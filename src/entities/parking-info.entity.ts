@@ -1,7 +1,8 @@
-import { Column, Entity, ManyToOne, PrimaryGeneratedColumn } from 'typeorm';
+import { Column, Entity, ManyToOne, PrimaryGeneratedColumn, Unique } from 'typeorm';
 import { Stadium } from './stadium.entity';
 
 @Entity()
+@Unique(['name'])
 export class ParkingInfo {
   @PrimaryGeneratedColumn()
   id: number;
@@ -9,10 +10,10 @@ export class ParkingInfo {
   @Column()
   name: string;
 
-  @Column()
+  @Column('double precision')
   latitude: number;
 
-  @Column()
+  @Column('double precision')
   longitude: number;
 
   @Column()
