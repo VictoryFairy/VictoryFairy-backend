@@ -1,6 +1,6 @@
 [
   {
-    "type": "player_cheer",
+    "type": "player",
     "team_name": "KIA",
     "title": "박찬호 응원가",
     "lyrics": "나를 봐\n끄떡없어\n쓰러지고 떨어져도\n다시 일어나(박찬호!)\n오를 뿐야(박찬호!)\n난 말야\n똑똑히 봐\n깎일수록 깨질수록\n더욱 세지고(박찬호!)\n강해지는(박찬호!)",
@@ -11,7 +11,7 @@
     "position": "유격수"
   },
   {
-    "type": "player_cheer",
+    "type": "player",
     "team_name": "KIA",
     "title": "김선빈 응원가",
     "lyrics": "작은 거인 KIA의 김선빈~ (김!선!빈!)\n작은 거인 KIA의 김선빈~ (김!선!빈!)\n\n그라운드 위~에서! 자~유롭게~\n작은 거인 KIA 김선빈~ (김!선!빈!)\n\n작은 거인 KIA의 김선빈~ (김!선!빈!)\n작은 거인 KIA의 김선빈~ (김!선!빈!)\n\n그라운드 위~에서! 자~유롭게~\n작은 거인 KIA 김선빈~ (김!선!빈!)",
@@ -22,7 +22,7 @@
     "position": "우투우타"
   },
   {
-    "type": "player_cheer",
+    "type": "player",
     "team_name": "KIA",
     "title": "김도영 응원가",
     "lyrics": "오오 오오(헤이!) 오오 오오(헤이!)\nKIA! 김! 도! 영!\n오오 오오(헤이!) 오오 오오(헤이!)\nKIA! 김! 도! 영!",
@@ -33,7 +33,7 @@
     "position": "3루수, 유격수"
   },
   {
-    "type": "player_cheer",
+    "type": "player",
     "team_name": "KIA",
     "title": "홍종표 응원가",
     "lyrics": "날려라 홍종표 달려라 홍종표 기아의 날쌘돌이 홍종표\n승리를 위하여 달려간다 워어 타이거즈 홍종표\n날려라 홍종표 달려라 홍종표 기아의 날쌘돌이 홍종표\n승리를 위하여 치고 달려라 기!아! 홍종표!",
@@ -44,7 +44,7 @@
     "position": "내야 유틸리티"
   },
   {
-    "type": "player_cheer",
+    "type": "player",
     "team_name": "KIA",
     "title": "이창진 응원가",
     "lyrics": "안~ 타 워어 KIA 이창진\n홈~런 워어 KIA 이창진\n승리를 위해 다같이 외쳐 KIA! 이창진!",
@@ -55,7 +55,7 @@
     "position": "외야수"
   },
   {
-    "type": "player_cheer",
+    "type": "player",
     "team_name": "KIA",
     "title": "김규성 응원가",
     "lyrics": "KIA 김규성\n타이거즈 김규성\n최강 KIA 승리를 위하여\n날려버려라\n\nKIA 김규성\n타이거즈 김규성\n최강 KIA 승리를 위하여\nKIA! 김!규!성!",
@@ -66,7 +66,7 @@
     "position": "내야 유틸리티"
   },
   {
-    "type": "player_cheer",
+    "type": "player",
     "team_name": "KIA",
     "title": "박정우 응원가",
     "lyrics": "자~달릴까 타이거즈 박정우\n워어어어어어 어어~ 기아 박정우!\n\n날려버려라 타이거즈 박정우\n워어어어어어 어어~ 기아 박정우!",
@@ -77,7 +77,7 @@
     "position": "좌투좌타"
   },
   {
-    "type": "player_cheer",
+    "type": "player",
     "team_name": "KIA",
     "title": "최원준 응원가",
     "lyrics": "워어어 KIA 최원준~ 워어어 KIA 최원준~\n워 어 어오! 힘차게 날려라~ (최! 원! 준!)\n\n워어어 KIA 최원준~ 워어어 KIA 최원준~\n워 어 어오! 승리를 위~해~ (최! 원! 준!)",
@@ -88,7 +88,7 @@
     "position": "외야수"
   },
   {
-    "type": "player_cheer",
+    "type": "player",
     "team_name": "KIA",
     "title": "주효상 응원가",
     "lyrics": "워~ 워~ 시원하게 안타\n화끈하게 홈런 KIA 주효상~\n날려버려라 승리를 위하여\n워우워우워우워~\n\n워~ 워~ 시원하게 안타\n화끈하게 홈런 KIA 주효상~\n날려버려라 승리를 위하여\nKIA! 주!효!상!",
@@ -99,7 +99,7 @@
     "position": "포수"
   },
   {
-    "type": "player_cheer",
+    "type": "player",
     "team_name": "KIA",
     "title": "이우성 응원가",
     "lyrics": "타이거즈 이우성~ 워어어어~\n타이거즈 이우성~ 워어어어~\n타이거즈 이우성~ 워어어어~\nKIA! 이우성!\n\n타이거즈 이우성~ 워어어어~\n타이거즈 이우성~ 워어어어~\n타이거즈 이우성~ 워어어어~\nKIA! 이우성!",
@@ -110,7 +110,7 @@
     "position": "우익수"
   },
   {
-    "type": "player_cheer",
+    "type": "player",
     "team_name": "KIA",
     "title": "한승택 응원가",
     "lyrics": "KIA 한승택~ KIA의 안방마님 한승택 워어~\nKIA 한~승택~ 한~승택 워어어 워어어~",
@@ -121,7 +121,7 @@
     "position": "포수"
   },
   {
-    "type": "player_cheer",
+    "type": "player",
     "team_name": "KIA",
     "title": "김호령 응원가",
     "lyrics": "오오오 김호령~ 오오오오 김호령\n호령 호령 김호령 타이거즈 김호령\n\n오오오 김호령~ 오오오오 김호령\n호령 호령 김호령~ 타이거즈 김호령 화이팅!",
@@ -132,7 +132,7 @@
     "position": "중견수"
   },
   {
-    "type": "player_cheer",
+    "type": "player",
     "team_name": "KIA",
     "title": "변우혁 응원가",
     "lyrics": "타이거즈의 변우혁 안타\n날려버려라 변우혁 홈런\n타이거즈의 변우혁 안타\n날려버려라 변우혁 홈런\n\n날려버려라 워워우워워\n변우혁 안타 워워우워워\n날려버려라 워워우워워\n변우혁 홈런 워워우워워",
@@ -143,7 +143,7 @@
     "position": "1루수, 3루수"
   },
   {
-    "type": "player_cheer",
+    "type": "player",
     "team_name": "KIA",
     "title": "소크라테스 응원가",
     "lyrics": "타이거즈 소크라테스\n소크라테스 워어어어어~\n타이거즈 소크라테스\n소크라테스 워어어어~\n\n타이거즈 소크라테스\n소크라테스 워어어어어~\n타이거즈 소크라테스\n소크라테스 워어어어~",
@@ -154,7 +154,7 @@
     "position": ""
   },
   {
-    "type": "player_cheer",
+    "type": "player",
     "team_name": "KIA",
     "title": "최형우 응원가",
     "lyrics": "최강 KIA 타이거즈 최형우~ (최!형!우!)\n최강 KIA 타이거즈 최형우~ (최!형!우!)\n워~ 최형우 워~ 최형우 워~ 최형우[11]\nKIA의 해결사~!",
@@ -165,7 +165,7 @@
     "position": "외야수"
   },
   {
-    "type": "player_cheer",
+    "type": "player",
     "team_name": "KIA",
     "title": "김석환 응원가",
     "lyrics": "최강 KIA의 김석환 안타\n최강 KIA의 김석환 안타\n워어~ 워어어어어어~\n최강 KIA 김석환 안타\n\n최강 KIA의 김석환 안타\n최강 KIA의 김석환 안타\n워어~ 워어어어어어~\n최강 KIA 김석환 안타",
@@ -176,7 +176,7 @@
     "position": "좌익수, 우익수, 1루수"
   },
   {
-    "type": "player_cheer",
+    "type": "player",
     "team_name": "KIA",
     "title": "김태군 응원가",
     "lyrics": "기아의 김태군 (안타!)\n김태군 (홈런!) 타이거즈 김태군\n승리를 부르는 기아의 남자 김태군 워어어어\n\n기아의 김태군 (안타!)\n김태군 (홈런!) 타이거즈 김태군\n승리를 부르는 기아의 남자 김태군 워어어어",
@@ -187,7 +187,7 @@
     "position": "우투우타"
   },
   {
-    "type": "player_cheer",
+    "type": "player",
     "team_name": "KIA",
     "title": "나성범 응원가",
     "lyrics": "타이거즈 나성범 안타\n안타 날려라 날려라 나! 성! 범!\n타이거즈 나성범 안타\n오오 오 오 오오오~\n\n타이거즈 나성범 홈런\n홈런 날려라 날려라 나! 성! 범!\n타이거즈 나성범 홈런\n오오 오 오 오오오~",
@@ -198,7 +198,7 @@
     "position": "외야수"
   },
   {
-    "type": "player_cheer",
+    "type": "player",
     "team_name": "KIA",
     "title": "황대인 응원가",
     "lyrics": "안타를 날려라 홈런을 날려라\n오오오~ KIA 타이거즈 황대인\n승리를 위하여 다함께 외쳐라\n안타! 홈런! 황!대!인! ×2",
@@ -209,7 +209,7 @@
     "position": "1루수"
   },
   {
-    "type": "player_cheer",
+    "type": "player",
     "team_name": "KIA",
     "title": "한준수 응원가",
     "lyrics": "기아의 한준수 워어어 어어어어\n날려라 한준수 워어어어어\n\n기아의 한준수 워어어 어어어어\n날려라 한준수 워어어어어\n\n기아의 한준수 워어어 어어어어\n날려라 한준수 워어어어어\n\n기아의 한준수 워어어 어어어어\n날려라 한준수 워어어어어",
@@ -220,7 +220,7 @@
     "position": ""
   },
   {
-    "type": "player_cheer",
+    "type": "player",
     "team_name": "KIA",
     "title": "고종욱 응원가",
     "lyrics": "오오오 날려라 KIA 고종욱\n오오오 날려라 KIA 고종욱\n승리 위해 Go! Go! Go!\n날려라 KIA 고종욱\n\n오오오 날려라 KIA 고종욱\n오오오 날려라 KIA 고종욱\n승리 위해 Go! Go! Go!\n날려라 KIA 고종욱",
@@ -231,7 +231,7 @@
     "position": "포수"
   },
   {
-    "type": "player_cheer",
+    "type": "player",
     "team_name": "KIA",
     "title": "서건창 응원가",
     "lyrics": "KIA의 서건창 안타! 서건창 안타!\n워어어어어\n\nKIA의 서건창 안타! 서건창 안타!\n워어어어",

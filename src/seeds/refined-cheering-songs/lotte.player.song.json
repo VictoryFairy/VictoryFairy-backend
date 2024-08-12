@@ -1,6 +1,6 @@
 [
   {
-    "type": "team_cheer",
+    "type": "team",
     "team_name": "롯데",
     "title": "손성빈 응원가",
     "lyrics": "최강롯데 자이언츠 롯데 손성빈!\n안타 손성빈! 안타 손성빈!\n오오오오~ 오오~ 손!성!빈! ×2",
@@ -11,7 +11,7 @@
     "position": "포수"
   },
   {
-    "type": "team_cheer",
+    "type": "team",
     "team_name": "롯데",
     "title": "유강남 응원가",
     "lyrics": "롯데의 유강남 오오오~ (유!강!남!)\n롯데의 유강남 오~ 오오오~ ×2",
@@ -22,7 +22,7 @@
     "position": "포수"
   },
   {
-    "type": "team_cheer",
+    "type": "team",
     "team_name": "롯데",
     "title": "정보근 응원가",
     "lyrics": "롯데 자이언츠 정보근 (Hey!)\n롯데 자이언츠 정보근 (Hey!)\n롯데 자이언츠 정보근 (Hey!)\n오 오오 오오오~ ×2",
@@ -33,7 +33,7 @@
     "position": "포수"
   },
   {
-    "type": "team_cheer",
+    "type": "team",
     "team_name": "롯데",
     "title": "오선진 응원가",
     "lyrics": "최강롯데 오선진\n오오오오 오선진\n최강롯데 오선진\n오오 오선진 (오선진!) ×2",
@@ -44,7 +44,7 @@
     "position": "3루수, 유격수, 2루수"
   },
   {
-    "type": "team_cheer",
+    "type": "team",
     "team_name": "롯데",
     "title": "이학주 응원가",
     "lyrics": "오오 롯데 이학주~ 오오 롯데 이학주~\n오오오~ 오오오~ 오오오~\n오오 롯데 이학주~ 오오 롯데 이학주~\n오오오~ 오오오오~ ×2",
@@ -55,7 +55,7 @@
     "position": "유격수, 3루수"
   },
   {
-    "type": "team_cheer",
+    "type": "team",
     "team_name": "롯데",
     "title": "전준우 응원가",
     "lyrics": "안타! 안타! 쌔리라~ 쌔~리라\n롯!데 전준우~\n안타! 안타! 쌔리라~ 쌔~리라\n롯!데 전준우~ ×2",
@@ -66,7 +66,7 @@
     "position": "지명타자, 좌익수"
   },
   {
-    "type": "team_cheer",
+    "type": "team",
     "team_name": "롯데",
     "title": "정훈 응원가",
     "lyrics": "오! 정훈! 자이언츠 정훈!\n오 오오오오~ 오오 오오오~ x2",
@@ -77,7 +77,7 @@
     "position": "1루수, 3루수"
   },
   {
-    "type": "team_cheer",
+    "type": "team",
     "team_name": "롯데",
     "title": "최항 응원가",
     "lyrics": "롯데의 최항\n오오오오오 오오오\n최강롯데 자이언츠\n최항 안타 ×4",
@@ -88,7 +88,7 @@
     "position": "2루수, 3루수, 1루수"
   },
   {
-    "type": "team_cheer",
+    "type": "team",
     "team_name": "롯데",
     "title": "김민성 응원가",
     "lyrics": "롯데의 김민성\n오오 오오오 오오오~ ×4",
@@ -99,7 +99,7 @@
     "position": "3루수, 2루수"
   },
   {
-    "type": "team_cheer",
+    "type": "team",
     "team_name": "롯데",
     "title": "한동희 응원가",
     "lyrics": "롯데 한~동희 오오~\n롯데 한~동희 오오~\n롯데 한동희 안타!\n롯데 한동희 안타!\n오~ 오오오오~ ×2",
@@ -110,7 +110,7 @@
     "position": "3루수, 1루수"
   },
   {
-    "type": "team_cheer",
+    "type": "team",
     "team_name": "롯데",
     "title": "손호영 응원가",
     "lyrics": "롯데의 손호영 안타 쎄리라\n롯데의 손호영 오오오오 ×4",
@@ -121,7 +121,7 @@
     "position": "3루수, 2루수, 유격수"
   },
   {
-    "type": "team_cheer",
+    "type": "team",
     "team_name": "롯데",
     "title": "나승엽 응원가",
     "lyrics": "자이언츠! 나승엽~\n쌔리라! 안타 안타~\n자이언츠! 나~승엽\n오오오오 오오오~ ×2",
@@ -132,7 +132,7 @@
     "position": "1루수"
   },
   {
-    "type": "team_cheer",
+    "type": "team",
     "team_name": "롯데",
     "title": "노진혁 응원가",
     "lyrics": "롯데 노진혁~\n롯데 노진~혁 오오오~\n안타 홈런 오오오~ 오오오오~\n안타 홈런 오오오~ 오오오오~ ×2\n롯데 노진~혁~~",
@@ -143,7 +143,7 @@
     "position": "유격수, 3루수"
   },
   {
-    "type": "team_cheer",
+    "type": "team",
     "team_name": "롯데",
     "title": "박승욱 응원가",
     "lyrics": "롯데의 박승욱 안타 안타!\n롯데의 박승욱 안타 안타~\n오오오 오오오 오오오 오오오\n롯!데! 박!승!욱! ×2",
@@ -154,7 +154,7 @@
     "position": "유격수, 2루수, 3루수"
   },
   {
-    "type": "team_cheer",
+    "type": "team",
     "team_name": "롯데",
     "title": "황성빈 응원가",
     "lyrics": "오~ 롯데의 황성빈~ 오오오~\n안타 안타~ 롯데 황성빈~ (황!성!빈!) X2",
@@ -165,7 +165,7 @@
     "position": "외야수"
   },
   {
-    "type": "team_cheer",
+    "type": "team",
     "team_name": "롯데",
     "title": "김민석 응원가",
     "lyrics": "롯데의~ (Hey!) 김~민석 (Hey!)\n롯데의 승리를 위해~\n롯데의~ (Hey!) 김~민석 (Hey!)\n오 오오 오오오~ 안타! ×2",
@@ -176,7 +176,7 @@
     "position": "좌익수, 중견수"
   },
   {
-    "type": "team_cheer",
+    "type": "team",
     "team_name": "롯데",
     "title": "신윤후 응원가",
     "lyrics": "롯데 신윤후~ 롯데 신윤후~\n안타 안타 오오오오~ ×2",
@@ -187,7 +187,7 @@
     "position": "내·외야 유틸리티"
   },
   {
-    "type": "team_cheer",
+    "type": "team",
     "team_name": "롯데",
     "title": "장두성 응원가",
     "lyrics": "롯데 롯데 장두성~ 롯데의 장두성~\n롯데 롯데 장두성~ 오 오오 오오오오오~ 안타! x2",
@@ -198,7 +198,7 @@
     "position": "외야수"
   },
   {
-    "type": "team_cheer",
+    "type": "team",
     "team_name": "롯데",
     "title": "빅터 레이예스 응원가",
     "lyrics": "빅터 레이예스~\n안타홈런 오오오\n빅터 레이예스~\n오오오 오오\n빅터 레이예스~\n안타홈런 오오오\n빅터 레이예스~\n(롯데! 레이예스!) x2",
@@ -209,7 +209,7 @@
     "position": "좌익수, 우익수"
   },
   {
-    "type": "team_cheer",
+    "type": "team",
     "team_name": "롯데",
     "title": "이정훈 응원가",
     "lyrics": "롯~데 롯데 이정훈 안타~\n오~오오 (HEY!) 오~오오 (HEY!)\n롯~데 롯데 이정훈 안타~\n롯!데! 이!정!훈! X2",
@@ -220,7 +220,7 @@
     "position": "좌익수,지명타자"
   },
   {
-    "type": "team_cheer",
+    "type": "team",
     "team_name": "롯데",
     "title": "고승민 응원가",
     "lyrics": "롯~데의 고승민 안타 안타~\n롯~데의 고승민 안타 안타~~\n워어어 워어어 워어어어~\n워어어 워어어 워어어어~\n롯~데의~ 고승민 안타 안타~",
@@ -231,7 +231,7 @@
     "position": "2루수"
   },
   {
-    "type": "team_cheer",
+    "type": "team",
     "team_name": "롯데",
     "title": "윤동희 응원가",
     "lyrics": "롯데의~ 윤동희! 쌔리라 안타 쌔리라~\n최강롯데 자이언츠! 윤동희~ (안타!) X2",
