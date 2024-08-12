@@ -1,6 +1,7 @@
 import { ApiProperty, ApiPropertyOptional, OmitType, PartialType } from '@nestjs/swagger';
 import { Exclude, Expose, Transform } from 'class-transformer';
 import { IsNumber, IsString } from 'class-validator';
+import { TRegisteredGameStatus } from 'src/types/registered-game-status.type';
 import { TeamDto } from './team.dto';
 import { GameDto } from './game.dto';
 
@@ -38,6 +39,11 @@ export class RegisteredGameDto {
   @Expose()
   review: string;
 
+  @ApiProperty()
+  @IsString()
+  @Expose()
+  status: TRegisteredGameStatus;
+
   @ApiProperty({
     description: '연결된 경기의 정보',
   })
@@ -64,6 +70,7 @@ export class CreateRegisteredGameDto extends OmitType(RegisteredGameDto, ['id', 
   })
   @IsString()
   @Expose()
+  @Transform(({ obj }) => obj.game.id)
   gameId: string;
 
   @ApiProperty({
