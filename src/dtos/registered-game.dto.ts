@@ -42,7 +42,7 @@ export class RegisteredGameDto {
   @ApiProperty()
   @IsString()
   @Expose()
-  status: TRegisteredGameStatus;
+  status?: TRegisteredGameStatus;
 
   @ApiProperty({
     description: '연결된 경기의 정보',
@@ -63,14 +63,13 @@ export class RegisteredGameDto {
   cheeringTeam: TeamDto;
 }
 
-export class CreateRegisteredGameDto extends OmitType(RegisteredGameDto, ['id', 'game', 'cheeringTeam'] as const) {
+export class CreateRegisteredGameDto extends OmitType(RegisteredGameDto, ['id', 'status', 'game', 'cheeringTeam'] as const) {
   @ApiProperty({
     description: '연결된 경기의 ID',
     example: '20240801SSLG0',
   })
   @IsString()
   @Expose()
-  @Transform(({ obj }) => obj.game.id)
   gameId: string;
 
   @ApiProperty({

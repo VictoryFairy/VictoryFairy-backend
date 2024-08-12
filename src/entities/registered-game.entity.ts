@@ -1,7 +1,6 @@
 import {
   Column,
   CreateDateColumn,
-  DeleteDateColumn,
   Entity,
   JoinColumn,
   ManyToOne,
@@ -29,8 +28,8 @@ export class RegisteredGame {
   @Column('text')
   review: string;
 
-  @Column()
-  status: TRegisteredGameStatus;
+  @Column({ nullable: true })
+  status?: TRegisteredGameStatus;
 
   @CreateDateColumn({ type: 'timestamptz' })
   created_at: Date;
