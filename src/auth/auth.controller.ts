@@ -41,14 +41,18 @@ export class AuthController {
   })
   @ApiOkResponse({
     schema: {
-      properties: { acToken: { type: 'string' } },
+      properties: {
+        acToken: { type: 'string' },
+        teamId: { type: 'number' },
+        teamName: { type: 'string' },
+      },
     },
     description: '리프레쉬는 쿠키, 엑세스는 json으로 응답',
   })
   @ApiUnauthorizedResponse({ description: '아이디 또는 비밀번호가 틀린 경우' })
   async login(@Body() body: LoginUserDto, @Res() res: Response) {
     const domain = this.configService.get('DOMAIN');
-    const { acToken, rfToken } = await this.authService.loginUser(body);
+    const { acToken, rfToken, user } = await this.authService.loginUser(body);
 
     const rfExTime = this.configService.get('REFRESH_EXPIRE_TIME');
     const cookieOptions: CookieOptions = {
@@ -57,7 +61,11 @@ export class AuthController {
       httpOnly: true,
     };
     res.cookie('token', rfToken, cookieOptions);
-    return res.json({ acToken });
+    return res.json({
+      acToken,
+      teamId: user.support_team.id,
+      teamName: user.support_team.name,
+    });
   }
 
   /** 유저 로그아웃 */
@@ -74,6 +82,14 @@ export class AuthController {
     });
     return res.sendStatus(HttpStatus.OK);
   }
+
+  /** 유저 리프레쉬 토큰 확인 */
+  @Post('token/check')
+  @HttpCode(HttpStatus.OK)
+  @JwtAuth('refresh')
+  @ApiOperation({ summary: '리프레쉬 토큰 확인' })
+  @ApiOkResponse({ description: '리프레쉬 토큰이 맞는 경우 상태코드만 응답' })
+  async checkRefreshToken() {}
 
   /** 엑세스 토큰 재발급 */
   @Post('token/issue')
