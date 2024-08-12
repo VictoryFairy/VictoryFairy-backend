@@ -18,6 +18,7 @@ import parse from 'node-html-parser';
 import * as moment from 'moment';
 import { BatchUpdateGameDto } from 'src/dtos/batch-update-game.dto';
 import { teamNameToTeamId } from 'src/utils/teamid-mapper';
+import { instanceToPlain } from 'class-transformer';
 
 @Injectable()
 export class GameService {
@@ -81,6 +82,7 @@ export class GameService {
   ): Promise<void> {
     return await this.gameRepository.manager.transaction(async (manager) => {
       const game = await this.findOne(gameId);
+      if (currentStatus.awayScore || currentStatus.awayScore || isNaN(currentStatus.awayScore), isNaN(currentStatus.homeScore)) return;
       game.home_team_score = currentStatus.homeScore;
       game.away_team_score = currentStatus.awayScore;
 
@@ -177,11 +179,15 @@ export class GameService {
           map((response) => extractStatus(response.data)), // 상태 추출
         ),
     }).pipe(
-      map(({ scores, status }) => ({
-        homeScore: scores.homeScore,
-        awayScore: scores.awayScore,
-        status: status.status,
-      })),
+      map(({ scores, status }) => {
+        const data = {
+          homeScore: scores.homeScore,
+          awayScore: scores.awayScore,
+          status: status.status,
+        };
+        this.logger.log(`Scrapped data for game ${gameId} -> homeScore: ${data.homeScore}, awayScore: ${data.awayScore}, status: ${data.status}`);
+        return data;
+      }),
     );
   }
 

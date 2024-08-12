@@ -13,6 +13,7 @@ import { AuthModule } from 'src/auth/auth.module';
     AuthModule,
     GameModule,
     TeamModule,
+    AuthModule,
   ],
   controllers: [RegisteredGameController],
   providers: [RegisteredGameService],
