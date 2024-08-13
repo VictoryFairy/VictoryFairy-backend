@@ -4,7 +4,15 @@ import * as path from 'path';
 import * as fs from 'fs';
 import { CheeringSong } from 'src/entities/cheering-song.entity';
 import { ICheeringSongSeed, TCheeringSongType } from 'src/types/seed.type';
-import { Brackets, FindOptionsWhere, LessThan, Like, MoreThan, QueryBuilder, Repository } from 'typeorm';
+import {
+  Brackets,
+  FindOptionsWhere,
+  LessThan,
+  Like,
+  MoreThan,
+  QueryBuilder,
+  Repository,
+} from 'typeorm';
 import { TeamService } from './team.service';
 import { Player } from 'src/entities/player.entity';
 import { TTeam } from 'src/types/crawling-game.type';
@@ -120,8 +128,8 @@ export class CheeringSongService {
 
     const where: FindOptionsWhere<CheeringSong> = {
       team,
-      type
-    }
+      type,
+    };
 
     if (cursor) {
       where.id = MoreThan(cursor);
@@ -154,30 +162,39 @@ export class CheeringSongService {
     cursor?: number,
     q?: string,
   ): Promise<CursorPageDto<CheeringSong>> {
-    const queryBuilder = this.cheeringSongRepository.createQueryBuilder('cheeringSong')
+    const queryBuilder = this.cheeringSongRepository
+      .createQueryBuilder('cheeringSong')
       .leftJoinAndSelect('cheeringSong.player', 'player')
       .orderBy('cheeringSong.id', 'ASC')
       .take(take + 1);
-  
+
     if (cursor) {
       queryBuilder.andWhere('cheeringSong.id > :cursor', { cursor });
     }
-  
+
     if (q) {
-      queryBuilder.andWhere(new Brackets(qb => {
-        qb.where('cheeringSong.title LIKE :q', { q: `%${q.replace(/[%_]/g, '\\$&')}%` })
-          .orWhere('cheeringSong.lyrics LIKE :q', { q: `%${q.replace(/[%_]/g, '\\$&')}%` })
-          .orWhere('player.name LIKE :q', { q: `%${q.replace(/[%_]/g, '\\$&')}%` });
-      }));
+      queryBuilder.andWhere(
+        new Brackets((qb) => {
+          qb.where('cheeringSong.title LIKE :q', {
+            q: `%${q.replace(/[%_]/g, '\\$&')}%`,
+          })
+            .orWhere('cheeringSong.lyrics LIKE :q', {
+              q: `%${q.replace(/[%_]/g, '\\$&')}%`,
+            })
+            .orWhere('player.name LIKE :q', {
+              q: `%${q.replace(/[%_]/g, '\\$&')}%`,
+            });
+        }),
+      );
     }
-  
+
     const cheeringSongs = await queryBuilder.getMany();
     const count = cheeringSongs.length;
-  
+
     const hasNextData = count > take;
     const data = hasNextData ? cheeringSongs.slice(0, -1) : cheeringSongs;
     const newCursor = data.length > 0 ? data[data.length - 1].id : null;
-  
+
     return {
       data,
       meta: {

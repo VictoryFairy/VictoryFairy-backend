@@ -11,17 +11,27 @@ import {
 
 @Exclude()
 export class CursorPageMetaDto {
-  @ApiPropertyOptional()
+  @ApiPropertyOptional({
+    description: '요청한 데이터의 수',
+    example: 5,
+    default: 5,
+  })
   @IsNumber()
   @Expose()
   take: number = 5;
 
-  @ApiProperty()
+  @ApiProperty({
+    description: '다음 데이터가 있는지 여부',
+    example: true,
+  })
   @IsBoolean()
   @Expose()
   hasNextData: boolean;
 
-  @ApiProperty()
+  @ApiProperty({
+    description: '다음 데이터를 얻기 위해 지정해야하는 커서',
+    example: 255,
+  })
   @IsNumber()
   @Expose()
   cursor: number;
@@ -29,12 +39,16 @@ export class CursorPageMetaDto {
 
 @Exclude()
 export class CursorPageDto<T> {
-  @ApiProperty()
+  @ApiProperty({
+    description: '데이터의 배열 / 그 길이는 take를 넘지 않음',
+  })
   @IsArray()
   @Expose()
   data: T[];
 
-  @ApiProperty()
+  @ApiProperty({
+    description: '페이지네이션 메타 정보',
+  })
   @IsInstance(CursorPageMetaDto)
   @Expose()
   meta: CursorPageMetaDto;
@@ -42,12 +56,18 @@ export class CursorPageDto<T> {
 
 @Exclude()
 export class CursorPageOptionDto {
-  @ApiPropertyOptional({ default: 5 })
+  @ApiProperty({
+    description: '받을 데이터의 수',
+    example: 5,
+  })
   @IsNumber()
   @Expose()
-  take: number = 5;
+  take: number;
 
-  @ApiPropertyOptional()
+  @ApiPropertyOptional({
+    description: '커서의 위치 / 기준은 ID 오름차순',
+    example: 255,
+  })
   @IsOptional()
   @IsNumber()
   @Expose()
@@ -56,7 +76,10 @@ export class CursorPageOptionDto {
 
 @Exclude()
 export class CursorPageWithSearchOptionDto extends CursorPageOptionDto {
-  @ApiPropertyOptional()
+  @ApiPropertyOptional({
+    description: '검색할 키워드',
+    example: '워어어',
+  })
   @IsOptional()
   @IsString()
   @Expose()
