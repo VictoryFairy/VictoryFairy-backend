@@ -7,6 +7,7 @@ import { RegisteredGame } from 'src/entities/registered-game.entity';
 import { User } from 'src/entities/user.entity';
 import { TRegisteredGameStatus } from 'src/types/registered-game-status.type';
 import { Repository } from 'typeorm';
+import * as moment from 'moment';
 
 @Injectable()
 export class RankService {
@@ -22,19 +23,22 @@ export class RankService {
   /** 당일 직관 등록 경기 업데이트하기 */
   @Cron(CronExpression.EVERY_DAY_AT_11PM)
   async rankTodayUpdate() {
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    const thisYear = today.getFullYear();
-    const tomorrow = new Date(today);
-    tomorrow.setDate(today.getDate() + 1);
+    const todayKST = moment.tz('Asia/Seoul').startOf('day');
+    const tomorrowKST = moment(todayKST).add(1, 'day');
+
+    const todayUTC = todayKST.clone().utc().toISOString();
+    const tomorrowUTC = tomorrowKST.clone().utc().toISOString();
+
+    const thisYear = todayKST.year();
+
     const todayRegisterGame = await this.registeredGameRepository
       .createQueryBuilder('registered_game')
       .innerJoin('registered_game.game', 'game')
       .innerJoin('registered_game.cheering_team', 'team')
       .innerJoin('registered_game.user', 'user')
       .where('game.date >= :today AND game.date < :tomorrow', {
-        today: today.toISOString(),
-        tomorrow: tomorrow.toISOString(),
+        today: todayUTC,
+        tomorrow: tomorrowUTC,
       })
       .select([
         'registered_game.status AS status',
