@@ -63,10 +63,10 @@ export class RankService {
     const { status, team_id, user_id, thisYear } = watchedGame;
 
     const columnToUpdate = {
-      승: 'win',
-      패: 'lose',
-      무: 'tie',
-      취: 'cancel',
+      Win: 'win',
+      Lose: 'lose',
+      Tie: 'tie',
+      'No game': 'cancel',
     };
     const foundRankData = await this.rankRepository.findOne({
       where: {
