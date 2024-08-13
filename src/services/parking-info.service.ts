@@ -28,7 +28,7 @@ export class ParkingInfoService {
             stadium: stadium,
           },
           ['name'],
-        ); // Specify the unique columns
+        );
       }
     });
   }
@@ -37,13 +37,16 @@ export class ParkingInfoService {
     const stadium = await this.stadiumService.findOne(stadiumId);
     const parkingInfos = await this.parkingInfoRepository.find({
       where: { stadium },
+      relations: { stadium: true },
     });
 
     return parkingInfos;
   }
 
   async findAll(): Promise<ParkingInfo[]> {
-    const parkingInfos = await this.parkingInfoRepository.find();
+    const parkingInfos = await this.parkingInfoRepository.find({
+      relations: { stadium: true },
+    });
 
     return parkingInfos;
   }
