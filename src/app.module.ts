@@ -18,6 +18,7 @@ import { AwsS3Module } from './modules/aws-s3.module';
 import { SeederService } from './services/seeder.service';
 import { SchedulingModule } from './modules/scheduling.module';
 import { CheeringSongModule } from './modules/cheering-song.module';
+import { EventEmitterModule } from '@nestjs/event-emitter';
 
 @Module({
   imports: [
@@ -28,6 +29,7 @@ import { CheeringSongModule } from './modules/cheering-song.module';
       useFactory: getDatabaseConfig,
       inject: [ConfigService],
     }),
+    EventEmitterModule.forRoot({}),
     ParkingInfoModule,
     StadiumModule,
     TeamModule,
