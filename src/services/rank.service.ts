@@ -7,7 +7,8 @@ import { RegisteredGame } from 'src/entities/registered-game.entity';
 import { User } from 'src/entities/user.entity';
 import { Repository } from 'typeorm';
 import * as moment from 'moment';
-import { CreateRankDto } from 'src/dtos/rank.dto';
+import { CreateRankDto, EventCreateRankDto } from 'src/dtos/rank.dto';
+import { OnEvent } from '@nestjs/event-emitter';
 
 @Injectable()
 export class RankService {
@@ -56,6 +57,14 @@ export class RankService {
     for (const list of userList) {
       await this.updateRedisRankings(list);
     }
+  }
+
+  /** @description 당일이 아닌 이전 직관 경기는 이벤트 리스터로 받아서 랭크 테이블 업데이트 후 랭킹 점수에 반영 */
+  @OnEvent('registeredGame.oldGame')
+  async handleCreateOldGame(payload: EventCreateRankDto) {
+    const thisYear = moment().year();
+    await this.updateRankEntity({ ...payload, thisYear });
+    await this.updateRedisRankings(payload.user_id);
   }
 
   /** @description rank entity에 저장 */
