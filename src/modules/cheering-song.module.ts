@@ -8,7 +8,11 @@ import { Player } from 'src/entities/player.entity';
 import { AuthModule } from 'src/auth/auth.module';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([CheeringSong, Player]), AuthModule, TeamModule],
+  imports: [
+    TypeOrmModule.forFeature([CheeringSong, Player]),
+    AuthModule,
+    TeamModule,
+  ],
   controllers: [CheeringSongController],
   providers: [CheeringSongService],
   exports: [CheeringSongService],

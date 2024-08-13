@@ -130,7 +130,7 @@ function refineNcTeamSong() {
 }
 
 function refineNcPlayerSong() {
-  const type: TCheeringSongType = 'team';
+  const type: TCheeringSongType = 'player';
   const team_name: TTeam = 'NC';
 
   const parsedData = ncPlayerSong.map<ICheeringSongSeed>((elem: any) => ({
@@ -172,7 +172,7 @@ function refineLotteTeamSong() {
 }
 
 function refineLottePlayerSong() {
-  const type: TCheeringSongType = 'team';
+  const type: TCheeringSongType = 'player';
   const team_name: TTeam = '롯데';
 
   const parsedData = lottePlayerSong.map<ICheeringSongSeed>((elem: any) => ({

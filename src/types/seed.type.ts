@@ -1,7 +1,7 @@
 import { TStadium, TTeam } from './crawling-game.type';
 
 export interface ICheeringSongSeed {
-  type: TCheeringSongType
+  type: TCheeringSongType;
   team_name: TTeam;
   title: string;
   lyrics: string;

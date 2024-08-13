@@ -3,22 +3,60 @@ import {
   Get,
   HttpCode,
   HttpStatus,
+  Logger,
   Param,
   ParseIntPipe,
   Query,
 } from '@nestjs/common';
-import { ApiTags, ApiOkResponse, ApiNotFoundResponse, ApiOperation, ApiParam, ApiQuery } from '@nestjs/swagger';
+import {
+  ApiTags,
+  ApiOkResponse,
+  ApiNotFoundResponse,
+  ApiOperation,
+  ApiParam,
+  ApiQuery,
+} from '@nestjs/swagger';
 import { plainToInstance } from 'class-transformer';
 import { JwtAuth } from 'src/decorator/jwt-token.decorator';
 import { CheeringSongDto } from 'src/dtos/cheering-song.dto';
+import {
+  CursorPageDto,
+  CursorPageOptionDto,
+  CursorPageWithSearchOptionDto,
+} from 'src/dtos/cursor-page.dto';
 import { CheeringSongService } from 'src/services/cheering-song.service';
 import { TCheeringSongType } from 'src/types/seed.type';
 
 @ApiTags('CheeringSong')
 @Controller('cheering-songs')
-@JwtAuth('access')
+// @JwtAuth('access')
 export class CheeringSongController {
+  private readonly logger = new Logger(CheeringSongController.name)
+
   constructor(private readonly cheeringSongService: CheeringSongService) {}
+
+  @Get('search')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({
+    summary: '검색한 응원가 목록 및 무한 스크롤 정보 반환',
+  })
+  async findBySearchWithInfiniteScroll(
+    @Query() cursorPageWithSearchOptionDto: CursorPageWithSearchOptionDto,
+  ): Promise<CursorPageDto<CheeringSongDto>> {
+    const { take, cursor, q } = cursorPageWithSearchOptionDto;
+    
+    const cheeringSongsWithCursorMeta =
+      await this.cheeringSongService.findBySearchWithInfiniteScroll(
+        take,
+        cursor,
+        q,
+      );
+
+    return plainToInstance(
+      CursorPageDto<CheeringSongDto>,
+      cheeringSongsWithCursorMeta,
+    );
+  }
 
   @Get(':id')
   @HttpCode(HttpStatus.OK)
@@ -34,7 +72,9 @@ export class CheeringSongController {
 
   @Get('teams/:teamId/types/:type')
   @HttpCode(HttpStatus.OK)
-  @ApiOperation({ summary: '팀 ID, 타입, 검색(지금X)으로 필터링 한 응원가 목록 반환' })
+  @ApiOperation({
+    summary: '팀 ID, 타입으로 필터링 한 응원가 목록 및 무한 스크롤 정보 반환',
+  })
   @ApiParam({
     name: 'teamId',
     type: Number,
@@ -48,28 +88,32 @@ export class CheeringSongController {
     examples: {
       team: {
         summary: '팀 공통 응원가',
-        value: 'team'
+        value: 'team',
       },
       player: {
         summary: '선수 응원가',
-        value: 'player'
-      }
-    }
+        value: 'player',
+      },
+    },
   })
-  @ApiQuery({
-    name: 'q',
-    type: String,
-    description: '검색어',
-    example: '구현 안됨',
-    required: false,
-  })
-  @ApiOkResponse({ type: [CheeringSongDto] })
-  async findByTeam(
+  @ApiOkResponse({ type: CursorPageDto<CheeringSongDto> })
+  async findByTeamAndNameWithInfiniteScroll(
     @Param('teamId', ParseIntPipe) teamId: number,
     @Param('type') type: TCheeringSongType,
-    @Query('q') q: string,
-  ): Promise<CheeringSongDto[]> {
-    const cheeringSongs = await this.cheeringSongService.findByTeamIdAndName(teamId, type, q);
-    return plainToInstance(CheeringSongDto, cheeringSongs);
+    @Query() cursorPageOptionDto: CursorPageOptionDto,
+  ): Promise<CursorPageDto<CheeringSongDto>> {
+    const { take, cursor } = cursorPageOptionDto;
+
+    const cheeringSongsWithCursorMeta =
+      await this.cheeringSongService.findByTeamIdAndTypeWithInfiniteScroll(
+        teamId,
+        type,
+        take,
+        cursor,
+      );
+    return plainToInstance(
+      CursorPageDto<CheeringSongDto>,
+      cheeringSongsWithCursorMeta,
+    );
   }
 }
