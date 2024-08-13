@@ -15,6 +15,8 @@ import { User } from 'src/entities/user.entity';
 import { TeamService } from './team.service';
 import { GameService } from './game.service';
 import * as moment from 'moment';
+import { Game } from 'src/entities/game.entity';
+import { instanceToPlain } from 'class-transformer';
 
 @Injectable()
 export class RegisteredGameService {
@@ -54,6 +56,8 @@ export class RegisteredGameService {
       cheering_team: cheeringTeam,
       user,
     });
+
+    this.defineStatus(game, registeredGame);
 
     await this.registeredGameRepository.save(registeredGame);
 
@@ -150,22 +154,26 @@ export class RegisteredGameService {
     const promises = registeredGames.map(async (registeredGame) => {
       const game = registeredGame.game;
 
-      if (game.status === '경기 종료') {
-        if (game.winning_team) {
-          registeredGame.status =
-            registeredGame.cheering_team === game.winning_team ? '승' : '패';
-        } else {
-          registeredGame.status = '무';
-        }
-      } else if (/.*취소$/.test(game.status)) {
-        registeredGame.status = '취';
-      } else {
-        registeredGame.status = null;
-      }
+      this.defineStatus(game, registeredGame);
 
       return this.registeredGameRepository.save(registeredGame);
     });
 
     await Promise.all(promises);
+  }
+
+  private defineStatus(game: Game, registeredGame: RegisteredGame): void {
+    if (game.status === '경기 종료') {
+      if (game.winning_team) {
+        registeredGame.status =
+          registeredGame.cheering_team.id === game.winning_team.id ? 'Win' : 'Lose';
+      } else {
+        registeredGame.status = 'Tie';
+      }
+    } else if (/.*취소$/.test(game.status)) {
+      registeredGame.status = 'No game';
+    } else {
+      registeredGame.status = null;
+    }
   }
 }

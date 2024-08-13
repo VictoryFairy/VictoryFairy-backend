@@ -1,1 +1,1 @@
-export type TRegisteredGameStatus = '승' | '패' | '무' | '취';
+export type TRegisteredGameStatus = 'Win' | 'Lose' | 'Tie' | 'No game';
