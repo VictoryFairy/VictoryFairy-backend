@@ -1,6 +1,6 @@
 [
   {
-    "type": "player_cheer",
+    "type": "player",
     "team_name": "한화",
     "title": "안치홍 응원가",
     "lyrics": "한화 안치홍~ 한화 안치홍~\n워어 승리를 위하여\n워어어 워어어",
@@ -11,7 +11,7 @@
     "position": "2루수"
   },
   {
-    "type": "player_cheer",
+    "type": "player",
     "team_name": "한화",
     "title": "이도윤 응원가",
     "lyrics": "한화의(의!) 이도윤(윤!)\n워어어어어어어 힘차게 날려라 승리를 위하여\n한화의(의!) 이도윤(윤!)\n워어어어어어어 힘차게 날려라 이도윤 (이!도!윤!)",
@@ -22,7 +22,7 @@
     "position": "유격수"
   },
   {
-    "type": "player_cheer",
+    "type": "player",
     "team_name": "한화",
     "title": "노시환 응원가",
     "lyrics": "노시환!상적으로 날려줘요\n환!상적으로 날려줘요\n이글스 노시환상적으로 날려버려 노시환! x2 (날려버려 노시환!!)\nHey Hey Hey Hey X 3\n날려버려 노시 환!",
@@ -33,7 +33,7 @@
     "position": "3루수"
   },
   {
-    "type": "player_cheer",
+    "type": "player",
     "team_name": "한화",
     "title": "김강민 응원가",
     "lyrics": "안타 김강민\n안타 김강민\n안타 김강민\n오오오오 김강민\n오오오오 짐승강민\n오 김강민",
@@ -44,7 +44,7 @@
     "position": "중견수"
   },
   {
-    "type": "player_cheer",
+    "type": "player",
     "team_name": "한화",
     "title": "최재훈 응원가",
     "lyrics": "케세라세라~ 이글스의 승리 위해~\n워어~안타 날려줘요 한방 날려줘요 이글스의 최재훈~\n케세라세라~ 이글스의 승리 위해~\n워어~\n안타 날려라 날려라 날려라 날려라~ (최! 재! 훈!)",
@@ -55,7 +55,7 @@
     "position": "포수"
   },
   {
-    "type": "player_cheer",
+    "type": "player",
     "team_name": "한화",
     "title": "이명기 응원가",
     "lyrics": "치고 달려라 한화 이명기~\n오오오~\n오오~ 한화 이명기~\n치고 달려라~ 한화 이명기~\n오오오 승리를 위해~\n이!명!기!",
@@ -66,7 +66,7 @@
     "position": "좌익수"
   },
   {
-    "type": "player_cheer",
+    "type": "player",
     "team_name": "한화",
     "title": "하주석 응원가",
     "lyrics": "하주석 유후! 하주석 승리를 위해~\n함께 외쳐라!\n하주석 유후! 하주석 승리를 위해~\n함께 외쳐라 워어\n하!주!석!",
@@ -77,7 +77,7 @@
     "position": "유격수"
   },
   {
-    "type": "player_cheer",
+    "type": "player",
     "team_name": "한화",
     "title": "채은성 응원가",
     "lyrics": "최강한화 채은성 워어어어~\n최강한화 채은성 워어어어~\n저!하늘로 날아올라 빛이 되리라\n워어어어 한화 채은성",
@@ -88,7 +88,7 @@
     "position": "1루수"
   },
   {
-    "type": "player_cheer",
+    "type": "player",
     "team_name": "한화",
     "title": "김태연 응원가",
     "lyrics": "한화의 김태연(Let's go x2) 힘차게 날려라(Let's go x2)\n승리는 언제나 우리의 것(Let's go 탱구)\n한화의 김태연(Let's go x2) 힘차게 날려라(Let's go x2)\n승리는 언제나 우리의 것(Let's go 탱구)\nLet's go 탱구 (x2)",
@@ -99,7 +99,7 @@
     "position": "지명타자"
   },
   {
-    "type": "player_cheer",
+    "type": "player",
     "team_name": "한화",
     "title": "페라자 응원가",
     "lyrics": "페! 페! 페라자 워어어\n워어어 워어어\n안!타! 페! 페! 페라자 워어어\n워어어 워어어\n홈!런!",
@@ -110,7 +110,7 @@
     "position": "외야수"
   },
   {
-    "type": "player_cheer",
+    "type": "player",
     "team_name": "한화",
     "title": "이재원 응원가",
     "lyrics": "이글스의 이재원 오오오\n오오오오 이글스의 이재원\n오오오\n오오오오 이재원\n오오오오\n오오오오\n이글스의 이재원 오오오\n오오오오 이!재!원!",
@@ -121,7 +121,7 @@
     "position": "포수"
   },
   {
-    "type": "player_cheer",
+    "type": "player",
     "team_name": "한화",
     "title": "김인환 응원가",
     "lyrics": "워어어 최강한화 김인환 워~\n승릴위해 외쳐라 (김!인!환!)\n워어어 최강한화 김인환\n워어어 워어어어어 (김!인!환!)",
@@ -132,7 +132,7 @@
     "position": "1루수"
   },
   {
-    "type": "player_cheer",
+    "type": "player",
     "team_name": "한화",
     "title": "최인호 응원가",
     "lyrics": "호! 안타 최인호\n안타 최인호\n워어어어 이글스의 호!\n안타 최인호\n안타 최인호\n워어어어 이글스의 (X2)\n최!인!호!",
@@ -143,7 +143,7 @@
     "position": "외야수"
   },
   {
-    "type": "player_cheer",
+    "type": "player",
     "team_name": "한화",
     "title": "정은원 응원가",
     "lyrics": "오오오 날아올라 한화 정은원 (정!은!원!)\n승리위해 외쳐보자 정은원 안타\n오오오 날아올라 한화 정은원 (정!은!원!)\n승리위해 외쳐보자 정은원 안타~ (정!은!원!)",
@@ -154,7 +154,7 @@
     "position": "2루수"
   },
   {
-    "type": "player_cheer",
+    "type": "player",
     "team_name": "한화",
     "title": "이진영 응원가",
     "lyrics": "한화에 이진영 워어어\n한화에 이진영 워어어\n이순간 너의 모든것을 보여줘\n넌! 이진영이다",
@@ -165,7 +165,7 @@
     "position": "외야수"
   },
   {
-    "type": "player_cheer",
+    "type": "player",
     "team_name": "한화",
     "title": "장진혁 응원가",
     "lyrics": "혁! 한화 장진혁 워어\n안타 장진혁\n워어 안타 장진혁\n승~리 위해 날려버려\n워어~~~ (장!진!혁!)\n혁! 한화 장진혁 워어\n안타 장진혁\n워어 안타 장진혁\n승~리 위해 날려버려\n워~! 장진혁 (장!진!혁!)",
@@ -176,7 +176,7 @@
     "position": "외야수"
   },
   {
-    "type": "player_cheer",
+    "type": "player",
     "team_name": "한화",
     "title": "문현빈 응원가",
     "lyrics": "한화 문현빈 워어어어어\n한화 문현빈 워어어어어\n최강 한화의 승리를 위해\n워어어어 어어어어",
@@ -187,7 +187,7 @@
     "position": "내야수"
   },
   {
-    "type": "player_cheer",
+    "type": "player",
     "team_name": "한화",
     "title": "황영묵 응원가",
     "lyrics": "한화의 황영묵 날려버려라\n한화의 승리를 원하잖아\n최강 한화의 승리를 위해 날려라 묵이~ (×2)\n황!영!묵!",

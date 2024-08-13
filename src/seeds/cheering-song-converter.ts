@@ -1,5 +1,5 @@
 import * as fs from 'fs';
-import { ICheeringSongSeed } from 'src/types/seed.type';
+import { ICheeringSongSeed, TCheeringSongType } from 'src/types/seed.type';
 import * as samsungTeamSong from './raw-cheering-songs/samsung.team.song.json';
 import * as samsungPlayerSong from './raw-cheering-songs/samsung.player.song.json';
 import * as ssgTeamSong from './raw-cheering-songs/ssg.team.song.json';
@@ -20,17 +20,18 @@ import * as ktPlayerSong from './raw-cheering-songs/kt.player.song.json';
 import * as ktTeamSong from './raw-cheering-songs/kt.team.song.json';
 import * as lgPlayerSong from './raw-cheering-songs/lg.player.song.json';
 import * as lgTeamSong from './raw-cheering-songs/lg.team.song.json';
+import { TTeam } from 'src/types/crawling-game.type';
 
 function refineSamsungTeamSong() {
-  const type = 'team_cheer';
-  const team_name = '삼성';
+  const type: TCheeringSongType = 'team';
+  const team_name: TTeam = '삼성';
 
   const parsedData = samsungTeamSong.map<ICheeringSongSeed>((elem: any) => ({
     type,
     team_name,
-    title: elem[type].title,
-    lyrics: elem[type].lyrics,
-    link: elem[type].link,
+    title: elem['team_cheer'].title,
+    lyrics: elem['team_cheer'].lyrics,
+    link: elem['team_cheer'].link,
   }));
 
   fs.writeFileSync(
@@ -41,8 +42,8 @@ function refineSamsungTeamSong() {
 }
 
 function refineSamsungPlayerSong() {
-  const type = 'player_cheer';
-  const team_name = '삼성';
+  const type: TCheeringSongType = 'player';
+  const team_name: TTeam = '삼성';
 
   const parsedData = samsungPlayerSong['player_cheers'].map<ICheeringSongSeed>(
     (elem: any) => ({
@@ -66,15 +67,15 @@ function refineSamsungPlayerSong() {
 }
 
 function refineSsgTeamSong() {
-  const type = 'team_cheer';
-  const team_name = 'SSG';
+  const type: TCheeringSongType = 'team';
+  const team_name: TTeam = 'SSG';
 
   const parsedData = ssgTeamSong.map<ICheeringSongSeed>((elem: any) => ({
     type,
     team_name,
-    title: elem[type].title,
-    lyrics: elem[type].lyrics,
-    link: elem[type].link,
+    title: elem['team_cheer'].title,
+    lyrics: elem['team_cheer'].lyrics,
+    link: elem['team_cheer'].link,
   }));
 
   fs.writeFileSync(
@@ -85,8 +86,8 @@ function refineSsgTeamSong() {
 }
 
 function refineSsgPlayerSong() {
-  const type = 'player_cheer';
-  const team_name = 'SSG';
+  const type: TCheeringSongType = 'player';
+  const team_name: TTeam = 'SSG';
 
   const parsedData = ssgPlayerSong['player_cheers'].map<ICheeringSongSeed>(
     (elem: any) => ({
@@ -110,8 +111,8 @@ function refineSsgPlayerSong() {
 }
 
 function refineNcTeamSong() {
-  const type = 'team_cheer';
-  const team_name = 'NC';
+  const type: TCheeringSongType = 'team';
+  const team_name: TTeam = 'NC';
 
   const parsedData = ncTeamSong.map<ICheeringSongSeed>((elem: any) => ({
     type,
@@ -129,8 +130,8 @@ function refineNcTeamSong() {
 }
 
 function refineNcPlayerSong() {
-  const type = 'team_cheer';
-  const team_name = 'NC';
+  const type: TCheeringSongType = 'player';
+  const team_name: TTeam = 'NC';
 
   const parsedData = ncPlayerSong.map<ICheeringSongSeed>((elem: any) => ({
     type,
@@ -152,8 +153,8 @@ function refineNcPlayerSong() {
 }
 
 function refineLotteTeamSong() {
-  const type = 'team_cheer';
-  const team_name = '롯데';
+  const type: TCheeringSongType = 'team';
+  const team_name: TTeam = '롯데';
 
   const parsedData = lotteTeamSong.map<ICheeringSongSeed>((elem: any) => ({
     type,
@@ -171,8 +172,8 @@ function refineLotteTeamSong() {
 }
 
 function refineLottePlayerSong() {
-  const type = 'team_cheer';
-  const team_name = '롯데';
+  const type: TCheeringSongType = 'player';
+  const team_name: TTeam = '롯데';
 
   const parsedData = lottePlayerSong.map<ICheeringSongSeed>((elem: any) => ({
     type,
@@ -194,8 +195,8 @@ function refineLottePlayerSong() {
 }
 
 function refineLgTeamSong() {
-  const type = 'team_cheer';
-  const team_name = 'LG';
+  const type: TCheeringSongType = 'team';
+  const team_name: TTeam = 'LG';
 
   const parsedData = lgTeamSong['team_cheer'].map<ICheeringSongSeed>(
     (elem: any) => ({
@@ -215,8 +216,8 @@ function refineLgTeamSong() {
 }
 
 function refineLgPlayerSong() {
-  const type = 'player_cheer';
-  const team_name = 'LG';
+  const type: TCheeringSongType = 'player';
+  const team_name: TTeam = 'LG';
 
   const parsedData = lgPlayerSong['player_cheers'].map<ICheeringSongSeed>(
     (elem: any) => ({
@@ -240,8 +241,8 @@ function refineLgPlayerSong() {
 }
 
 function refineKtTeamSong() {
-  const type = 'team_cheer';
-  const team_name = 'KT';
+  const type: TCheeringSongType = 'team';
+  const team_name: TTeam = 'KT';
 
   const parsedData = ktTeamSong['team_cheer'].map<ICheeringSongSeed>(
     (elem: any) => ({
@@ -261,8 +262,8 @@ function refineKtTeamSong() {
 }
 
 function refineKtPlayerSong() {
-  const type = 'player_cheer';
-  const team_name = 'KT';
+  const type: TCheeringSongType = 'player';
+  const team_name: TTeam = 'KT';
 
   const parsedData = ktPlayerSong['player_cheers'].map<ICheeringSongSeed>(
     (elem: any) => ({
@@ -286,8 +287,8 @@ function refineKtPlayerSong() {
 }
 
 function refineKiwoomTeamSong() {
-  const type = 'team_cheer';
-  const team_name = '키움';
+  const type: TCheeringSongType = 'team';
+  const team_name: TTeam = '키움';
 
   const parsedData = kiwoomTeamSong['team_cheer'].map<ICheeringSongSeed>(
     (elem: any) => ({
@@ -307,8 +308,8 @@ function refineKiwoomTeamSong() {
 }
 
 function refineKiwoomPlayerSong() {
-  const type = 'player_cheer';
-  const team_name = '키움';
+  const type: TCheeringSongType = 'player';
+  const team_name: TTeam = '키움';
 
   const parsedData = kiwoomPlayerSong['player_cheers'].map<ICheeringSongSeed>(
     (elem: any) => ({
@@ -332,8 +333,8 @@ function refineKiwoomPlayerSong() {
 }
 
 function refineKiaTeamSong() {
-  const type = 'team_cheer';
-  const team_name = 'KIA';
+  const type: TCheeringSongType = 'team';
+  const team_name: TTeam = 'KIA';
 
   const parsedData = kiaTeamSong.map<ICheeringSongSeed>((elem: any) => ({
     type,
@@ -351,8 +352,8 @@ function refineKiaTeamSong() {
 }
 
 function refineKiaPlayerSong() {
-  const type = 'player_cheer';
-  const team_name = 'KIA';
+  const type: TCheeringSongType = 'player';
+  const team_name: TTeam = 'KIA';
 
   const parsedData = kiaPlayerSong.map<ICheeringSongSeed>((elem: any) => ({
     type,
@@ -374,15 +375,15 @@ function refineKiaPlayerSong() {
 }
 
 function refineHanhwaTeamSong() {
-  const type = 'team_cheer';
-  const team_name = '한화';
+  const type: TCheeringSongType = 'team';
+  const team_name: TTeam = '한화';
 
   const parsedData = hanhwaTeamSong.map<ICheeringSongSeed>((elem: any) => ({
     type,
     team_name,
-    title: elem[type].title,
-    lyrics: elem[type].lyrics,
-    link: elem[type].link,
+    title: elem['team_cheer'].title,
+    lyrics: elem['team_cheer'].lyrics,
+    link: elem['team_cheer'].link,
   }));
 
   fs.writeFileSync(
@@ -393,8 +394,8 @@ function refineHanhwaTeamSong() {
 }
 
 function refineHanhwaPlayerSong() {
-  const type = 'player_cheer';
-  const team_name = '한화';
+  const type: TCheeringSongType = 'player';
+  const team_name: TTeam = '한화';
 
   const parsedData = hanhwaPlayerSong['player_cheers'].map<ICheeringSongSeed>(
     (elem: any) => ({
@@ -418,8 +419,8 @@ function refineHanhwaPlayerSong() {
 }
 
 function refineDoosanTeamSong() {
-  const type = 'team_cheer';
-  const team_name = '두산';
+  const type: TCheeringSongType = 'team';
+  const team_name: TTeam = '두산';
 
   const parsedData = doosanTeamSong['team_cheer'].map<ICheeringSongSeed>(
     (elem: any) => ({
@@ -439,8 +440,8 @@ function refineDoosanTeamSong() {
 }
 
 function refineDoosanPlayerSong() {
-  const type = 'player_cheer';
-  const team_name = '두산';
+  const type: TCheeringSongType = 'player';
+  const team_name: TTeam = '두산';
 
   const parsedData = doosanPlayerSong['player_cheers'].map<ICheeringSongSeed>(
     (elem: any) => ({
