@@ -47,11 +47,9 @@ export class RankService {
       ])
       .getRawMany();
 
-    const updateTablePromises = todayRegisterGame.map((watched) => {
-      return this.updateRankTable({ ...watched, thisYear });
-    });
-
-    await Promise.all(updateTablePromises);
+    for (const watched of todayRegisterGame) {
+      await this.updateRankTable({ ...watched, thisYear });
+    }
   }
 
   async updateRankTable(watchedGame: {

@@ -33,7 +33,7 @@ export class User {
   @OneToMany(() => Rank, (rank) => rank.id)
   rank: Rank[];
 
-  @ManyToOne(() => Team, (team) => team.users)
+  @ManyToOne(() => Team, (team) => team.users, { cascade: true })
   @JoinColumn({ name: 'support_team_id' })
   support_team: Team;
 

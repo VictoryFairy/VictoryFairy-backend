@@ -12,7 +12,7 @@ export class Rank {
   @PrimaryGeneratedColumn()
   id: number;
 
-  @ManyToOne(() => User, (user) => user.id)
+  @ManyToOne(() => User, (user) => user.id, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'user_id' })
   user: User;
 
