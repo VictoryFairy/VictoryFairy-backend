@@ -8,6 +8,7 @@ import {
 } from 'typeorm';
 import { Team } from './team.entity';
 import { RegisteredGame } from './registered-game.entity';
+import { Rank } from './rank.entity';
 
 @Entity()
 export class User {
@@ -29,7 +30,10 @@ export class User {
   @Column({ default: 1000 })
   score: number;
 
-  @ManyToOne(() => Team, (team) => team.users)
+  @OneToMany(() => Rank, (rank) => rank.id)
+  rank: Rank[];
+
+  @ManyToOne(() => Team, (team) => team.users, { cascade: true })
   @JoinColumn({ name: 'support_team_id' })
   support_team: Team;
 
