@@ -1,4 +1,5 @@
-import { OmitType } from '@nestjs/swagger';
+import { ApiPropertyOptional, OmitType } from '@nestjs/swagger';
+import { IsNumber, IsOptional } from 'class-validator';
 import { TRegisteredGameStatus } from 'src/types/registered-game-status.type';
 
 export class CreateRankDto {
@@ -11,3 +12,10 @@ export class CreateRankDto {
 export class EventCreateRankDto extends OmitType(CreateRankDto, [
   'thisYear',
 ] as const) {}
+
+export class QueryTotalRankingListAboutTeamDto {
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsNumber()
+  teamId?: number;
+}

@@ -98,6 +98,33 @@ export class RankService {
     }
   }
 
+  /** @description 랭킹 리스트 전부, teamId가 들어오면 해당 팀의 랭킹 리스트 전부 */
+  async getRankList(teamId?: number) {
+    const key = teamId ? teamId : 'total';
+    const rankList = await this.redisClient.zrevrange(
+      `rank:${key}`,
+      0,
+      -1,
+      'WITHSCORES',
+    );
+    const rawUserInfo = await this.redisClient.hgetall('userInfo');
+    const parsedInfo = {};
+    Object.values(rawUserInfo).forEach((user) => {
+      const obj = JSON.parse(user);
+      parsedInfo[obj.id] = obj;
+    });
+
+    const rankData = [];
+    for (let index = 0; index < rankList.length; index += 2) {
+      const user_id = parseInt(rankList[index]);
+      const score = parseInt(rankList[index + 1]);
+      const { id, ...rest } = parsedInfo[user_id];
+      const rank = index / 2 + 1;
+      rankData.push({ rank, score, ...rest, user_id });
+    }
+    return rankData;
+  }
+
   /** @description 랭킹 점수 레디스에 반영 */
   async updateRedisRankings(userId: number) {
     const stat = await this.calculateUserRankings(userId);
