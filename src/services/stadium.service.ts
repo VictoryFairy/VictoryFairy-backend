@@ -2,7 +2,7 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Stadium } from 'src/entities/stadium.entity';
 import { stadiumSeeder } from 'src/seeds/stadium.seed';
-import { Repository } from 'typeorm';
+import { Not, Repository } from 'typeorm';
 
 @Injectable()
 export class StadiumService {
@@ -40,10 +40,12 @@ export class StadiumService {
   async findAll(name?: string): Promise<Stadium[]> {
     if (name) {
       return await this.stadiumRepository.find({
-        where: { name },
+        where: { name, full_name: Not('등록되어 있지 않은 경기장') },
       });
     } else {
-      return await this.stadiumRepository.find();
+      return await this.stadiumRepository.find({
+        where: { full_name: Not('등록되어 있지 않은 경기장') },
+      });
     }
   }
 

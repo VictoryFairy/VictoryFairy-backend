@@ -1,10 +1,17 @@
-import { PutObjectCommand, S3Client } from '@aws-sdk/client-s3';
-import { Inject, Injectable } from '@nestjs/common';
+import {
+  DeleteObjectCommand,
+  PutObjectCommand,
+  S3Client,
+} from '@aws-sdk/client-s3';
+import { Inject, Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
+import { DeleteImageAwsS3Dto } from 'src/dtos/aws-s3.dto';
 import { v4 as uuid4 } from 'uuid';
 
 @Injectable()
 export class AwsS3Service {
+  private readonly logger = new Logger(AwsS3Service.name);
+
   constructor(
     private readonly configService: ConfigService,
     @Inject('S3_CLIENT')
@@ -37,6 +44,23 @@ export class AwsS3Service {
     await this.s3Client.send(command);
     const fileUrl = `https://${bucketName}.s3.${region}.amazonaws.com/${uploadName}`;
     return fileUrl;
+  }
+
+  async deleteImage(deleteImageAwsS3Dto: DeleteImageAwsS3Dto): Promise<void> {
+    const { bucketName } = this.getEnv();
+    const { fileUrl } = deleteImageAwsS3Dto;
+    const uploadName = this.extractKeyFromUrl(fileUrl);
+
+    const command = new DeleteObjectCommand({
+      Bucket: bucketName,
+      Key: uploadName,
+    });
+    const result = await this.s3Client.send(command);
+  }
+
+  private extractKeyFromUrl(url: string): string {
+    const urlObj = new URL(url);
+    return decodeURIComponent(urlObj.pathname.substring(1));
   }
 
   /** 환경변수 게터 함수 */

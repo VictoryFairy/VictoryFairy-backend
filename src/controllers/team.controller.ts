@@ -7,7 +7,7 @@ import {
   ParseIntPipe,
   Query,
 } from '@nestjs/common';
-import { ApiOperation, ApiQuery, ApiTags } from '@nestjs/swagger';
+import { ApiOperation, ApiParam, ApiQuery, ApiTags } from '@nestjs/swagger';
 import { ApiOkResponse, ApiNotFoundResponse } from '@nestjs/swagger';
 import { plainToInstance } from 'class-transformer';
 import { JwtAuth } from 'src/decorator/jwt-token.decorator';
@@ -38,6 +38,11 @@ export class TeamController {
   @Get(':id')
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: '해당하는 ID의 팀 정보 반환 ' })
+  @ApiParam({
+    name: 'id',
+    description: '팀 ID',
+    example: 1,
+  })
   @ApiOkResponse({ type: TeamDto })
   @ApiNotFoundResponse({ description: '해당하는 ID의 팀이 없을 경우' })
   async findOne(@Param('id', ParseIntPipe) id: number): Promise<TeamDto> {

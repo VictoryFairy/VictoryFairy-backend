@@ -19,6 +19,7 @@ import {
   ApiOperation,
   ApiNoContentResponse,
   ApiQuery,
+  ApiParam,
 } from '@nestjs/swagger';
 import { plainToInstance } from 'class-transformer';
 import { JwtAuth } from 'src/decorator/jwt-token.decorator';
@@ -104,6 +105,10 @@ export class RegisteredGameController {
   @Get(':id')
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: '유저가 등록한 해당하는 ID의 직관 경기 반환' })
+  @ApiParam({
+    name: 'id',
+    description: '등록한 직관 경기 ID',
+    example: 1,
   @ApiOkResponse({
     type: RegisteredGameDto,
     description: '요청한 ID의 직관 경기',
@@ -122,6 +127,11 @@ export class RegisteredGameController {
   @Put(':id')
   @HttpCode(HttpStatus.NO_CONTENT)
   @ApiOperation({ summary: '유저가 등록한 해당하는 ID의 직관 경기 수정' })
+  @ApiParam({
+    name: 'id',
+    description: '등록한 직관 경기 ID',
+    example: 1,
+  })
   @ApiNoContentResponse({
     description: '성공 시 별 다른 데이터를 반환하지 않음',
   })
@@ -139,6 +149,11 @@ export class RegisteredGameController {
   @Delete(':id')
   @HttpCode(HttpStatus.NO_CONTENT)
   @ApiOperation({ summary: '유저가 등록한 해당하는 ID의 직관 경기 삭제' })
+  @ApiParam({
+    name: 'id',
+    description: '등록한 직관 경기 ID',
+    example: 1,
+  })
   @ApiNoContentResponse({
     description: '성공 시 별 다른 데이터를 반환하지 않음',
   })
