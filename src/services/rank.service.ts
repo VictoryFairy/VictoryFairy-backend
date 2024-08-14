@@ -1,4 +1,4 @@
-import { Inject, Injectable } from '@nestjs/common';
+import { BadRequestException, Inject, Injectable } from '@nestjs/common';
 import { Cron, CronExpression } from '@nestjs/schedule';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Redis } from 'ioredis';
@@ -93,6 +93,40 @@ export class RankService {
     }
   }
 
+  /** @description 랭킹 상위 3명 가져오기 */
+  async getTopThreeRankList(teamId?: number) {
+    const key = teamId ? teamId : 'total';
+    const rankList = await this.redisClient.zrevrange(
+      `rank:${key}`,
+      0,
+      2,
+      'WITHSCORES',
+    );
+
+    return this.processRankList(rankList);
+  }
+  /** @description 랭킹 리스트에서 유저와 근처 유저 1명씩 가져오기 */
+  async getUserRankWithNeighbors(userId: number, teamId?: number) {
+    const key = teamId ? teamId : 'total';
+    const userRank = await this.redisClient.zrank(
+      `rank:${key}`,
+      userId.toString(),
+    );
+    if (!userRank) {
+      throw new BadRequestException('해당 유저가 랭킹 리스트에 없습니다');
+    }
+    const start = Math.max(userRank - 1, 0);
+    const end = userRank + 1;
+    const rankList = await this.redisClient.zrevrange(
+      `rank:${key}`,
+      start,
+      end,
+      'WITHSCORES',
+    );
+
+    return this.processRankList(rankList);
+  }
+
   /** @description 랭킹 리스트 전부, teamId가 들어오면 해당 팀의 랭킹 리스트 전부 */
   async getRankList(teamId?: number) {
     const key = teamId ? teamId : 'total';
@@ -102,6 +136,12 @@ export class RankService {
       -1,
       'WITHSCORES',
     );
+
+    return this.processRankList(rankList);
+  }
+
+  /** @description 레디스 랭킹과 유저 정보 데이터 합쳐서 가공 */
+  private async processRankList(rankList: string[]) {
     const rawUserInfo = await this.redisClient.hgetall('userInfo');
     const parsedInfo = {};
     Object.values(rawUserInfo).forEach((user) => {
