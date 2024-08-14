@@ -19,6 +19,7 @@ import { SeederService } from './services/seeder.service';
 import { SchedulingModule } from './modules/scheduling.module';
 import { CheeringSongModule } from './modules/cheering-song.module';
 import { EventEmitterModule } from '@nestjs/event-emitter';
+import { LikeModule } from './modules/like.module';
 
 @Module({
   imports: [
@@ -43,6 +44,7 @@ import { EventEmitterModule } from '@nestjs/event-emitter';
     AwsS3Module,
     SchedulingModule,
     CheeringSongModule,
+    LikeModule,
   ],
   controllers: [AppController],
   providers: [AppService, SeederService],

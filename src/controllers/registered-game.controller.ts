@@ -106,7 +106,7 @@ export class RegisteredGameController {
   @ApiOperation({ summary: '유저가 등록한 해당하는 ID의 직관 경기 반환' })
   @ApiOkResponse({
     type: RegisteredGameDto,
-    description: '요청한 ID의 직관 경기'
+    description: '요청한 ID의 직관 경기',
   })
   @ApiNotFoundResponse({
     description: '유저가 등록한 해당하는 ID의 직관 경기가 없을 경우',
