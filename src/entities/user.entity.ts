@@ -27,9 +27,6 @@ export class User {
   @Column()
   password: string;
 
-  @Column({ default: 1000 })
-  score: number;
-
   @OneToMany(() => Rank, (rank) => rank.id)
   rank: Rank[];
 

@@ -13,6 +13,7 @@ import { User } from 'src/entities/user.entity';
 import { CreateUserDto, LoginUserDto } from 'src/dtos/user-dto';
 import { QueryDeepPartialEntity } from 'typeorm/query-builder/QueryPartialEntity';
 import { Redis } from 'ioredis';
+import { EventEmitter2, OnEvent } from '@nestjs/event-emitter';
 
 @Injectable()
 export class UserService {
@@ -22,13 +23,21 @@ export class UserService {
     private readonly userRepository: Repository<User>,
     @Inject('REDIS_CLIENT')
     private readonly redisClient: Redis,
+    private readonly eventEmitter: EventEmitter2,
   ) {}
 
+  @OnEvent('redis-connected')
   async initCacheUsers() {
     try {
       const users = await this.userRepository.find();
-      const cachingPromises = users.map((user) => this.cachingUser(user.id));
+      const userIds = [];
+      const cachingPromises = users.map((user) => {
+        userIds.push(user.id);
+        return this.cachingUser(user.id);
+      });
       await Promise.all(cachingPromises);
+      this.eventEmitter.emit('user-warmed', userIds);
+      this.logger.log('유저 정보 레디스 캐싱 완료');
     } catch (error) {
       this.logger.error(
         `redis userInfo warming failed : ${error.message}`,

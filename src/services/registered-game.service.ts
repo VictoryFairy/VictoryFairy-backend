@@ -16,7 +16,9 @@ import { TeamService } from './team.service';
 import { GameService } from './game.service';
 import * as moment from 'moment';
 import { Game } from 'src/entities/game.entity';
-import { instanceToPlain } from 'class-transformer';
+import { EventEmitter2 } from '@nestjs/event-emitter';
+import { EventCreateRankDto } from 'src/dtos/rank.dto';
+import { plainToInstance } from 'class-transformer';
 
 @Injectable()
 export class RegisteredGameService {
@@ -27,6 +29,7 @@ export class RegisteredGameService {
     private readonly registeredGameRepository: Repository<RegisteredGame>,
     private readonly gameService: GameService,
     private readonly teamService: TeamService,
+    private readonly eventEmitter: EventEmitter2,
   ) {}
 
   async create(
@@ -60,6 +63,17 @@ export class RegisteredGameService {
     this.defineStatus(game, registeredGame);
 
     await this.registeredGameRepository.save(registeredGame);
+
+    if (registeredGame.status !== null) {
+      this.eventEmitter.emit(
+        'registeredGame.oldGame',
+        plainToInstance(EventCreateRankDto, {
+          team_id: registeredGame.cheering_team.id,
+          user_id: registeredGame.user.id,
+          status: registeredGame.status,
+        }),
+      );
+    }
 
     return registeredGame;
   }
@@ -166,7 +180,9 @@ export class RegisteredGameService {
     if (game.status === '경기 종료') {
       if (game.winning_team) {
         registeredGame.status =
-          registeredGame.cheering_team.id === game.winning_team.id ? 'Win' : 'Lose';
+          registeredGame.cheering_team.id === game.winning_team.id
+            ? 'Win'
+            : 'Lose';
       } else {
         registeredGame.status = 'Tie';
       }
