@@ -3,13 +3,15 @@ import {
   PutObjectCommand,
   S3Client,
 } from '@aws-sdk/client-s3';
-import { Inject, Injectable } from '@nestjs/common';
+import { Inject, Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { DeleteImageAwsS3Dto } from 'src/dtos/aws-s3.dto';
 import { v4 as uuid4 } from 'uuid';
 
 @Injectable()
 export class AwsS3Service {
+  private readonly logger = new Logger(AwsS3Service.name);
+
   constructor(
     private readonly configService: ConfigService,
     @Inject('S3_CLIENT')
@@ -53,7 +55,7 @@ export class AwsS3Service {
       Bucket: bucketName,
       Key: uploadName,
     });
-    await this.s3Client.send(command);
+    const result = await this.s3Client.send(command);
   }
 
   private extractKeyFromUrl(url: string): string {

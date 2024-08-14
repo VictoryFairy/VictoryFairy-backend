@@ -9,7 +9,7 @@ import {
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import {
-  ApiOkResponse,
+  ApiNoContentResponse,
   ApiOperation,
   ApiResponse,
   ApiTags,
@@ -67,7 +67,7 @@ export class AwsS3Controller {
 
   @Delete('')
   @ApiOperation({ summary: '이미지 삭제' })
-  @ApiOkResponse()
+  @ApiNoContentResponse()
   async deleteImage(
     @Body() deleteImageAwsS3Dto: DeleteImageAwsS3Dto,
   ): Promise<void> {
