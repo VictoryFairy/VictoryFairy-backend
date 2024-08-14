@@ -243,10 +243,4 @@ export class RankService {
 
     return data;
   }
-
-  async saveTest() {}
-
-  async getTest() {}
-
-  async delTest() {}
 }

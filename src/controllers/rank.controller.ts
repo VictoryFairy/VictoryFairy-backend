@@ -1,4 +1,4 @@
-import { Controller, Delete, Get, Post, Query } from '@nestjs/common';
+import { Controller, Get, Query } from '@nestjs/common';
 import { RankService } from '../services/rank.service';
 import { ApiOkResponse, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { JwtAuth } from 'src/decorator/jwt-token.decorator';
@@ -39,7 +39,7 @@ export class RankController {
 
   @Get()
   @ApiOperation({
-    summary: '랭킹 랜딩 페이지 랭킹 상위 3명, 해당 유저 포함 근처 유저 3명',
+    summary: '랭킹 상위 3명과 해당 유저 주변의 3명을 표시',
     description: '쿼리에 teamId 추가하면 해당 팀에 대한 랭킹 리스트 반환',
   })
   async getRankTopThree(
@@ -52,19 +52,5 @@ export class RankController {
       this.rankService.getUserRankWithNeighbors(userId, teamId),
     ]);
     return { top, withUser };
-  }
-
-  @Post()
-  saveTest() {
-    return this.rankService.saveTest();
-  }
-  @Get('test')
-  rankUpdateTest() {
-    return this.rankService.rankTodayUpdate();
-  }
-
-  @Delete()
-  delTest() {
-    return this.rankService.delTest();
   }
 }
