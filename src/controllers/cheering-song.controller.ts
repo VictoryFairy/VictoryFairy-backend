@@ -129,6 +129,11 @@ export class CheeringSongController {
   @Get(':id')
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: '응원가 하나 반환' })
+  @ApiParam({
+    name: 'id',
+    description: '응원가 ID',
+    example: 1,
+  })
   @ApiOkResponse({ type: CheeringSongDto })
   @ApiNotFoundResponse()
   async findOne(

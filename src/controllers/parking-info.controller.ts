@@ -27,7 +27,7 @@ export class ParkingInfoController {
   @Get('stadium/:id')
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: '경기장 ID로 주변 주차장 반환' })
-  @ApiParam({ name: 'id', type: Number, description: '경기장 ID' })
+  @ApiParam({ name: 'id', type: Number, description: '경기장 ID', example: 1 })
   @ApiOkResponse({
     type: [ParkingInfoDto],
     description: '경기장 ID가 유효하면 주차장 정보가 없어도 빈 배열은 반환',
