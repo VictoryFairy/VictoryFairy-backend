@@ -109,6 +109,7 @@ export class RegisteredGameController {
     name: 'id',
     description: '등록한 직관 경기 ID',
     example: 1,
+  })
   @ApiOkResponse({
     type: RegisteredGameDto,
     description: '요청한 ID의 직관 경기',
