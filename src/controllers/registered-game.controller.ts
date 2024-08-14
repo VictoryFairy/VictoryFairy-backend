@@ -7,9 +7,9 @@ import {
   Delete,
   HttpCode,
   HttpStatus,
-  Put,
   ParseIntPipe,
   Query,
+  Patch,
 } from '@nestjs/common';
 import {
   ApiCreatedResponse,
@@ -121,7 +121,7 @@ export class RegisteredGameController {
     return plainToInstance(RegisteredGameDto, registeredGame);
   }
 
-  @Put(':id')
+  @Patch(':id')
   @HttpCode(HttpStatus.OK)
   @JwtAuth('access')
   @ApiOperation({ summary: '유저가 등록한 해당하는 ID의 직관 경기 수정' })
