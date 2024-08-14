@@ -68,7 +68,7 @@ export class LikeService {
       },
     });
 
-    const isLiked = result === null;
+    const isLiked = result !== null;
 
     return { isLiked };
   }
