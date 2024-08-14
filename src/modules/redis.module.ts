@@ -1,6 +1,7 @@
 import { Global, Module } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { redisConfig } from 'src/config/redis.config';
+import { CustomRedisService } from 'src/services/custom-redis.service';
 
 @Global()
 @Module({
@@ -10,6 +11,7 @@ import { redisConfig } from 'src/config/redis.config';
       useFactory: redisConfig,
       inject: [ConfigService],
     },
+    CustomRedisService,
   ],
   exports: ['REDIS_CLIENT'],
 })

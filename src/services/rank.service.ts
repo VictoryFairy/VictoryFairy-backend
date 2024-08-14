@@ -1,4 +1,10 @@
-import { BadRequestException, Inject, Injectable } from '@nestjs/common';
+import {
+  BadRequestException,
+  Inject,
+  Injectable,
+  InternalServerErrorException,
+  Logger,
+} from '@nestjs/common';
 import { Cron, CronExpression } from '@nestjs/schedule';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Redis } from 'ioredis';
@@ -12,6 +18,7 @@ import { OnEvent } from '@nestjs/event-emitter';
 
 @Injectable()
 export class RankService {
+  private readonly logger = new Logger(RankService.name);
   constructor(
     @Inject('REDIS_CLIENT')
     private readonly redisClient: Redis,
@@ -20,6 +27,20 @@ export class RankService {
     @InjectRepository(Rank)
     private readonly rankRepository: Repository<Rank>,
   ) {}
+
+  @OnEvent('user-warmed')
+  async initRankCaching(payload: number[]) {
+    try {
+      const warmingPromises = payload.map((userId) =>
+        this.updateRedisRankings(userId),
+      );
+      await Promise.all(warmingPromises);
+      this.logger.log(`랭킹 레디스 캐싱 완료`);
+    } catch (error) {
+      this.logger.error('랭킹 레디스 초기 캐싱 실패', error.stack);
+      throw new InternalServerErrorException('랭킹 레디스 초기 캐싱 실패');
+    }
+  }
 
   /** @description 당일 직관 등록 경기 오후 11시 기준으로 업데이트하기 */
   @Cron(CronExpression.EVERY_DAY_AT_11PM)
@@ -54,7 +75,7 @@ export class RankService {
     }
   }
 
-  /** @description 당일이 아닌 이전 직관 경기는 이벤트 리스터로 받아서 랭크 테이블 업데이트 후 랭킹 점수에 반영 */
+  /** @description 당일이 아닌 이전 직관 경기는 이벤트 리스너로 받아서 랭크 테이블 업데이트 후 랭킹 점수에 반영 */
   @OnEvent('registeredGame.oldGame')
   async handleCreateOldGame(payload: EventCreateRankDto) {
     const thisYear = moment().year();
@@ -123,8 +144,22 @@ export class RankService {
       end,
       'WITHSCORES',
     );
+    const searchRank = [];
+    for (let i = 0; i < rankList.length; i += 2) {
+      const result = await this.redisClient.zrevrank(
+        `rank:${key}`,
+        rankList[i],
+      );
+      // 순위 1등은 0으로 들어옴
+      searchRank.push(result + 1);
+    }
+    const calculated = await this.processRankList(rankList);
 
-    return this.processRankList(rankList);
+    return calculated.map((data, i) => {
+      console.log(data);
+      data.rank = searchRank[i];
+      return data;
+    });
   }
 
   /** @description 랭킹 리스트 전부, teamId가 들어오면 해당 팀의 랭킹 리스트 전부 */
