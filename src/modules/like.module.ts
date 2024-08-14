@@ -7,7 +7,11 @@ import { LikeService } from 'src/services/like.service';
 import { AuthModule } from 'src/auth/auth.module';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([LikeCheeringSong]), AuthModule, CheeringSongModule],
+  imports: [
+    TypeOrmModule.forFeature([LikeCheeringSong]),
+    AuthModule,
+    CheeringSongModule,
+  ],
   controllers: [LikeController],
   providers: [LikeService],
 })

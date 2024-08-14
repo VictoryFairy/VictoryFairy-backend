@@ -1,4 +1,8 @@
-import { ConflictException, Injectable, NotFoundException } from '@nestjs/common';
+import {
+  ConflictException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { CheeringSong } from 'src/entities/cheering-song.entity';
 import { LikeCheeringSong } from 'src/entities/like-cheering-song.entity';
@@ -20,16 +24,16 @@ export class LikeService {
     user: User,
   ): Promise<LikeCheeringSong> {
     const cheeringSong = await this.cheeringSongService.findOne(cheeringSongId);
-    
+
     const duplicate = await this.likeCheeringSongRepository.findOne({
       where: {
         cheeringSong,
         user,
-      }
+      },
     });
 
     if (duplicate) {
-      throw new ConflictException('The user alreay liked the game.')
+      throw new ConflictException('The user alreay liked the game.');
     }
 
     const like = new LikeCheeringSong();
@@ -52,7 +56,26 @@ export class LikeService {
     }
   }
 
-  async getLikes(cheeringSongId: number): Promise<{ count: number }> {
+  async getCheeringSongIsLiked(
+    cheeringSongId: number,
+    user: User,
+  ): Promise<{ isLiked: boolean }> {
+    const cheeringSong = await this.cheeringSongService.findOne(cheeringSongId);
+    const result = await this.likeCheeringSongRepository.findOne({
+      where: {
+        cheeringSong,
+        user,
+      },
+    });
+
+    const isLiked = result === null;
+
+    return { isLiked };
+  }
+
+  async getCheeringSongLikes(
+    cheeringSongId: number,
+  ): Promise<{ count: number }> {
     const cheeringSong = await this.cheeringSongService.findOne(cheeringSongId);
     const [likes, count] = await this.likeCheeringSongRepository.findAndCount({
       where: { cheeringSong },
