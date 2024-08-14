@@ -7,7 +7,7 @@ import {
   ParseIntPipe,
   Query,
 } from '@nestjs/common';
-import { ApiOperation, ApiQuery, ApiTags } from '@nestjs/swagger';
+import { ApiOperation, ApiParam, ApiQuery, ApiTags } from '@nestjs/swagger';
 import { ApiOkResponse, ApiNotFoundResponse } from '@nestjs/swagger';
 import { plainToInstance } from 'class-transformer';
 import { JwtAuth } from 'src/decorator/jwt-token.decorator';
@@ -40,7 +40,12 @@ export class StadiumController {
 
   @Get(':id')
   @HttpCode(HttpStatus.OK)
-  @ApiOperation({ summary: '해당하는 ID의 경기장 정보 반환 ' })
+  @ApiOperation({ summary: '해당하는 ID의 경기장 정보 반환' })
+  @ApiParam({
+    name: 'id',
+    description: '경기장 ID',
+    example: 1,
+  })
   @ApiOkResponse({ type: StadiumDto })
   @ApiNotFoundResponse({ description: '해당하는 ID의 경기장이 없을 경우' })
   async findOne(@Param('id', ParseIntPipe) id: number): Promise<StadiumDto> {
