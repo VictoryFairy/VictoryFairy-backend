@@ -48,14 +48,9 @@ export class RankService {
       ])
       .getRawMany();
 
-    const userList = [];
     for (const watched of todayRegisterGame) {
-      userList.push(watched.user_id);
       await this.updateRankEntity({ ...watched, thisYear });
-    }
-
-    for (const list of userList) {
-      await this.updateRedisRankings(list);
+      await this.updateRedisRankings(watched.user_id);
     }
   }
 
