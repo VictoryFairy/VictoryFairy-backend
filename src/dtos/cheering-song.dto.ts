@@ -2,7 +2,6 @@ import { ApiProperty, ApiPropertyOptional, OmitType } from '@nestjs/swagger';
 import { Exclude, Expose, Transform, Type } from 'class-transformer';
 import {
   IsBoolean,
-  IsInstance,
   IsNumber,
   IsString,
   IsUrl,

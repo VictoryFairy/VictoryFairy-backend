@@ -9,22 +9,12 @@ import * as path from 'path';
 import * as fs from 'fs';
 import { CheeringSong } from 'src/entities/cheering-song.entity';
 import { ICheeringSongSeed, TCheeringSongType } from 'src/types/seed.type';
-import {
-  Brackets,
-  FindOptionsWhere,
-  LessThan,
-  Like,
-  MoreThan,
-  QueryBuilder,
-  Repository,
-} from 'typeorm';
+import { Brackets, FindOptionsWhere, MoreThan, Repository } from 'typeorm';
 import { TeamService } from './team.service';
 import { Player } from 'src/entities/player.entity';
 import { User } from 'src/entities/user.entity';
 import { LikeCheeringSong } from 'src/entities/like-cheering-song.entity';
-import { instanceToPlain } from 'class-transformer';
 import { CursorPageCheeringSongDto } from 'src/dtos/cursor-page.dto';
-import { IsLikedDto } from 'src/dtos/like.dto';
 
 @Injectable()
 export class CheeringSongService {

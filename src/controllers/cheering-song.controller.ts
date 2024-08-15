@@ -23,10 +23,7 @@ import {
 import { plainToInstance } from 'class-transformer';
 import { JwtAuth } from 'src/decorator/jwt-token.decorator';
 import { UserDeco } from 'src/decorator/user.decorator';
-import {
-  CheeringSongDetailedDto,
-  CheeringSongDto,
-} from 'src/dtos/cheering-song.dto';
+import { CheeringSongDetailedDto } from 'src/dtos/cheering-song.dto';
 import {
   CursorPageCheeringSongDto,
   CursorPageOptionDto,
