@@ -48,6 +48,12 @@ export class BaseUserDto {
   @Expose()
   @IsNotEmpty()
   @IsString()
+  @Transform(({ obj }) => {
+    if (obj.profile_image) {
+      return obj.profile_image;
+    }
+    return obj;
+  })
   image: string;
 
   @ApiProperty({

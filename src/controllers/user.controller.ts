@@ -30,12 +30,16 @@ import {
   UserDetailDto,
 } from 'src/dtos/user-dto';
 import { User } from 'src/entities/user.entity';
+import { RankService } from 'src/services/rank.service';
 import { UserService } from 'src/services/user.service';
 
 @ApiTags('User')
 @Controller('users')
 export class UserController {
-  constructor(private readonly userService: UserService) {}
+  constructor(
+    private readonly userService: UserService,
+    private readonly rankService: RankService,
+  ) {}
 
   /** 유저 회원가입 */
   @Post('signup')
@@ -128,17 +132,25 @@ export class UserController {
     await this.userService.changeUserProfile(body, user);
   }
 
-  /** 본인 정보 가져오기 */
+  /** 해당 유저의 상대 팀 전적 및 승리 중 홈 비율 기록 */
+  @Get('me/versus-record')
+  @JwtAuth('access')
+  async getUserStats(@UserDeco('id') userId: number) {
+    return this.rankService.userStatsWithVerseTeam(userId);
+  }
+
+  /** 해당 유저의 간단한 정보와 직관 전적 가져오기 */
   @Get('me')
   @JwtAuth('access')
   @ApiOkResponse({ type: UserDetailDto })
   @ApiInternalServerErrorResponse({ description: 'DB 문제인 경우' })
   async getUserInfo(@UserDeco() user: User) {
-    const findUser = await this.userService.findUserById(user.id, {
-      registeredGames: true,
-      support_team: true,
-    });
-    return plainToInstance(UserDetailDto, findUser);
+    const record = await this.rankService.userOverallGameStats(user.id);
+    const userDto = plainToInstance(UserDetailDto, user);
+    return {
+      user: userDto,
+      record,
+    };
   }
 
   /** 회원 탈퇴 */
