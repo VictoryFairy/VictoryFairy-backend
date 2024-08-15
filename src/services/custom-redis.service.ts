@@ -16,6 +16,10 @@ export class CustomRedisService implements OnModuleInit {
       await this.initializeCacheOnRedisReady();
     });
 
+    this.redisClient.on('end', () => {
+      this.logger.error('Redis 연결이 끊어짐');
+    });
+
     this.redisClient.on('error', (error) => {
       this.logger.error('Redis 오류:', error);
     });

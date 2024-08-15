@@ -15,6 +15,8 @@ import { Repository } from 'typeorm';
 import * as moment from 'moment';
 import { CreateRankDto, EventCreateRankDto } from 'src/dtos/rank.dto';
 import { OnEvent } from '@nestjs/event-emitter';
+import { EventName } from 'src/const/event.const';
+import { RedisKeys } from 'src/const/redis.const';
 
 @Injectable()
 export class RankService {
@@ -29,7 +31,7 @@ export class RankService {
   ) {}
 
   /** 레디스 연결 시 랭킹 데이터 미리 저장 */
-  @OnEvent('user-warmed')
+  @OnEvent(EventName.CACHED_USERS)
   async initRankCaching(payload: number[]) {
     try {
       const warmingPromises = payload.map((userId) =>
@@ -119,7 +121,7 @@ export class RankService {
   async getTopThreeRankList(teamId?: number) {
     const key = teamId ? teamId : 'total';
     const rankList = await this.redisClient.zrevrange(
-      `rank:${key}`,
+      `${RedisKeys.RANKING}:${key}`,
       0,
       2,
       'WITHSCORES',
@@ -131,7 +133,7 @@ export class RankService {
   async getUserRankWithNeighbors(userId: number, teamId?: number) {
     const key = teamId ? teamId : 'total';
     const userRank = await this.redisClient.zrank(
-      `rank:${key}`,
+      `${RedisKeys.RANKING}:${key}`,
       userId.toString(),
     );
     if (!userRank) {
@@ -140,7 +142,7 @@ export class RankService {
     const start = Math.max(userRank - 1, 0);
     const end = userRank + 1;
     const rankList = await this.redisClient.zrevrange(
-      `rank:${key}`,
+      `${RedisKeys.RANKING}:${key}`,
       start,
       end,
       'WITHSCORES',
@@ -148,7 +150,7 @@ export class RankService {
     const searchRank = [];
     for (let i = 0; i < rankList.length; i += 2) {
       const result = await this.redisClient.zrevrank(
-        `rank:${key}`,
+        `${RedisKeys.RANKING}:${key}`,
         rankList[i],
       );
       // 순위 1등은 0으로 들어옴
@@ -167,7 +169,7 @@ export class RankService {
   async getRankList(teamId?: number) {
     const key = teamId ? teamId : 'total';
     const rankList = await this.redisClient.zrevrange(
-      `rank:${key}`,
+      `${RedisKeys.RANKING}:${key}`,
       0,
       -1,
       'WITHSCORES',
@@ -178,7 +180,7 @@ export class RankService {
 
   /** @description 레디스 랭킹과 유저 정보 데이터 합쳐서 가공 */
   private async processRankList(rankList: string[]) {
-    const rawUserInfo = await this.redisClient.hgetall('userInfo');
+    const rawUserInfo = await this.redisClient.hgetall(RedisKeys.USER_INFO);
     const parsedInfo = {};
     Object.values(rawUserInfo).forEach((user) => {
       const obj = JSON.parse(user);
@@ -202,7 +204,7 @@ export class RankService {
 
     for (const [key, value] of Object.entries(stat)) {
       await this.redisClient.zadd(
-        `rank:${key}`,
+        `${RedisKeys.RANKING}:${key}`,
         value.score.toString(),
         userId.toString(),
       );

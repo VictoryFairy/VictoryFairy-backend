@@ -14,6 +14,8 @@ import { CreateUserDto, LoginUserDto } from 'src/dtos/user-dto';
 import { QueryDeepPartialEntity } from 'typeorm/query-builder/QueryPartialEntity';
 import { Redis } from 'ioredis';
 import { EventEmitter2, OnEvent } from '@nestjs/event-emitter';
+import { EventName } from 'src/const/event.const';
+import { RedisKeys } from 'src/const/redis.const';
 
 @Injectable()
 export class UserService {
@@ -27,7 +29,7 @@ export class UserService {
   ) {}
 
   /** 레디스 연결 시 미리 저장 */
-  @OnEvent('redis-connected')
+  @OnEvent(EventName.REDIS_CONNECT)
   async initCacheUsers() {
     try {
       const users = await this.userRepository.find();
@@ -37,7 +39,7 @@ export class UserService {
         return this.cachingUser(user.id);
       });
       await Promise.all(cachingPromises);
-      this.eventEmitter.emit('user-warmed', userIds);
+      this.eventEmitter.emit(EventName.CACHED_USERS, userIds);
       this.logger.log('유저 정보 레디스 초기 캐싱 완료');
     } catch (error) {
       this.logger.error(
@@ -162,7 +164,7 @@ export class UserService {
       throw new InternalServerErrorException('DB 삭제 실패');
     }
     // redis caching 동기화
-    await this.redisClient.hdel('userInfo', user.id.toString());
+    await this.redisClient.hdel(RedisKeys.USER_INFO, user.id.toString());
     return { affected };
   }
 
@@ -179,7 +181,7 @@ export class UserService {
     );
     try {
       const cached = await this.redisClient.hset(
-        'userInfo',
+        RedisKeys.USER_INFO,
         userInfo.id.toString(),
         JSON.stringify(userInfo),
       );
@@ -190,7 +192,7 @@ export class UserService {
   }
 
   async getCachedUsers() {
-    const userInfo = await this.redisClient.hgetall('userInfo');
+    const userInfo = await this.redisClient.hgetall(RedisKeys.USER_INFO);
     const cachedUsers = Object.entries(userInfo).reduce(
       (acc, [id, userInfoString]) => {
         acc[parseInt(id)] = JSON.parse(userInfoString);

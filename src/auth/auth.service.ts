@@ -16,6 +16,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { User } from 'src/entities/user.entity';
 import { FindOptionsRelations, FindOptionsWhere, Repository } from 'typeorm';
 import { EmailWithCodeDto, LoginUserDto } from 'src/dtos/user-dto';
+import { RedisKeys } from 'src/const/redis.const';
 
 @Injectable()
 export class AuthService {
@@ -56,7 +57,12 @@ export class AuthService {
       throw new InternalServerErrorException('이메일 전송 실패');
     }
     try {
-      await this.redisClient.set(`code:${email}`, code, 'EX', CODE_LIMIT_TIME);
+      await this.redisClient.set(
+        `${RedisKeys.EMAIL_CODE}:${email}`,
+        code,
+        'EX',
+        CODE_LIMIT_TIME,
+      );
       return result;
     } catch (error) {
       throw new InternalServerErrorException('레디스 저장 실패');
@@ -65,12 +71,14 @@ export class AuthService {
 
   async verifyEmailCode(dto: EmailWithCodeDto) {
     const { code, email } = dto;
-    const getCachedCode = await this.redisClient.get(`code:${email}`);
+    const getCachedCode = await this.redisClient.get(
+      `${RedisKeys.EMAIL_CODE}:${email}`,
+    );
     if (!getCachedCode || getCachedCode !== code) {
       throw new UnauthorizedException('인증 코드 틀림');
     }
     try {
-      await this.redisClient.del(`code:${email}`);
+      await this.redisClient.del(`${RedisKeys.EMAIL_CODE}:${email}`);
     } catch (error) {
       throw new InternalServerErrorException('레디스 삭제 실패');
     }
