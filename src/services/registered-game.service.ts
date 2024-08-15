@@ -14,7 +14,6 @@ import { RegisteredGame } from 'src/entities/registered-game.entity';
 import { User } from 'src/entities/user.entity';
 import { TeamService } from './team.service';
 import { GameService } from './game.service';
-import * as moment from 'moment';
 import { Game } from 'src/entities/game.entity';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import { EventCreateRankDto } from 'src/dtos/rank.dto';
@@ -129,12 +128,12 @@ export class RegisteredGameService {
     if (!registeredGame) {
       throw new NotFoundException(`Registered game with ID ${id} not found`);
     }
-    
+
     if (updateRegisteredGameDto.cheeringTeamId) {
       const cheeringTeam = await this.teamService.findOne(
         updateRegisteredGameDto.cheeringTeamId,
       );
-  
+
       if (!cheeringTeam) {
         throw new NotFoundException(
           `Team with ID ${updateRegisteredGameDto.cheeringTeamId} not found`,

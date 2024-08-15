@@ -3,12 +3,13 @@ import {
   Entity,
   JoinColumn,
   ManyToOne,
-  OneToOne,
+  OneToMany,
   PrimaryGeneratedColumn,
   Unique,
 } from 'typeorm';
 import { Team } from './team.entity';
 import { Player } from './player.entity';
+import { LikeCheeringSong } from './like-cheering-song.entity';
 
 @Entity()
 @Unique(['link'])
@@ -35,4 +36,10 @@ export class CheeringSong {
   @ManyToOne(() => Player, (player) => player.cheeringSongs, { nullable: true })
   @JoinColumn({ name: 'player_id' })
   player?: Player;
+
+  @OneToMany(() => LikeCheeringSong, (like) => like.cheeringSong, {
+    cascade: true,
+    onDelete: 'CASCADE',
+  })
+  likeCheeringSongs: LikeCheeringSong[];
 }

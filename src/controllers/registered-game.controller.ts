@@ -110,6 +110,10 @@ export class RegisteredGameController {
     description: '등록한 직관 경기 ID',
     example: 1,
   })
+  @ApiOkResponse({
+    type: RegisteredGameDto,
+    description: '요청한 ID의 직관 경기',
+  })
   @ApiNotFoundResponse({
     description: '유저가 등록한 해당하는 ID의 직관 경기가 없을 경우',
   })
@@ -122,8 +126,7 @@ export class RegisteredGameController {
   }
 
   @Patch(':id')
-  @HttpCode(HttpStatus.OK)
-  @JwtAuth('access')
+  @HttpCode(HttpStatus.NO_CONTENT)
   @ApiOperation({ summary: '유저가 등록한 해당하는 ID의 직관 경기 수정' })
   @ApiParam({
     name: 'id',
@@ -145,8 +148,7 @@ export class RegisteredGameController {
   }
 
   @Delete(':id')
-  @HttpCode(HttpStatus.OK)
-  @JwtAuth('access')
+  @HttpCode(HttpStatus.NO_CONTENT)
   @ApiOperation({ summary: '유저가 등록한 해당하는 ID의 직관 경기 삭제' })
   @ApiParam({
     name: 'id',

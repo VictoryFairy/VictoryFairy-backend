@@ -18,7 +18,6 @@ import parse from 'node-html-parser';
 import * as moment from 'moment';
 import { BatchUpdateGameDto } from 'src/dtos/batch-update-game.dto';
 import { teamNameToTeamId } from 'src/utils/teamid-mapper';
-import { instanceToPlain } from 'class-transformer';
 
 @Injectable()
 export class GameService {
@@ -54,7 +53,7 @@ export class GameService {
   async findOne(gameId: string): Promise<Game> {
     const game = await this.gameRepository.findOne({
       where: { id: gameId },
-      relations: { winning_team: true }
+      relations: { winning_team: true },
     });
     if (!game) {
       throw new NotFoundException(`Game with id ${gameId} not found.`);
