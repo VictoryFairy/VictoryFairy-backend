@@ -7,9 +7,9 @@ import {
   Delete,
   HttpCode,
   HttpStatus,
-  Put,
   ParseIntPipe,
   Query,
+  Patch,
 } from '@nestjs/common';
 import {
   ApiCreatedResponse,
