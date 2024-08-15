@@ -1,6 +1,16 @@
-import { ApiProperty } from '@nestjs/swagger';
-import { Exclude, Expose } from 'class-transformer';
-import { IsNumber, IsString, IsUrl } from 'class-validator';
+import { ApiProperty, ApiPropertyOptional, OmitType } from '@nestjs/swagger';
+import { Exclude, Expose, Transform, Type } from 'class-transformer';
+import {
+  IsBoolean,
+  IsInstance,
+  IsNumber,
+  IsString,
+  IsUrl,
+  ValidateNested,
+} from 'class-validator';
+import { TeamDto } from './team.dto';
+import { PlayerDto } from './player.dto';
+import { CheeringSong } from 'src/entities/cheering-song.entity';
 
 @Exclude()
 export class CheeringSongDto {
@@ -20,6 +30,48 @@ export class CheeringSongDto {
   @Expose()
   title: string;
 
+  @ApiProperty({
+    description: '응원가 가사',
+    example: `찬란하게 빛날 최강두산 이유찬~ (이유찬!)`,
+  })
+  @IsString()
+  @Expose()
+  @Transform(({ obj }: { obj: CheeringSong }) => obj.lyrics.split('\n')[0])
+  lyrics_preview: string;
+
+  @ApiProperty({
+    description: '응원가 팀',
+    example: {
+      id: 2,
+      name: '두산',
+    },
+  })
+  @Type(() => TeamDto)
+  @ValidateNested()
+  @Expose()
+  team: TeamDto;
+
+  @ApiPropertyOptional({
+    description: '선수 응원가의 선수',
+  })
+  @Type(() => PlayerDto)
+  @ValidateNested()
+  @Expose()
+  player?: PlayerDto;
+
+  @ApiProperty({
+    description: '좋아요 여부',
+    example: false,
+  })
+  @IsBoolean()
+  @Expose()
+  isLiked: boolean;
+}
+
+@Exclude()
+export class CheeringSongDetailedDto extends OmitType(CheeringSongDto, [
+  'lyrics_preview',
+]) {
   @ApiProperty({
     description: '응원가 가사',
     example: `찬란하게 빛날 최강두산 이유찬~ (이유찬!)

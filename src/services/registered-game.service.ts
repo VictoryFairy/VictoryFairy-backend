@@ -129,12 +129,12 @@ export class RegisteredGameService {
     if (!registeredGame) {
       throw new NotFoundException(`Registered game with ID ${id} not found`);
     }
-    
+
     if (updateRegisteredGameDto.cheeringTeamId) {
       const cheeringTeam = await this.teamService.findOne(
         updateRegisteredGameDto.cheeringTeamId,
       );
-  
+
       if (!cheeringTeam) {
         throw new NotFoundException(
           `Team with ID ${updateRegisteredGameDto.cheeringTeamId} not found`,

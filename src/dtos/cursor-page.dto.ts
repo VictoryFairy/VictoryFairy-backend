@@ -1,5 +1,5 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { Exclude, Expose } from 'class-transformer';
+import { Exclude, Expose, Type } from 'class-transformer';
 import {
   IsArray,
   IsBoolean,
@@ -7,7 +7,9 @@ import {
   IsNumber,
   IsOptional,
   IsString,
+  ValidateNested,
 } from 'class-validator';
+import { CheeringSongDto } from './cheering-song.dto';
 
 @Exclude()
 export class CursorPageMetaDto {
@@ -37,19 +39,23 @@ export class CursorPageMetaDto {
   cursor: number;
 }
 
+/** 제네릭으로 어떻게 할 수 있지 않을까??? 찾아봤지만 잘 안됨... */
 @Exclude()
-export class CursorPageDto<T> {
+export class CursorPageCheeringSongDto {
   @ApiProperty({
     description: '데이터의 배열 / 그 길이는 take를 넘지 않음',
   })
   @IsArray()
+  @Type(() => CheeringSongDto)
+  @ValidateNested()
   @Expose()
-  data: T[];
+  data: CheeringSongDto[];
 
   @ApiProperty({
     description: '페이지네이션 메타 정보',
   })
-  @IsInstance(CursorPageMetaDto)
+  @Type(() => CursorPageMetaDto)
+  @ValidateNested()
   @Expose()
   meta: CursorPageMetaDto;
 }
