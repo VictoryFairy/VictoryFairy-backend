@@ -1,12 +1,13 @@
-import { Inject, Injectable, Logger, OnModuleInit } from '@nestjs/common';
+import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import { Redis } from 'ioredis';
+import { InjectRedisClient } from 'src/decorator/redis-inject.decorator';
 
 @Injectable()
 export class CustomRedisService implements OnModuleInit {
   private readonly logger = new Logger(CustomRedisService.name);
   constructor(
-    @Inject('REDIS_CLIENT')
+    @InjectRedisClient()
     private readonly redisClient: Redis,
     private readonly eventEmitter: EventEmitter2,
   ) {}

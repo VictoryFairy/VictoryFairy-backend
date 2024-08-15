@@ -1,5 +1,4 @@
 import {
-  Inject,
   Injectable,
   InternalServerErrorException,
   UnauthorizedException,
@@ -17,6 +16,7 @@ import { User } from 'src/entities/user.entity';
 import { FindOptionsRelations, FindOptionsWhere, Repository } from 'typeorm';
 import { EmailWithCodeDto, LoginUserDto } from 'src/dtos/user-dto';
 import { RedisKeys } from 'src/const/redis.const';
+import { InjectRedisClient } from 'src/decorator/redis-inject.decorator';
 
 @Injectable()
 export class AuthService {
@@ -24,7 +24,7 @@ export class AuthService {
     private readonly jwtService: JwtService,
     private readonly configService: ConfigService,
     private readonly mailService: MailService,
-    @Inject('REDIS_CLIENT')
+    @InjectRedisClient()
     private readonly redisClient: Redis,
     @InjectRepository(User)
     private readonly userRepository: Repository<User>,

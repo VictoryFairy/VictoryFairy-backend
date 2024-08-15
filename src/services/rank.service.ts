@@ -1,6 +1,5 @@
 import {
   BadRequestException,
-  Inject,
   Injectable,
   InternalServerErrorException,
   Logger,
@@ -17,12 +16,13 @@ import { CreateRankDto, EventCreateRankDto } from 'src/dtos/rank.dto';
 import { OnEvent } from '@nestjs/event-emitter';
 import { EventName } from 'src/const/event.const';
 import { RedisKeys } from 'src/const/redis.const';
+import { InjectRedisClient } from 'src/decorator/redis-inject.decorator';
 
 @Injectable()
 export class RankService {
   private readonly logger = new Logger(RankService.name);
   constructor(
-    @Inject('REDIS_CLIENT')
+    @InjectRedisClient()
     private readonly redisClient: Redis,
     @InjectRepository(RegisteredGame)
     private readonly registeredGameRepository: Repository<RegisteredGame>,
@@ -136,6 +136,7 @@ export class RankService {
       `${RedisKeys.RANKING}:${key}`,
       userId.toString(),
     );
+
     if (!userRank) {
       throw new BadRequestException('해당 유저가 랭킹 리스트에 없습니다');
     }
@@ -159,7 +160,6 @@ export class RankService {
     const calculated = await this.processRankList(rankList);
 
     return calculated.map((data, i) => {
-      console.log(data);
       data.rank = searchRank[i];
       return data;
     });

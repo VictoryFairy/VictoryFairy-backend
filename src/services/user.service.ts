@@ -1,6 +1,5 @@
 import {
   BadRequestException,
-  Inject,
   Injectable,
   InternalServerErrorException,
   Logger,
@@ -16,6 +15,7 @@ import { Redis } from 'ioredis';
 import { EventEmitter2, OnEvent } from '@nestjs/event-emitter';
 import { EventName } from 'src/const/event.const';
 import { RedisKeys } from 'src/const/redis.const';
+import { InjectRedisClient } from 'src/decorator/redis-inject.decorator';
 
 @Injectable()
 export class UserService {
@@ -23,7 +23,7 @@ export class UserService {
   constructor(
     @InjectRepository(User)
     private readonly userRepository: Repository<User>,
-    @Inject('REDIS_CLIENT')
+    @InjectRedisClient()
     private readonly redisClient: Redis,
     private readonly eventEmitter: EventEmitter2,
   ) {}
