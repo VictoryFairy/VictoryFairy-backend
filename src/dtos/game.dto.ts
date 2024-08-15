@@ -1,6 +1,6 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { Exclude, Expose, Transform } from 'class-transformer';
-import { IsNumber, IsString } from 'class-validator';
+import { Exclude, Expose, Transform, Type } from 'class-transformer';
+import { IsNumber, IsString, ValidateNested } from 'class-validator';
 import { TeamDto } from './team.dto';
 import { StadiumDto } from './stadium.dto';
 
@@ -45,6 +45,8 @@ export class GameDto {
       name: 'LG',
     },
   })
+  @Type(() => TeamDto)
+  @ValidateNested()
   @Expose()
   @Transform(({ obj }) => obj.home_team)
   homeTeam: TeamDto;
@@ -56,6 +58,8 @@ export class GameDto {
       name: '삼성',
     },
   })
+  @Type(() => TeamDto)
+  @ValidateNested()
   @Expose()
   @Transform(({ obj }) => obj.away_team)
   awayTeam: TeamDto;
@@ -70,6 +74,8 @@ export class GameDto {
       address: 'no address',
     },
   })
+  @Type(() => StadiumDto)
+  @ValidateNested()
   @Expose()
   stadium: StadiumDto;
 
@@ -98,7 +104,10 @@ export class GameDto {
       name: '삼성',
     },
   })
+  @Type(() => TeamDto)
+  @ValidateNested()
   @Expose()
+  @Transform(({ obj }) => obj.winning_team)
   winningTeam?: TeamDto;
 }
 

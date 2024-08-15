@@ -1,4 +1,9 @@
-import { ConflictException, Injectable, Logger, NotFoundException } from '@nestjs/common';
+import {
+  ConflictException,
+  Injectable,
+  Logger,
+  NotFoundException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import * as path from 'path';
 import * as fs from 'fs';
@@ -15,9 +20,11 @@ import {
 } from 'typeorm';
 import { TeamService } from './team.service';
 import { Player } from 'src/entities/player.entity';
-import { CursorPageDto } from 'src/dtos/cursor-page.dto';
 import { User } from 'src/entities/user.entity';
 import { LikeCheeringSong } from 'src/entities/like-cheering-song.entity';
+import { instanceToPlain } from 'class-transformer';
+import { CursorPageCheeringSongDto } from 'src/dtos/cursor-page.dto';
+import { IsLikedDto } from 'src/dtos/like.dto';
 
 @Injectable()
 export class CheeringSongService {
@@ -33,39 +40,39 @@ export class CheeringSongService {
     private readonly teamService: TeamService,
   ) {}
 
-  private readJSONFile(filePath: string): ICheeringSongSeed[] {
-    try {
-      const data = fs.readFileSync(filePath, 'utf-8');
-      return JSON.parse(data) as ICheeringSongSeed[];
-    } catch (error) {
-      console.error(`Error reading file ${filePath}:`, error);
-      return [];
-    }
-  }
-
-  private getCheeringSongData(): ICheeringSongSeed[] {
-    const dirPath = 'src/seeds/refined-cheering-songs';
-
-    let combinedData: ICheeringSongSeed[] = [];
-
-    try {
-      const files = fs.readdirSync(dirPath);
-      for (const file of files) {
-        if (path.extname(file) === '.json') {
-          const filePath = path.join(dirPath, file);
-          const fileData = this.readJSONFile(filePath);
-          combinedData = combinedData.concat(fileData);
-        }
-      }
-    } catch (error) {
-      console.error(`Error reading directory ${dirPath}:`, error);
-    }
-
-    return combinedData;
-  }
-
   async seed() {
-    const cheeringSongSeeder = this.getCheeringSongData();
+    function readJSONFile(filePath: string): ICheeringSongSeed[] {
+      try {
+        const data = fs.readFileSync(filePath, 'utf-8');
+        return JSON.parse(data) as ICheeringSongSeed[];
+      } catch (error) {
+        console.error(`Error reading file ${filePath}:`, error);
+        return [];
+      }
+    }
+
+    function getCheeringSongData(): ICheeringSongSeed[] {
+      const dirPath = 'src/seeds/refined-cheering-songs';
+
+      let combinedData: ICheeringSongSeed[] = [];
+
+      try {
+        const files = fs.readdirSync(dirPath);
+        for (const file of files) {
+          if (path.extname(file) === '.json') {
+            const filePath = path.join(dirPath, file);
+            const fileData = readJSONFile(filePath);
+            combinedData = combinedData.concat(fileData);
+          }
+        }
+      } catch (error) {
+        console.error(`Error reading directory ${dirPath}:`, error);
+      }
+
+      return combinedData;
+    }
+
+    const cheeringSongSeeder = getCheeringSongData();
 
     await this.cheeringSongRepository.manager.transaction(async (manager) => {
       for (const seed of cheeringSongSeeder) {
@@ -110,63 +117,17 @@ export class CheeringSongService {
     });
   }
 
-  async findOne(id: number): Promise<CheeringSong> {
-    const team = await this.cheeringSongRepository.findOne({
-      where: { id },
-    });
-    if (!team) {
-      throw new NotFoundException(`Team with id ${id} is not found`);
-    }
-    return team;
-  }
-
-  async findByTeamIdAndTypeWithInfiniteScroll(
-    teamId: number,
-    type: TCheeringSongType,
-    take: number,
-    cursor?: number,
-  ): Promise<CursorPageDto<CheeringSong>> {
-    const team = await this.teamService.findOne(teamId);
-
-    const where: FindOptionsWhere<CheeringSong> = {
-      team,
-      type,
-    };
-
-    if (cursor) {
-      where.id = MoreThan(cursor);
-    }
-
-    const [cheeringSongs, count] =
-      await this.cheeringSongRepository.findAndCount({
-        take: take + 1,
-        where,
-        relations: { player: true },
-        order: { id: 'ASC' },
-      });
-
-    const hasNextData = cheeringSongs.length > take;
-    const data = hasNextData ? cheeringSongs.slice(0, -1) : cheeringSongs;
-    const newCursor = data.length > 0 ? data[data.length - 1].id : null;
-
-    return {
-      data,
-      meta: {
-        take,
-        hasNextData,
-        cursor: newCursor,
-      },
-    };
-  }
-
   async findBySearchWithInfiniteScroll(
+    user: User,
     take: number,
     cursor?: number,
     q?: string,
-  ): Promise<CursorPageDto<CheeringSong>> {
+  ): Promise<unknown> {
     const queryBuilder = this.cheeringSongRepository
       .createQueryBuilder('cheeringSong')
       .leftJoinAndSelect('cheeringSong.player', 'player')
+      .leftJoinAndSelect('cheeringSong.team', 'team')
+      .leftJoinAndSelect('cheeringSong.likeCheeringSongs', 'likeCheeringSongs')
       .orderBy('cheeringSong.id', 'ASC')
       .take(take + 1);
 
@@ -196,6 +157,68 @@ export class CheeringSongService {
     const hasNextData = count > take;
     const data = hasNextData ? cheeringSongs.slice(0, -1) : cheeringSongs;
     const newCursor = data.length > 0 ? data[data.length - 1].id : null;
+
+    // 유저가 이 응원가를 좋아요 표시 했는지 여부 확인 로직 추가
+    for (const datum of data) {
+      const { isLiked } = await this.getCheeringSongIsLiked(datum.id, user);
+      datum['isLiked'] = isLiked; // isLiked 필드 추가
+    }
+
+    return {
+      data,
+      meta: {
+        take,
+        hasNextData,
+        cursor: newCursor,
+      },
+    };
+  }
+
+  async findOne(id: number): Promise<CheeringSong> {
+    const cheeringSong = await this.cheeringSongRepository.findOne({
+      where: { id },
+      relations: { player: true, team: true },
+    });
+    if (!cheeringSong) {
+      throw new NotFoundException(`Cheering song with id ${id} is not found`);
+    }
+    return cheeringSong;
+  }
+
+  async findByTeamIdAndTypeWithInfiniteScroll(
+    teamId: number,
+    type: TCheeringSongType,
+    user: User,
+    take: number,
+    cursor?: number,
+  ): Promise<unknown> {
+    const team = await this.teamService.findOne(teamId);
+
+    const where: FindOptionsWhere<CheeringSong> = {
+      team,
+      type,
+    };
+
+    if (cursor) {
+      where.id = MoreThan(cursor);
+    }
+
+    const [cheeringSongs, count] =
+      await this.cheeringSongRepository.findAndCount({
+        take: take + 1,
+        where,
+        relations: { player: true, team: true, likeCheeringSongs: true },
+        order: { id: 'ASC' },
+      });
+
+    const hasNextData = cheeringSongs.length > take;
+    const data = hasNextData ? cheeringSongs.slice(0, -1) : cheeringSongs;
+    const newCursor = data.length > 0 ? data[data.length - 1].id : null;
+
+    for (const datum of data) {
+      const { isLiked } = await this.getCheeringSongIsLiked(datum.id, user);
+      datum['isLiked'] = isLiked; // isLiked 필드 추가
+    }
 
     return {
       data,
