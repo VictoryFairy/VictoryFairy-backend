@@ -132,7 +132,7 @@ export class RankService {
   /** @description 랭킹 리스트에서 유저와 근처 유저 1명씩 가져오기 */
   async getUserRankWithNeighbors(userId: number, teamId?: number) {
     const key = teamId ? teamId : 'total';
-    const userRank = await this.redisClient.zrank(
+    const userRank = await this.redisClient.zrevrank(
       `${RedisKeys.RANKING}:${key}`,
       userId.toString(),
     );
