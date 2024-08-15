@@ -3,7 +3,6 @@ import { Exclude, Expose, Type } from 'class-transformer';
 import {
   IsArray,
   IsBoolean,
-  IsInstance,
   IsNumber,
   IsOptional,
   IsString,

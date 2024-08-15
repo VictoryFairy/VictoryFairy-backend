@@ -18,7 +18,6 @@ import parse from 'node-html-parser';
 import * as moment from 'moment';
 import { BatchUpdateGameDto } from 'src/dtos/batch-update-game.dto';
 import { teamNameToTeamId } from 'src/utils/teamid-mapper';
-import { instanceToPlain } from 'class-transformer';
 
 @Injectable()
 export class GameService {
