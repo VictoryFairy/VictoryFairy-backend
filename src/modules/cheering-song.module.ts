@@ -6,10 +6,11 @@ import { CheeringSongService } from 'src/services/cheering-song.service';
 import { TeamModule } from './team.module';
 import { Player } from 'src/entities/player.entity';
 import { AuthModule } from 'src/auth/auth.module';
+import { LikeCheeringSong } from 'src/entities/like-cheering-song.entity';
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([CheeringSong, Player]),
+    TypeOrmModule.forFeature([CheeringSong, Player, LikeCheeringSong]),
     AuthModule,
     TeamModule,
   ],

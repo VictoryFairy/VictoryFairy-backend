@@ -1,4 +1,4 @@
-import { Injectable, Logger, NotFoundException } from '@nestjs/common';
+import { ConflictException, Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import * as path from 'path';
 import * as fs from 'fs';
@@ -15,9 +15,9 @@ import {
 } from 'typeorm';
 import { TeamService } from './team.service';
 import { Player } from 'src/entities/player.entity';
-import { TTeam } from 'src/types/crawling-game.type';
-import { Team } from 'src/entities/team.entity';
 import { CursorPageDto } from 'src/dtos/cursor-page.dto';
+import { User } from 'src/entities/user.entity';
+import { LikeCheeringSong } from 'src/entities/like-cheering-song.entity';
 
 @Injectable()
 export class CheeringSongService {
@@ -28,6 +28,8 @@ export class CheeringSongService {
     private readonly cheeringSongRepository: Repository<CheeringSong>,
     @InjectRepository(Player)
     private readonly playerRepository: Repository<Player>,
+    @InjectRepository(LikeCheeringSong)
+    private readonly likeCheeringSongRepository: Repository<LikeCheeringSong>,
     private readonly teamService: TeamService,
   ) {}
 
@@ -203,5 +205,70 @@ export class CheeringSongService {
         cursor: newCursor,
       },
     };
+  }
+
+  async likeCheerSong(
+    cheeringSongId: number,
+    user: User,
+  ): Promise<LikeCheeringSong> {
+    const cheeringSong = await this.findOne(cheeringSongId);
+
+    const duplicate = await this.likeCheeringSongRepository.findOne({
+      where: {
+        cheeringSong,
+        user,
+      },
+    });
+
+    if (duplicate) {
+      throw new ConflictException('The user alreay liked the game.');
+    }
+
+    const like = new LikeCheeringSong();
+    like.cheeringSong = cheeringSong;
+    like.user = user;
+    this.likeCheeringSongRepository.save(like);
+    return like;
+  }
+
+  async unlikeCheerSong(cheeringSongId: number, user: User): Promise<void> {
+    const cheeringSong = await this.findOne(cheeringSongId);
+    const result = await this.likeCheeringSongRepository.delete({
+      cheeringSong,
+      user,
+    });
+    if (result.affected === 0) {
+      throw new NotFoundException(
+        `Like relationship with cheering song ${cheeringSongId} and user ${user.id} not found.`,
+      );
+    }
+  }
+
+  async getCheeringSongIsLiked(
+    cheeringSongId: number,
+    user: User,
+  ): Promise<{ isLiked: boolean }> {
+    const cheeringSong = await this.findOne(cheeringSongId);
+    const result = await this.likeCheeringSongRepository.findOne({
+      where: {
+        cheeringSong,
+        user,
+      },
+    });
+
+    const isLiked = result !== null;
+
+    return { isLiked };
+  }
+
+  async getCheeringSongLikes(
+    cheeringSongId: number,
+  ): Promise<{ count: number }> {
+    const cheeringSong = await this.findOne(cheeringSongId);
+    const [likes, count] = await this.likeCheeringSongRepository.findAndCount({
+      where: { cheeringSong },
+    });
+
+    return { count };
   }
 }

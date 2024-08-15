@@ -9,6 +9,7 @@ import {
 import { Team } from './team.entity';
 import { RegisteredGame } from './registered-game.entity';
 import { Rank } from './rank.entity';
+import { LikeCheeringSong } from './like-cheering-song.entity';
 
 @Entity()
 export class User {
@@ -38,4 +39,10 @@ export class User {
     cascade: true,
   })
   registeredGames: RegisteredGame[];
+
+  @OneToMany(() => LikeCheeringSong, (like) => like.user, {
+    cascade: true,
+    onDelete: 'CASCADE',
+  })
+  likeCheeringSongs: LikeCheeringSong[];
 }
