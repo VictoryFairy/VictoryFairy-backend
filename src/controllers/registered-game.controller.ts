@@ -125,7 +125,7 @@ export class RegisteredGameController {
     return plainToInstance(RegisteredGameDto, registeredGame);
   }
 
-  @Put(':id')
+  @Patch(':id')
   @HttpCode(HttpStatus.NO_CONTENT)
   @ApiOperation({ summary: '유저가 등록한 해당하는 ID의 직관 경기 수정' })
   @ApiParam({

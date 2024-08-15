@@ -19,7 +19,6 @@ import { SeederService } from './services/seeder.service';
 import { SchedulingModule } from './modules/scheduling.module';
 import { CheeringSongModule } from './modules/cheering-song.module';
 import { EventEmitterModule } from '@nestjs/event-emitter';
-import { LikeModule } from './modules/like.module';
 
 @Module({
   imports: [
@@ -44,7 +43,6 @@ import { LikeModule } from './modules/like.module';
     SchedulingModule,
     CheeringSongModule,
     RedisModule,
-    LikeModule,
   ],
   controllers: [AppController],
   providers: [AppService, SeederService],
