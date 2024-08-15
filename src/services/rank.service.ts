@@ -137,7 +137,7 @@ export class RankService {
       userId.toString(),
     );
 
-    if (!userRank) {
+    if (userRank === null) {
       throw new BadRequestException('해당 유저가 랭킹 리스트에 없습니다');
     }
     const start = Math.max(userRank - 1, 0);
