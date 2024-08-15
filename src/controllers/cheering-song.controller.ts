@@ -138,7 +138,105 @@ export class CheeringSongController {
         cursor,
         q,
       );
-    this.logger.debug(cheeringSongsWithCursorMeta);
+
+    return plainToInstance(
+      CursorPageCheeringSongDto,
+      cheeringSongsWithCursorMeta,
+    );
+  }
+
+  @Get('liked')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({
+    summary: '좋아요 한 응원가 목록 및 무한 스크롤 정보 반환',
+  })
+  @ApiOkResponse({
+    type: CursorPageCheeringSongDto,
+    example: {
+      data: [
+        {
+          id: 271,
+          title: '고승민 응원가',
+          lyrics_preview: '롯~데의 고승민 안타 안타~',
+          team: {
+            id: 1,
+            name: '롯데',
+          },
+          player: {
+            id: 134,
+            name: '고승민',
+            jerseyNumber: 65,
+          },
+          isLiked: true,
+        },
+        {
+          id: 286,
+          title: '오늘도 승리한다',
+          lyrics_preview: '롯데 롯데 롯데',
+          team: {
+            id: 1,
+            name: '롯데',
+          },
+          player: null,
+          isLiked: true,
+        },
+        {
+          id: 293,
+          title: '마! 최강롯데 아이가',
+          lyrics_preview: '워어어 워어어어 필승 롯데',
+          team: {
+            id: 1,
+            name: '롯데',
+          },
+          player: null,
+          isLiked: true,
+        },
+        {
+          id: 294,
+          title: '우리들의 빛나는 이 순간',
+          lyrics_preview: '워 워어어어 승리를 위해',
+          team: {
+            id: 1,
+            name: '롯데',
+          },
+          player: null,
+          isLiked: true,
+        },
+        {
+          id: 307,
+          title: '박세혁 응원가',
+          lyrics_preview: '워어우워어어 NC 박세혁 워어우워어어 NC 박세혁',
+          team: {
+            id: 6,
+            name: 'NC',
+          },
+          player: {
+            id: 137,
+            name: '박세혁',
+            jerseyNumber: 10,
+          },
+          isLiked: true,
+        },
+      ],
+      meta: {
+        take: 5,
+        hasNextData: true,
+        cursor: 307,
+      },
+    },
+  })
+  async findByLikedWithInfiniteScroll(
+    @Query() cursorPageOptionDto: CursorPageOptionDto,
+    @UserDeco() user: User,
+  ): Promise<CursorPageCheeringSongDto> {
+    const { take, cursor } = cursorPageOptionDto;
+
+    const cheeringSongsWithCursorMeta =
+      await this.cheeringSongService.findByLikedWithInfiniteScroll(
+        user,
+        take,
+        cursor,
+      );
 
     return plainToInstance(
       CursorPageCheeringSongDto,

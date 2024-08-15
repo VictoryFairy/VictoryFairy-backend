@@ -122,26 +122,27 @@ export class CheeringSongService {
     take: number,
     cursor?: number,
     q?: string,
-  ): Promise<unknown> {
+  ): Promise<
+    Omit<CursorPageCheeringSongDto, 'data'> & { data: CheeringSong[] }
+  > {
     const queryBuilder = this.cheeringSongRepository
-      .createQueryBuilder('cheeringSong')
-      .leftJoinAndSelect('cheeringSong.player', 'player')
-      .leftJoinAndSelect('cheeringSong.team', 'team')
-      .leftJoinAndSelect('cheeringSong.likeCheeringSongs', 'likeCheeringSongs')
-      .orderBy('cheeringSong.id', 'ASC')
+      .createQueryBuilder('cheering_song')
+      .leftJoinAndSelect('cheering_song.player', 'player')
+      .leftJoinAndSelect('cheering_song.team', 'team')
+      .orderBy('cheering_song.id', 'ASC')
       .take(take + 1);
 
     if (cursor) {
-      queryBuilder.andWhere('cheeringSong.id > :cursor', { cursor });
+      queryBuilder.andWhere('cheering_song.id > :cursor', { cursor });
     }
 
     if (q) {
       queryBuilder.andWhere(
         new Brackets((qb) => {
-          qb.where('cheeringSong.title LIKE :q', {
+          qb.where('cheering_song.title LIKE :q', {
             q: `%${q.replace(/[%_]/g, '\\$&')}%`,
           })
-            .orWhere('cheeringSong.lyrics LIKE :q', {
+            .orWhere('cheering_song.lyrics LIKE :q', {
               q: `%${q.replace(/[%_]/g, '\\$&')}%`,
             })
             .orWhere('player.name LIKE :q', {
@@ -158,10 +159,9 @@ export class CheeringSongService {
     const data = hasNextData ? cheeringSongs.slice(0, -1) : cheeringSongs;
     const newCursor = data.length > 0 ? data[data.length - 1].id : null;
 
-    // 유저가 이 응원가를 좋아요 표시 했는지 여부 확인 로직 추가
     for (const datum of data) {
       const { isLiked } = await this.getCheeringSongIsLiked(datum.id, user);
-      datum['isLiked'] = isLiked; // isLiked 필드 추가
+      datum['isLiked'] = isLiked;
     }
 
     return {
@@ -191,7 +191,9 @@ export class CheeringSongService {
     user: User,
     take: number,
     cursor?: number,
-  ): Promise<unknown> {
+  ): Promise<
+    Omit<CursorPageCheeringSongDto, 'data'> & { data: CheeringSong[] }
+  > {
     const team = await this.teamService.findOne(teamId);
 
     const where: FindOptionsWhere<CheeringSong> = {
@@ -207,7 +209,7 @@ export class CheeringSongService {
       await this.cheeringSongRepository.findAndCount({
         take: take + 1,
         where,
-        relations: { player: true, team: true, likeCheeringSongs: true },
+        relations: { player: true, team: true },
         order: { id: 'ASC' },
       });
 
@@ -217,7 +219,7 @@ export class CheeringSongService {
 
     for (const datum of data) {
       const { isLiked } = await this.getCheeringSongIsLiked(datum.id, user);
-      datum['isLiked'] = isLiked; // isLiked 필드 추가
+      datum['isLiked'] = isLiked;
     }
 
     return {
@@ -293,5 +295,50 @@ export class CheeringSongService {
     });
 
     return { count };
+  }
+
+  async findByLikedWithInfiniteScroll(
+    user: User,
+    take: number,
+    cursor?: number,
+  ): Promise<unknown> {
+    const queryBuilder = this.cheeringSongRepository
+      .createQueryBuilder('cheering_song')
+      .innerJoin(
+        'like_cheering_song',
+        'like_cheering_song',
+        'like_cheering_song.cheering_song_id = cheering_song.id',
+      )
+      .where('like_cheering_song.user_id = :user_id', { user_id: user.id })
+      .orderBy('cheering_song.id', 'ASC')
+      .leftJoinAndSelect('cheering_song.player', 'player')
+      .leftJoinAndSelect('cheering_song.team', 'team')
+      .take(take + 1);
+
+    if (cursor) {
+      queryBuilder.andWhere('cheering_song.id > :cursor', { cursor });
+    }
+
+    const cheeringSongs = await queryBuilder.getMany();
+    const count = cheeringSongs.length;
+
+    const hasNextData = count > take;
+    const data = hasNextData ? cheeringSongs.slice(0, -1) : cheeringSongs;
+    const newCursor = data.length > 0 ? data[data.length - 1].id : null;
+
+    // 유저가 이 응원가를 좋아요 표시 했는지 여부 확인 로직 추가
+    for (const datum of data) {
+      const { isLiked } = await this.getCheeringSongIsLiked(datum.id, user);
+      datum['isLiked'] = isLiked; // isLiked 필드 추가
+    }
+
+    return {
+      data,
+      meta: {
+        take,
+        hasNextData,
+        cursor: newCursor,
+      },
+    };
   }
 }
