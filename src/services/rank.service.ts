@@ -28,6 +28,7 @@ export class RankService {
     private readonly rankRepository: Repository<Rank>,
   ) {}
 
+  /** 레디스 연결 시 랭킹 데이터 미리 저장 */
   @OnEvent('user-warmed')
   async initRankCaching(payload: number[]) {
     try {
@@ -35,7 +36,7 @@ export class RankService {
         this.updateRedisRankings(userId),
       );
       await Promise.all(warmingPromises);
-      this.logger.log(`랭킹 레디스 캐싱 완료`);
+      this.logger.log(`랭킹 레디스 초기 캐싱 완료`);
     } catch (error) {
       this.logger.error('랭킹 레디스 초기 캐싱 실패', error.stack);
       throw new InternalServerErrorException('랭킹 레디스 초기 캐싱 실패');

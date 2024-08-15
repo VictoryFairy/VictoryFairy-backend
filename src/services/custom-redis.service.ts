@@ -12,14 +12,8 @@ export class CustomRedisService implements OnModuleInit {
   ) {}
 
   async onModuleInit() {
-    await this.handleReady();
-
     this.redisClient.on('ready', async () => {
-      await this.handleReady();
-    });
-
-    this.redisClient.on('end', () => {
-      this.logger.error('Redis 연결이 끊어졌습니다.');
+      await this.initializeCacheOnRedisReady();
     });
 
     this.redisClient.on('error', (error) => {
@@ -27,17 +21,15 @@ export class CustomRedisService implements OnModuleInit {
     });
   }
 
-  private async handleReady() {
+  async initializeCacheOnRedisReady() {
     try {
       const test = await this.redisClient.ping();
       if (test === 'PONG') {
-        this.logger.log('Redis 연결 확인 완료');
-        setTimeout(() => {
-          this.eventEmitter.emit('redis-connected');
-        }, 2000);
+        this.logger.log('Redis 연결 확인');
+        this.eventEmitter.emit('redis-connected');
       }
     } catch (error) {
-      this.logger.error('Ping 테스트 실패:', error);
+      this.logger.error('Redis 연결 실패:', error);
     }
   }
 }

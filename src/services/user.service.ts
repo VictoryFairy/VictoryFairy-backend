@@ -26,6 +26,7 @@ export class UserService {
     private readonly eventEmitter: EventEmitter2,
   ) {}
 
+  /** 레디스 연결 시 미리 저장 */
   @OnEvent('redis-connected')
   async initCacheUsers() {
     try {
@@ -37,13 +38,13 @@ export class UserService {
       });
       await Promise.all(cachingPromises);
       this.eventEmitter.emit('user-warmed', userIds);
-      this.logger.log('유저 정보 레디스 캐싱 완료');
+      this.logger.log('유저 정보 레디스 초기 캐싱 완료');
     } catch (error) {
       this.logger.error(
-        `redis userInfo warming failed : ${error.message}`,
+        `유저 정보 레디스 초기 캐싱 실패 : ${error.message}`,
         error.stack,
       );
-      throw new InternalServerErrorException('redis userInfo warming failed');
+      throw new InternalServerErrorException('유저 정보 레디스 초기 캐싱 실패');
     }
   }
 
