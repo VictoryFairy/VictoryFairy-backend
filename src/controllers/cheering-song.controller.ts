@@ -444,47 +444,4 @@ export class CheeringSongController {
     await this.cheeringSongService.unlikeCheerSong(cheeringSongId, user);
     return;
   }
-
-  @Get(':id/likes')
-  @HttpCode(HttpStatus.OK)
-  @ApiOperation({ summary: '해당하는 ID의 응원가에 대한 유저의 좋아요 여부' })
-  @ApiParam({
-    name: 'id',
-    description: '응원가 ID',
-    example: 1,
-  })
-  @ApiOkResponse({ type: IsLikedDto })
-  @ApiNotFoundResponse({
-    description: '해당 ID의 응원가가 없을 경우',
-  })
-  async getCheeringSongIsLiked(
-    @Param('id') cheeringSongId: number,
-    @UserDeco() user: User,
-  ): Promise<IsLikedDto> {
-    const isLikedInfo = await this.cheeringSongService.getCheeringSongIsLiked(
-      cheeringSongId,
-      user,
-    );
-    return plainToInstance(IsLikedDto, isLikedInfo);
-  }
-
-  @Get(':id/likes/total')
-  @HttpCode(HttpStatus.OK)
-  @ApiOperation({ summary: '해당하는 ID의 응원가의 좋아요 수 반환' })
-  @ApiParam({
-    name: 'id',
-    description: '응원가 ID',
-    example: 1,
-  })
-  @ApiOkResponse({ type: LikeCountDto })
-  @ApiNotFoundResponse({
-    description: '해당 ID의 응원가가 없을 경우',
-  })
-  async getCheeringSongLikes(
-    @Param('id') cheeringSongId: number,
-  ): Promise<LikeCountDto> {
-    const likeCountInfo =
-      await this.cheeringSongService.getCheeringSongLikes(cheeringSongId);
-    return plainToInstance(LikeCountDto, likeCountInfo);
-  }
 }
