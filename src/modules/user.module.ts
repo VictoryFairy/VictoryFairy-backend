@@ -5,9 +5,15 @@ import { UserService } from 'src/services/user.service';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { User } from 'src/entities/user.entity';
 import { RedisModule } from './redis.module';
+import { RankModule } from './rank.module';
 
 @Module({
-  imports: [AuthModule, TypeOrmModule.forFeature([User]), RedisModule],
+  imports: [
+    AuthModule,
+    TypeOrmModule.forFeature([User]),
+    RedisModule,
+    RankModule,
+  ],
   controllers: [UserController],
   providers: [UserService],
   exports: [UserService],

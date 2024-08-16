@@ -13,6 +13,6 @@ import { CustomRedisService } from 'src/services/custom-redis.service';
     },
     CustomRedisService,
   ],
-  exports: ['REDIS_CLIENT'],
+  exports: ['REDIS_CLIENT', CustomRedisService],
 })
 export class RedisModule {}

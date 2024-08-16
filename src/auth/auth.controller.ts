@@ -21,7 +21,7 @@ import {
 } from '@nestjs/swagger';
 import { CookieOptions, Response } from 'express';
 import { ConfigService } from '@nestjs/config';
-import { EmailDto, EmailWithCodeDto, LoginUserDto } from 'src/dtos/user-dto';
+import { EmailDto, EmailWithCodeDto, LoginUserDto } from 'src/dtos/user.dto';
 import { JwtAuth } from 'src/decorator/jwt-token.decorator';
 
 @ApiTags('Auth')

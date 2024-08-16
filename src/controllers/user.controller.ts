@@ -21,21 +21,27 @@ import {
 import { plainToInstance } from 'class-transformer';
 import { JwtAuth } from 'src/decorator/jwt-token.decorator';
 import { UserDeco } from 'src/decorator/user.decorator';
+import { OverallOppTeamDto } from 'src/dtos/rank.dto';
 import {
   CreateUserDto,
   EmailDto,
   LoginUserDto,
   NicknameDto,
   PatchUserProfileDto,
-  UserDetailDto,
-} from 'src/dtos/user-dto';
+  UserMyPageDto,
+  UserResDto,
+} from 'src/dtos/user.dto';
 import { User } from 'src/entities/user.entity';
+import { RankService } from 'src/services/rank.service';
 import { UserService } from 'src/services/user.service';
 
 @ApiTags('User')
 @Controller('users')
 export class UserController {
-  constructor(private readonly userService: UserService) {}
+  constructor(
+    private readonly userService: UserService,
+    private readonly rankService: RankService,
+  ) {}
 
   /** 유저 회원가입 */
   @Post('signup')
@@ -128,17 +134,33 @@ export class UserController {
     await this.userService.changeUserProfile(body, user);
   }
 
-  /** 본인 정보 가져오기 */
+  /** 해당 유저의 상대 팀 전적 및 승리 중 홈 비율 기록 */
+  @Get('me/versus-record')
+  @JwtAuth('access')
+  @ApiOkResponse({
+    type: OverallOppTeamDto,
+    description: 'oppTeam의 key는 팀의 아이디'
+  })
+  @ApiOperation({ summary: '해당 유저의 상대 팀 전적 및 승리 중 홈 비율 기록' })
+  async getUserStats(@UserDeco('id') userId: number) {
+    const result = this.rankService.userStatsWithVerseTeam(userId);
+    return plainToInstance(OverallOppTeamDto, result);
+  }
+
+  /** 해당 유저의 간단한 정보와 직관 전적 가져오기 */
   @Get('me')
   @JwtAuth('access')
-  @ApiOkResponse({ type: UserDetailDto })
+  @ApiOperation({ summary: '해당 유저의 간단한 정보와 직관 전적 가져오기' })
+  @ApiOkResponse({
+    type: UserMyPageDto,
+  })
   @ApiInternalServerErrorResponse({ description: 'DB 문제인 경우' })
   async getUserInfo(@UserDeco() user: User) {
-    const findUser = await this.userService.findUserById(user.id, {
-      registeredGames: true,
-      support_team: true,
-    });
-    return plainToInstance(UserDetailDto, findUser);
+    const record = await this.rankService.userOverallGameStats(user.id);
+
+    const userDto = plainToInstance(UserResDto, user);
+
+    return plainToInstance(UserMyPageDto, { user: userDto, record });
   }
 
   /** 회원 탈퇴 */

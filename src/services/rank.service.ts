@@ -1,6 +1,5 @@
 import {
   BadRequestException,
-  Inject,
   Injectable,
   InternalServerErrorException,
   Logger,
@@ -15,12 +14,16 @@ import { Repository } from 'typeorm';
 import * as moment from 'moment';
 import { CreateRankDto, EventCreateRankDto } from 'src/dtos/rank.dto';
 import { OnEvent } from '@nestjs/event-emitter';
+import { EventName } from 'src/const/event.const';
+import { RedisKeys } from 'src/const/redis.const';
+import { InjectRedisClient } from 'src/decorator/redis-inject.decorator';
+import { TRegisteredGameStatus } from 'src/types/registered-game-status.type';
 
 @Injectable()
 export class RankService {
   private readonly logger = new Logger(RankService.name);
   constructor(
-    @Inject('REDIS_CLIENT')
+    @InjectRedisClient()
     private readonly redisClient: Redis,
     @InjectRepository(RegisteredGame)
     private readonly registeredGameRepository: Repository<RegisteredGame>,
@@ -28,14 +31,15 @@ export class RankService {
     private readonly rankRepository: Repository<Rank>,
   ) {}
 
-  @OnEvent('user-warmed')
+  /** 레디스 연결 시 랭킹 데이터 미리 저장 */
+  @OnEvent(EventName.CACHED_USERS)
   async initRankCaching(payload: number[]) {
     try {
       const warmingPromises = payload.map((userId) =>
         this.updateRedisRankings(userId),
       );
       await Promise.all(warmingPromises);
-      this.logger.log(`랭킹 레디스 캐싱 완료`);
+      this.logger.log(`랭킹 레디스 초기 캐싱 완료`);
     } catch (error) {
       this.logger.error('랭킹 레디스 초기 캐싱 실패', error.stack);
       throw new InternalServerErrorException('랭킹 레디스 초기 캐싱 실패');
@@ -118,7 +122,7 @@ export class RankService {
   async getTopThreeRankList(teamId?: number) {
     const key = teamId ? teamId : 'total';
     const rankList = await this.redisClient.zrevrange(
-      `rank:${key}`,
+      `${RedisKeys.RANKING}:${key}`,
       0,
       2,
       'WITHSCORES',
@@ -129,17 +133,17 @@ export class RankService {
   /** @description 랭킹 리스트에서 유저와 근처 유저 1명씩 가져오기 */
   async getUserRankWithNeighbors(userId: number, teamId?: number) {
     const key = teamId ? teamId : 'total';
-    const userRank = await this.redisClient.zrank(
-      `rank:${key}`,
+    const userRank = await this.redisClient.zrevrank(
+      `${RedisKeys.RANKING}:${key}`,
       userId.toString(),
     );
-    if (!userRank) {
+    if (userRank === null) {
       throw new BadRequestException('해당 유저가 랭킹 리스트에 없습니다');
     }
     const start = Math.max(userRank - 1, 0);
     const end = userRank + 1;
     const rankList = await this.redisClient.zrevrange(
-      `rank:${key}`,
+      `${RedisKeys.RANKING}:${key}`,
       start,
       end,
       'WITHSCORES',
@@ -147,7 +151,7 @@ export class RankService {
     const searchRank = [];
     for (let i = 0; i < rankList.length; i += 2) {
       const result = await this.redisClient.zrevrank(
-        `rank:${key}`,
+        `${RedisKeys.RANKING}:${key}`,
         rankList[i],
       );
       // 순위 1등은 0으로 들어옴
@@ -156,7 +160,6 @@ export class RankService {
     const calculated = await this.processRankList(rankList);
 
     return calculated.map((data, i) => {
-      console.log(data);
       data.rank = searchRank[i];
       return data;
     });
@@ -166,7 +169,7 @@ export class RankService {
   async getRankList(teamId?: number) {
     const key = teamId ? teamId : 'total';
     const rankList = await this.redisClient.zrevrange(
-      `rank:${key}`,
+      `${RedisKeys.RANKING}:${key}`,
       0,
       -1,
       'WITHSCORES',
@@ -177,7 +180,7 @@ export class RankService {
 
   /** @description 레디스 랭킹과 유저 정보 데이터 합쳐서 가공 */
   private async processRankList(rankList: string[]) {
-    const rawUserInfo = await this.redisClient.hgetall('userInfo');
+    const rawUserInfo = await this.redisClient.hgetall(RedisKeys.USER_INFO);
     const parsedInfo = {};
     Object.values(rawUserInfo).forEach((user) => {
       const obj = JSON.parse(user);
@@ -201,7 +204,7 @@ export class RankService {
 
     for (const [key, value] of Object.entries(stat)) {
       await this.redisClient.zadd(
-        `rank:${key}`,
+        `${RedisKeys.RANKING}:${key}`,
         value.score.toString(),
         userId.toString(),
       );
@@ -209,7 +212,7 @@ export class RankService {
   }
 
   /** @description 해당 유저의 랭킹 전체 & 팀별 점수 계산 */
-  async calculateUserRankings(userId: number) {
+  private async calculateUserRankings(userId: number) {
     const thisYear = moment().year();
     const foundUserStats = await this.rankRepository.find({
       where: { user: { id: userId }, active_year: thisYear },
@@ -242,5 +245,83 @@ export class RankService {
     data['total'] = { ...totals, score: totalScore };
 
     return data;
+  }
+
+  /** @description 유저의 직관 경기 전체 기록 */
+  async userOverallGameStats(userId: number) {
+    try {
+      const userRecord = await this.rankRepository.find({
+        where: { user: { id: userId } },
+      });
+
+      const sum = userRecord.reduce(
+        (acc, cur) => {
+          return {
+            win: acc.win + cur.win,
+            lose: acc.lose + cur.lose,
+            tie: acc.tie + cur.tie,
+            cancel: acc.cancel + cur.cancel,
+            total: acc.total + cur.win + cur.lose + cur.tie + cur.cancel,
+          };
+        },
+        { win: 0, lose: 0, tie: 0, cancel: 0, total: 0 },
+      );
+      return sum;
+    } catch (error) {
+      throw new InternalServerErrorException('Rank Entity DB 조회 실패');
+    }
+  }
+
+  /** @description 직관 홈 승리 & 상대팀 전적 불러오기 */
+  async userStatsWithVerseTeam(userId: number) {
+    const registeredGame: {
+      win_id: number;
+      home_id: number;
+      away_id: number;
+      sup_id: number;
+      status: TRegisteredGameStatus;
+    }[] = await this.registeredGameRepository
+      .createQueryBuilder('registered_game')
+      .innerJoin('registered_game.game', 'game')
+      .select([
+        'game.winning_team as win_id',
+        'game.home_team_id as home_id',
+        'game.away_team_id as away_id',
+        'registered_game.status status',
+        'registered_game.cheering_team.id as sup_id',
+      ])
+      .where('registered_game.user.id = :id', { id: userId })
+      .getRawMany();
+
+    let homeWin = 0;
+    let totalWin = 0;
+    const oppTeam = {};
+    for (const game of registeredGame) {
+      const { away_id, home_id, sup_id, status } = game;
+      const isHomeGame = home_id === sup_id;
+      const opp_id = home_id === sup_id ? away_id : home_id;
+      if (status === 'No game') {
+        continue;
+      }
+      if (status === 'Tie') {
+        oppTeam[opp_id]
+          ? oppTeam[opp_id].total++
+          : (oppTeam[opp_id] = { total: 1, win: 0 });
+        continue;
+      }
+      if (status === 'Win') {
+        isHomeGame ? homeWin++ : null;
+        totalWin++;
+        oppTeam[opp_id]
+          ? (oppTeam[opp_id].total++, oppTeam[opp_id].win++)
+          : (oppTeam[opp_id] = { total: 1, win: 1 });
+        continue;
+      }
+      oppTeam[opp_id]
+        ? oppTeam[opp_id].total++
+        : (oppTeam[opp_id] = { total: 1, win: 0 });
+    }
+
+    return { totalWin, homeWin, oppTeam };
   }
 }

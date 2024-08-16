@@ -1,9 +1,4 @@
-import {
-  ApiProperty,
-  PickType,
-  OmitType,
-  ApiPropertyOptional,
-} from '@nestjs/swagger';
+import { ApiProperty, PickType, OmitType } from '@nestjs/swagger';
 import { Exclude, Expose, Transform } from 'class-transformer';
 import {
   IsEmail,
@@ -15,6 +10,7 @@ import {
   ValidateIf,
 } from 'class-validator';
 import { CODE_LENGTH } from 'src/const/auth.const';
+import { UserRecordDto } from './rank.dto';
 
 export class BaseUserDto {
   @ApiProperty({
@@ -110,30 +106,32 @@ export class EmailWithCodeDto extends PickType(BaseUserDto, [
 }
 
 @Exclude()
-export class UserDetailDto extends PickType(BaseUserDto, [
+export class UserResDto extends PickType(BaseUserDto, [
+  'id',
   'email',
   'image',
   'nickname',
 ]) {
   @ApiProperty()
   @Expose()
-  @IsNumber()
-  score: number;
+  @IsString()
+  @Transform(({ obj }) => obj.profile_image ?? obj.image)
+  image: string;
+}
 
-  @ApiPropertyOptional({ type: [Number] })
-  @Expose()
-  @Transform(({ obj }) => {
-    return obj.registeredGames?.map((game) => game.id);
+export class UserMyPageDto {
+  @ApiProperty({
+    example: {
+      id: 12,
+      email: 'test11@gmail.com',
+      nickname: 'test11',
+      image: 'dfdadlkjfk/example',
+    },
   })
-  registeredGames?: number[];
+  user: UserResDto;
 
-  @ApiPropertyOptional()
-  @Expose()
-  @Transform(({ obj }) => obj.support_team?.name)
-  supportTeam?: string;
-
-  @ApiPropertyOptional()
-  @Expose()
-  @Transform(({ obj }) => obj.support_team?.id)
-  supportTeamId?: number;
+  @ApiProperty({
+    example: { win: 1, lose: 0, tie: 0, cancel: 0, total: 1 },
+  })
+  record: UserRecordDto;
 }

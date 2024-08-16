@@ -8,6 +8,7 @@ import { AuthModule } from 'src/auth/auth.module';
 
 @Module({
   imports: [TypeOrmModule.forFeature([Rank, RegisteredGame]), AuthModule],
+  exports: [RankService],
   controllers: [RankController],
   providers: [RankService],
 })
