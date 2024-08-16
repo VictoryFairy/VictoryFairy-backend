@@ -142,10 +142,25 @@ export class CheeringSongController {
     );
   }
 
-  @Get('liked')
+  @Get('liked/types/:type')
   @HttpCode(HttpStatus.OK)
   @ApiOperation({
     summary: '좋아요 한 응원가 목록 및 무한 스크롤 정보 반환',
+  })
+  @ApiParam({
+    name: 'type',
+    type: String,
+    description: '응원가 타입',
+    examples: {
+      team: {
+        summary: '팀 공통 응원가',
+        value: 'team',
+      },
+      player: {
+        summary: '선수 응원가',
+        value: 'player',
+      },
+    },
   })
   @ApiOkResponse({
     type: CursorPageCheeringSongDto,
@@ -223,6 +238,7 @@ export class CheeringSongController {
     },
   })
   async findByLikedWithInfiniteScroll(
+    @Param('type') type: TCheeringSongType,
     @Query() cursorPageOptionDto: CursorPageOptionDto,
     @UserDeco() user: User,
   ): Promise<CursorPageCheeringSongDto> {
@@ -230,6 +246,7 @@ export class CheeringSongController {
 
     const cheeringSongsWithCursorMeta =
       await this.cheeringSongService.findByLikedWithInfiniteScroll(
+        type,
         user,
         take,
         cursor,
