@@ -48,12 +48,6 @@ export class BaseUserDto {
   @Expose()
   @IsNotEmpty()
   @IsString()
-  @Transform(({ obj }) => {
-    if (obj.profile_image) {
-      return obj.profile_image;
-    }
-    return obj;
-  })
   image: string;
 
   @ApiProperty({
@@ -116,15 +110,17 @@ export class EmailWithCodeDto extends PickType(BaseUserDto, [
 }
 
 @Exclude()
-export class UserDetailDto extends PickType(BaseUserDto, [
+export class UserResDto extends PickType(BaseUserDto, [
+  'id',
   'email',
   'image',
   'nickname',
 ]) {
   @ApiProperty()
   @Expose()
-  @IsNumber()
-  score: number;
+  @IsString()
+  @Transform(({ obj }) => obj.profile_image)
+  image: string;
 
   @ApiPropertyOptional({ type: [Number] })
   @Expose()

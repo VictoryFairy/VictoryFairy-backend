@@ -27,7 +27,7 @@ import {
   LoginUserDto,
   NicknameDto,
   PatchUserProfileDto,
-  UserDetailDto,
+  UserResDto,
 } from 'src/dtos/user-dto';
 import { User } from 'src/entities/user.entity';
 import { RankService } from 'src/services/rank.service';
@@ -135,6 +135,7 @@ export class UserController {
   /** 해당 유저의 상대 팀 전적 및 승리 중 홈 비율 기록 */
   @Get('me/versus-record')
   @JwtAuth('access')
+  @ApiOperation({ summary: '해당 유저의 상대 팀 전적 및 승리 중 홈 비율 기록' })
   async getUserStats(@UserDeco('id') userId: number) {
     return this.rankService.userStatsWithVerseTeam(userId);
   }
@@ -142,11 +143,12 @@ export class UserController {
   /** 해당 유저의 간단한 정보와 직관 전적 가져오기 */
   @Get('me')
   @JwtAuth('access')
-  @ApiOkResponse({ type: UserDetailDto })
+  @ApiOperation({ summary: '해당 유저의 간단한 정보와 직관 전적 가져오기' })
+  @ApiOkResponse({ type: UserResDto })
   @ApiInternalServerErrorResponse({ description: 'DB 문제인 경우' })
   async getUserInfo(@UserDeco() user: User) {
     const record = await this.rankService.userOverallGameStats(user.id);
-    const userDto = plainToInstance(UserDetailDto, user);
+    const userDto = plainToInstance(UserResDto, user);
     return {
       user: userDto,
       record,
