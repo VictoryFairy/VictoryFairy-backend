@@ -288,6 +288,7 @@ export class CheeringSongService {
   }
 
   async findByLikedWithInfiniteScroll(
+    type: TCheeringSongType,
     user: User,
     take: number,
     cursor?: number,
@@ -300,6 +301,7 @@ export class CheeringSongService {
         'like_cheering_song.cheering_song_id = cheering_song.id',
       )
       .where('like_cheering_song.user_id = :user_id', { user_id: user.id })
+      .andWhere('cheering_song.type = :type', { type })
       .orderBy('cheering_song.id', 'ASC')
       .leftJoinAndSelect('cheering_song.player', 'player')
       .leftJoinAndSelect('cheering_song.team', 'team')
