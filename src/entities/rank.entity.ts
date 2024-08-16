@@ -4,10 +4,12 @@ import {
   JoinColumn,
   ManyToOne,
   PrimaryGeneratedColumn,
+  Unique,
 } from 'typeorm';
 import { User } from './user.entity';
 
 @Entity()
+@Unique(['team_id', 'user', 'active_year'])
 export class Rank {
   @PrimaryGeneratedColumn()
   id: number;

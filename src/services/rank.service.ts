@@ -97,24 +97,20 @@ export class RankService {
       Tie: 'tie',
       'No game': 'cancel',
     };
-    const foundRankData = await this.rankRepository.findOne({
-      where: {
-        team_id,
-        user: { id: user_id },
-        active_year: thisYear,
-      },
-    });
 
-    if (!foundRankData) {
+    const updateCount = await this.rankRepository.increment(
+      { team_id, user: { id: user_id }, active_year: thisYear },
+      columnToUpdate[status],
+      1,
+    );
+
+    if (updateCount.affected === 0) {
       const rankData = new Rank();
       rankData.team_id = team_id;
       rankData.user = { id: user_id } as User;
       rankData.active_year = thisYear;
       rankData[columnToUpdate[status]] = 1;
-      await this.rankRepository.save(rankData);
-    } else {
-      foundRankData[columnToUpdate[status]] += 1;
-      await this.rankRepository.save(foundRankData);
+      await this.rankRepository.insert(rankData);
     }
   }
 
