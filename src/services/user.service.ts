@@ -113,6 +113,11 @@ export class UserService {
     }
   }
 
+  async checkUserPw(user: User, password) {
+    const isVerifiedPw = await bcrypt.compare(password, user.password);
+    return isVerifiedPw;
+  }
+
   async changeUserPw({ email, password }: LoginUserDto) {
     const user = await this.findUserByEmail(email);
     if (!user) {

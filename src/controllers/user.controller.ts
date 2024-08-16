@@ -80,6 +80,42 @@ export class UserController {
     const isExist = await this.userService.isExistNickname(nickname);
     return { isExist };
   }
+
+  @Post('password/check')
+  @HttpCode(HttpStatus.OK)
+  @JwtAuth('access')
+  @ApiOperation({ summary: '유저가 제출한 비밀번호가 맞는지 확인' })
+  @ApiBody({ schema: { properties: { password: { type: 'string' } } } })
+  @ApiOkResponse({
+    description: '비밀번호 확인 결과를 반환. 틀린 경우 isCorrect : false',
+    content: {
+      'application/json': {
+        schema: {
+          type: 'object',
+          properties: { isCorrect: { type: 'boolean' } },
+        },
+        examples: {
+          incorrect: {
+            summary: '비밀번호 불일치',
+            value: { isCorrect: false },
+          },
+          correct: {
+            summary: '비밀번호 일치',
+            value: { isCorrect: true },
+          },
+        },
+      },
+    },
+  })
+  async checkPassword(
+    @UserDeco() user: User,
+    @Body() body: Pick<LoginUserDto, 'password'>,
+  ) {
+    const { password } = body;
+    const isCorrect = await this.userService.checkUserPw(user, password);
+    return { isCorrect };
+  }
+
   /** 비밀번호 변경 , 프로필과 따로 뺀 이유 : 이메일 인증 코드 확인 후 변경 */
   @Patch('password')
   @HttpCode(HttpStatus.NO_CONTENT)
@@ -139,7 +175,7 @@ export class UserController {
   @JwtAuth('access')
   @ApiOkResponse({
     type: OverallOppTeamDto,
-    description: 'oppTeam의 key는 팀의 아이디'
+    description: 'oppTeam의 key는 팀의 아이디',
   })
   @ApiOperation({ summary: '해당 유저의 상대 팀 전적 및 승리 중 홈 비율 기록' })
   async getUserStats(@UserDeco('id') userId: number) {
