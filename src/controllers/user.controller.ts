@@ -21,12 +21,14 @@ import {
 import { plainToInstance } from 'class-transformer';
 import { JwtAuth } from 'src/decorator/jwt-token.decorator';
 import { UserDeco } from 'src/decorator/user.decorator';
+import { OverallOppTeamDto } from 'src/dtos/rank.dto';
 import {
   CreateUserDto,
   EmailDto,
   LoginUserDto,
   NicknameDto,
   PatchUserProfileDto,
+  UserMyPageDto,
   UserResDto,
 } from 'src/dtos/user-dto';
 import { User } from 'src/entities/user.entity';
@@ -135,24 +137,30 @@ export class UserController {
   /** 해당 유저의 상대 팀 전적 및 승리 중 홈 비율 기록 */
   @Get('me/versus-record')
   @JwtAuth('access')
+  @ApiOkResponse({
+    type: OverallOppTeamDto,
+    description: 'oppTeam의 key는 팀의 아이디'
+  })
   @ApiOperation({ summary: '해당 유저의 상대 팀 전적 및 승리 중 홈 비율 기록' })
   async getUserStats(@UserDeco('id') userId: number) {
-    return this.rankService.userStatsWithVerseTeam(userId);
+    const result = this.rankService.userStatsWithVerseTeam(userId);
+    return plainToInstance(OverallOppTeamDto, result);
   }
 
   /** 해당 유저의 간단한 정보와 직관 전적 가져오기 */
   @Get('me')
   @JwtAuth('access')
   @ApiOperation({ summary: '해당 유저의 간단한 정보와 직관 전적 가져오기' })
-  @ApiOkResponse({ type: UserResDto })
+  @ApiOkResponse({
+    type: UserMyPageDto,
+  })
   @ApiInternalServerErrorResponse({ description: 'DB 문제인 경우' })
   async getUserInfo(@UserDeco() user: User) {
     const record = await this.rankService.userOverallGameStats(user.id);
+
     const userDto = plainToInstance(UserResDto, user);
-    return {
-      user: userDto,
-      record,
-    };
+
+    return plainToInstance(UserMyPageDto, { user: userDto, record });
   }
 
   /** 회원 탈퇴 */

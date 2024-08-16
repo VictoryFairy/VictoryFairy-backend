@@ -305,7 +305,7 @@ export class RankService {
       }
       if (status === 'Tie') {
         oppTeam[opp_id]
-          ? (oppTeam[opp_id].total += 1)
+          ? oppTeam[opp_id].total++
           : (oppTeam[opp_id] = { total: 1, win: 0 });
         continue;
       }
