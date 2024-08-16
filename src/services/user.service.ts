@@ -9,7 +9,7 @@ import { HASH_ROUND } from 'src/const/user.const';
 import { InjectRepository } from '@nestjs/typeorm';
 import { FindOptionsRelations, FindOptionsSelect, Repository } from 'typeorm';
 import { User } from 'src/entities/user.entity';
-import { CreateUserDto, LoginUserDto } from 'src/dtos/user-dto';
+import { CreateUserDto, LoginUserDto } from 'src/dtos/user.dto';
 import { QueryDeepPartialEntity } from 'typeorm/query-builder/QueryPartialEntity';
 import { Redis } from 'ioredis';
 import { EventEmitter2, OnEvent } from '@nestjs/event-emitter';

@@ -14,7 +14,7 @@ import { CODE_LENGTH, CODE_LIMIT_TIME } from 'src/const/auth.const';
 import { InjectRepository } from '@nestjs/typeorm';
 import { User } from 'src/entities/user.entity';
 import { FindOptionsRelations, FindOptionsWhere, Repository } from 'typeorm';
-import { EmailWithCodeDto, LoginUserDto } from 'src/dtos/user-dto';
+import { EmailWithCodeDto, LoginUserDto } from 'src/dtos/user.dto';
 import { RedisKeys } from 'src/const/redis.const';
 import { InjectRedisClient } from 'src/decorator/redis-inject.decorator';
 

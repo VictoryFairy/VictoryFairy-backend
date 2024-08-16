@@ -30,7 +30,7 @@ import {
   PatchUserProfileDto,
   UserMyPageDto,
   UserResDto,
-} from 'src/dtos/user-dto';
+} from 'src/dtos/user.dto';
 import { User } from 'src/entities/user.entity';
 import { RankService } from 'src/services/rank.service';
 import { UserService } from 'src/services/user.service';
