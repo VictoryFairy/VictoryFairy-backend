@@ -53,16 +53,16 @@ export class AwsS3Controller {
     status: HttpStatus.CREATED,
     schema: {
       properties: {
-        profileImgUrl: { type: 'string' },
+        registeredGameImgUrl: { type: 'string' },
       },
     },
   })
   async uploadRegisteredGameImg(@UploadedFile() file: Express.Multer.File) {
-    const profileImgUrl = await this.awsS3Service.uploadRegisteredGame(
+    const registeredGameImgUrl = await this.awsS3Service.uploadRegisteredGame(
       file.buffer,
       file.mimetype,
     );
-    return { profileImgUrl };
+    return { registeredGameImgUrl };
   }
 
   @Delete('')
