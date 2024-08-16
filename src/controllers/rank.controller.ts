@@ -110,7 +110,6 @@ export class RankController {
       this.rankService.getUserRankWithNeighbors(userId, teamId),
       this.rankService.userOverallGameStats(userId),
     ]);
-    console.log(userStat);
     const top = topResult.map((rank) => plainToInstance(ResRankDto, rank));
     const withUser = withUserResult.map((rank) =>
       plainToInstance(ResRankDto, rank),
