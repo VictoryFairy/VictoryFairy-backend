@@ -12,12 +12,32 @@ function convertYouTubeURL(url: string): string {
     }
 }
 
+function cleanYouTubeURL(url: string): string {
+  try {
+      const urlObj = new URL(url);
+      const videoID = urlObj.searchParams.get('v');
+      const timestamp = urlObj.searchParams.get('t');
+      
+      if (videoID) {
+          let cleanURL = `https://www.youtube.com/watch?v=${videoID}`;
+          if (timestamp) {
+              cleanURL += `&t=${timestamp}`;
+          }
+          return cleanURL;
+      } else {
+          throw new Error("URL does not contain a 'v' parameter");
+      }
+  } catch (error) {
+      throw new Error(`Invalid URL: ${error.message}`);
+  }
+}
+
 function traverseAndConvertLinks(obj: any): void {
     for (const key in obj) {
         if (obj.hasOwnProperty(key)) {
             if (key === 'link' && typeof obj[key] === 'string') {
                 try {
-                    obj[key] = convertYouTubeURL(obj[key]);
+                    obj[key] = cleanYouTubeURL(obj[key]);
                 } catch (error) {
                     console.error(`Error converting URL for key "${key}": ${error.message}`);
                 }
