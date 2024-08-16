@@ -115,13 +115,7 @@ export class UserResDto extends PickType(BaseUserDto, [
   @ApiProperty()
   @Expose()
   @IsString()
-  @Transform(({ obj }) => {
-    if (obj.profile_image) {
-      return obj.profile_image;
-    } else {
-      return obj.image;
-    }
-  })
+  @Transform(({ obj }) => obj.profile_image ?? obj.image)
   image: string;
 }
 
