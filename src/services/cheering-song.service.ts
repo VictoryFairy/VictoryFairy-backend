@@ -5,8 +5,6 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import * as path from 'path';
-import * as fs from 'fs';
 import { CheeringSong } from 'src/entities/cheering-song.entity';
 import { ICheeringSongSeed, TCheeringSongType } from 'src/types/seed.type';
 import { Brackets, FindOptionsWhere, MoreThan, Repository } from 'typeorm';
@@ -15,6 +13,7 @@ import { Player } from 'src/entities/player.entity';
 import { User } from 'src/entities/user.entity';
 import { LikeCheeringSong } from 'src/entities/like-cheering-song.entity';
 import { CursorPageCheeringSongDto } from 'src/dtos/cursor-page.dto';
+import { refinedCheeringSongs } from 'src/seeds/cheering-song.seed';
 
 @Injectable()
 export class CheeringSongService {
@@ -31,38 +30,7 @@ export class CheeringSongService {
   ) {}
 
   async seed() {
-    function readJSONFile(filePath: string): ICheeringSongSeed[] {
-      try {
-        const data = fs.readFileSync(filePath, 'utf-8');
-        return JSON.parse(data) as ICheeringSongSeed[];
-      } catch (error) {
-        console.error(`Error reading file ${filePath}:`, error);
-        return [];
-      }
-    }
-
-    function getCheeringSongData(): ICheeringSongSeed[] {
-      const dirPath = 'src/seeds/refined-cheering-songs';
-
-      let combinedData: ICheeringSongSeed[] = [];
-
-      try {
-        const files = fs.readdirSync(dirPath);
-        for (const file of files) {
-          if (path.extname(file) === '.json') {
-            const filePath = path.join(dirPath, file);
-            const fileData = readJSONFile(filePath);
-            combinedData = combinedData.concat(fileData);
-          }
-        }
-      } catch (error) {
-        console.error(`Error reading directory ${dirPath}:`, error);
-      }
-
-      return combinedData;
-    }
-
-    const cheeringSongSeeder = getCheeringSongData();
+    const cheeringSongSeeder = refinedCheeringSongs;
 
     await this.cheeringSongRepository.manager.transaction(async (manager) => {
       for (const seed of cheeringSongSeeder) {
