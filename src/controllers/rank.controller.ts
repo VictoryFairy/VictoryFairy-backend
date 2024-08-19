@@ -1,6 +1,11 @@
 import { Controller, Get, Query } from '@nestjs/common';
 import { RankService } from '../services/rank.service';
-import { ApiOkResponse, ApiOperation, ApiTags } from '@nestjs/swagger';
+import {
+  ApiBadRequestResponse,
+  ApiOkResponse,
+  ApiOperation,
+  ApiTags,
+} from '@nestjs/swagger';
 import { JwtAuth } from 'src/decorator/jwt-token.decorator';
 import {
   QueryTotalRankingListAboutTeamDto,
@@ -15,42 +20,13 @@ import { plainToInstance } from 'class-transformer';
 export class RankController {
   constructor(private readonly rankService: RankService) {}
 
-  @Get('list')
+  @Get('top')
   @ApiOperation({
-    summary: '랭킹 리스트 전부 가져오기',
-    description:
-      '쿼리에 teamId 추가하면 해당 팀에 대한 랭킹 리스트 전부를 반환',
-  })
-  @ApiOkResponse({
-    description: '배열 형태로 보여주고 랭킹 순위는 rank 프로퍼티의 값',
-    example: [
-      {
-        rank: 1,
-        score: 1030,
-        profile_image: 'image/s3/example',
-        nickname: 'test5',
-        user_id: 1,
-      },
-    ],
-  })
-  async getRankList(@Query() query: QueryTotalRankingListAboutTeamDto) {
-    const { teamId } = query;
-
-    const result = teamId
-      ? await this.rankService.getRankList(teamId)
-      : await this.rankService.getRankList();
-
-    return result.map((rank) => plainToInstance(ResRankDto, rank));
-  }
-
-  @Get()
-  @ApiOperation({
-    summary: '랭킹 상위 3명과 해당 유저 주변의 3명을 표시',
+    summary: '랭킹 상위 3명, 없는 경우 빈 배열',
     description: '쿼리에 teamId 추가하면 해당 팀에 대한 랭킹 리스트 반환',
   })
   @ApiOkResponse({
-    description:
-      'top, withUser 각각 3명의 유저가 반환. 단 1등이거나 꼴등이면 withUser에서 2명이 반환 될 수 있음.',
+    description: 'top 3명의 유저가 반환',
     schema: {
       example: {
         top: [
@@ -76,7 +52,27 @@ export class RankController {
             userId: 11,
           },
         ],
-        withUser: [
+      },
+    },
+  })
+  async getRankTopThree(@Query() query: QueryTotalRankingListAboutTeamDto) {
+    const { teamId } = query;
+    const topResult = await this.rankService.getTopThreeRankList(teamId);
+    const top = topResult.map((rank) => plainToInstance(ResRankDto, rank));
+    return { top };
+  }
+
+  @Get('nearby')
+  @ApiOperation({
+    summary: '해당 유저와 주변의 2명 반환',
+    description: '쿼리에 teamId 추가하면 해당 팀에 대한 랭킹 리스트 반환',
+  })
+  @ApiOkResponse({
+    description:
+      'nearBy 3명의 유저와 해당 유저의 데이터 반환. 단 1등이거나 꼴등이면 nearBy에서 2명이 반환 될 수 있음.',
+    schema: {
+      example: {
+        nearBy: [
           {
             rank: 1,
             score: 1025,
@@ -92,33 +88,49 @@ export class RankController {
             userId: 5,
           },
         ],
-        user: {
-          userId: 2,
-          totalGame: 8,
-          win: 6,
-        },
+        user: { userId: 2, totalGame: 8, win: 6 },
       },
     },
   })
-  async getRankTopThree(
+  @ApiBadRequestResponse({ description: '해당 랭킹에 유저가 없는 경우' })
+  async getNearByUser(
     @Query() query: QueryTotalRankingListAboutTeamDto,
     @UserDeco('id') userId: number,
   ) {
     const { teamId } = query;
-    const [topResult, withUserResult, userStat] = await Promise.all([
-      this.rankService.getTopThreeRankList(teamId),
+    const [nearBy, userStats] = await Promise.all([
       this.rankService.getUserRankWithNeighbors(userId, teamId),
       this.rankService.userOverallGameStats(userId),
     ]);
-    const top = topResult.map((rank) => plainToInstance(ResRankDto, rank));
-    const withUser = withUserResult.map((rank) =>
-      plainToInstance(ResRankDto, rank),
-    );
-
     return {
-      top,
-      withUser,
-      user: { userId, totalGame: userStat.total, win: userStat.win },
+      nearBy,
+      user: { userId, totalGames: userStats.total, win: userStats.win },
     };
+  }
+
+  @Get()
+  @ApiOperation({
+    summary: '랭킹 리스트 전부 가져오기',
+    description:
+      '쿼리에 teamId 추가하면 해당 팀에 대한 랭킹 리스트 전부를 반환',
+  })
+  @ApiOkResponse({
+    description: '배열 형태로 반환, ',
+    example: [
+      {
+        rank: 1,
+        score: 1030,
+        profile_image: 'image/s3/example',
+        nickname: 'test5',
+        user_id: 1,
+      },
+    ],
+  })
+  async getRankList(@Query() query: QueryTotalRankingListAboutTeamDto) {
+    const { teamId } = query;
+
+    const result = await this.rankService.getRankList(teamId);
+
+    return result.map((rank) => plainToInstance(ResRankDto, rank));
   }
 }
