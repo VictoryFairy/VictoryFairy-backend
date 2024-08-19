@@ -104,7 +104,6 @@ export class GameDto {
       name: '삼성',
     },
   })
-  @Type(() => TeamDto)
   @ValidateNested()
   @Expose()
   @Transform(({ obj }) => obj.winning_team)

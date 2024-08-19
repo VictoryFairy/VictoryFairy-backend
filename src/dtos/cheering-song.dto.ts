@@ -36,7 +36,7 @@ export class CheeringSongDto {
   @IsString()
   @Expose()
   @Transform(({ obj }: { obj: CheeringSong }) => obj.lyrics.split('\n')[0])
-  lyrics_preview: string;
+  lyricsPreview: string;
 
   @ApiProperty({
     description: '응원가 팀',
@@ -69,7 +69,7 @@ export class CheeringSongDto {
 
 @Exclude()
 export class CheeringSongDetailedDto extends OmitType(CheeringSongDto, [
-  'lyrics_preview',
+  'lyricsPreview',
 ]) {
   @ApiProperty({
     description: '응원가 가사',

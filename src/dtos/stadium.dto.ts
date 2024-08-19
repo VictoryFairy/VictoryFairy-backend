@@ -26,7 +26,7 @@ export class StadiumDto {
   })
   @IsString()
   @Expose()
-  full_name: string;
+  fullName: string;
 
   @ApiProperty({
     description: '경기장 위도',
