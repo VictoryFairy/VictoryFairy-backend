@@ -6,6 +6,7 @@ import { RegisteredGameService } from 'src/services/registered-game.service';
 import { GameModule } from './game.module';
 import { TeamModule } from './team.module';
 import { AuthModule } from 'src/auth/auth.module';
+import { RankModule } from './rank.module';
 
 @Module({
   imports: [
@@ -13,7 +14,7 @@ import { AuthModule } from 'src/auth/auth.module';
     AuthModule,
     GameModule,
     TeamModule,
-    AuthModule,
+    RankModule,
   ],
   controllers: [RegisteredGameController],
   providers: [RegisteredGameService],

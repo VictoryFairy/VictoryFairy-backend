@@ -7,11 +7,11 @@ export class CreateRankDto {
   team_id: number;
   user_id: number;
   status: TRegisteredGameStatus;
-  thisYear: number;
+  year: number;
 }
 
 export class EventCreateRankDto extends OmitType(CreateRankDto, [
-  'thisYear',
+  'year',
 ] as const) {}
 
 export class QueryTotalRankingListAboutTeamDto {
