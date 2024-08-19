@@ -5,7 +5,7 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Between, Repository } from 'typeorm';
+import { Between, EntityManager, Repository } from 'typeorm';
 import {
   CreateRegisteredGameDto,
   UpdateRegisteredGameDto,
@@ -15,9 +15,8 @@ import { User } from 'src/entities/user.entity';
 import { TeamService } from './team.service';
 import { GameService } from './game.service';
 import { Game } from 'src/entities/game.entity';
-import { EventEmitter2 } from '@nestjs/event-emitter';
-import { EventCreateRankDto } from 'src/dtos/rank.dto';
-import { instanceToPlain, plainToInstance } from 'class-transformer';
+import * as moment from 'moment';
+import { RankService } from './rank.service';
 
 @Injectable()
 export class RegisteredGameService {
@@ -28,19 +27,20 @@ export class RegisteredGameService {
     private readonly registeredGameRepository: Repository<RegisteredGame>,
     private readonly gameService: GameService,
     private readonly teamService: TeamService,
-    private readonly eventEmitter: EventEmitter2,
+    private readonly rankService: RankService,
   ) {}
 
   async create(
     createRegisteredGameDto: CreateRegisteredGameDto,
     user: User,
+    qrManager: EntityManager,
   ): Promise<RegisteredGame> {
     const game = await this.gameService.findOne(createRegisteredGameDto.gameId);
     const cheeringTeam = await this.teamService.findOne(
       createRegisteredGameDto.cheeringTeamId,
     );
 
-    const duplcate = await this.registeredGameRepository.findOne({
+    const duplcate = await qrManager.getRepository(RegisteredGame).findOne({
       where: {
         game: game,
         user: user,
@@ -52,7 +52,7 @@ export class RegisteredGameService {
         'Users cannot register for more than one copy of the same game.',
       );
 
-    const registeredGame = this.registeredGameRepository.create({
+    const registeredGame = qrManager.create(RegisteredGame, {
       ...createRegisteredGameDto,
       game,
       cheering_team: cheeringTeam,
@@ -61,17 +61,20 @@ export class RegisteredGameService {
 
     this.defineStatus(game, registeredGame);
 
-    await this.registeredGameRepository.save(registeredGame);
+    await qrManager.save(registeredGame);
 
     if (registeredGame.status !== null) {
-      this.eventEmitter.emit(
-        'registeredGame.oldGame',
-        plainToInstance(EventCreateRankDto, {
+      await this.rankService.updateRankEntity(
+        {
           team_id: registeredGame.cheering_team.id,
           user_id: registeredGame.user.id,
           status: registeredGame.status,
-        }),
+          year: moment(game.date).year(),
+        },
+        qrManager,
       );
+
+      await this.rankService.updateRedisRankings(user.id, qrManager);
     }
 
     return registeredGame;

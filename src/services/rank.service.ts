@@ -10,9 +10,9 @@ import { Redis } from 'ioredis';
 import { Rank } from 'src/entities/rank.entity';
 import { RegisteredGame } from 'src/entities/registered-game.entity';
 import { User } from 'src/entities/user.entity';
-import { Repository } from 'typeorm';
+import { EntityManager, Repository } from 'typeorm';
 import * as moment from 'moment';
-import { CreateRankDto, EventCreateRankDto } from 'src/dtos/rank.dto';
+import { CreateRankDto } from 'src/dtos/rank.dto';
 import { OnEvent } from '@nestjs/event-emitter';
 import { EventName } from 'src/const/event.const';
 import { RedisKeys } from 'src/const/redis.const';
@@ -79,17 +79,12 @@ export class RankService {
     }
   }
 
-  /** @description 당일이 아닌 이전 직관 경기는 이벤트 리스너로 받아서 랭크 테이블 업데이트 후 랭킹 점수에 반영 */
-  @OnEvent('registeredGame.oldGame')
-  async handleCreateOldGame(payload: EventCreateRankDto) {
-    const thisYear = moment().year();
-    await this.updateRankEntity({ ...payload, thisYear });
-    await this.updateRedisRankings(payload.user_id);
-  }
-
   /** @description rank entity에 저장 */
-  async updateRankEntity(watchedGame: CreateRankDto) {
-    const { status, team_id, user_id, thisYear } = watchedGame;
+  async updateRankEntity(
+    watchedGame: CreateRankDto,
+    qrManager?: EntityManager,
+  ) {
+    const { status, team_id, user_id, year } = watchedGame;
 
     const columnToUpdate = {
       Win: 'win',
@@ -98,8 +93,12 @@ export class RankService {
       'No game': 'cancel',
     };
 
-    const updateCount = await this.rankRepository.increment(
-      { team_id, user: { id: user_id }, active_year: thisYear },
+    const repository = qrManager
+      ? qrManager.getRepository(Rank)
+      : this.rankRepository;
+
+    const updateCount = await repository.increment(
+      { team_id, user: { id: user_id }, active_year: year },
       columnToUpdate[status],
       1,
     );
@@ -108,9 +107,9 @@ export class RankService {
       const rankData = new Rank();
       rankData.team_id = team_id;
       rankData.user = { id: user_id } as User;
-      rankData.active_year = thisYear;
+      rankData.active_year = year;
       rankData[columnToUpdate[status]] = 1;
-      await this.rankRepository.insert(rankData);
+      await repository.insert(rankData);
     }
   }
 
@@ -202,22 +201,34 @@ export class RankService {
   }
 
   /** @description 랭킹 점수 레디스에 반영 */
-  async updateRedisRankings(userId: number) {
-    const stat = await this.calculateUserRankings(userId);
+  async updateRedisRankings(userId: number, qrManger?: EntityManager) {
+    try {
+      const stat = await this.calculateUserRankings(userId, qrManger);
 
-    for (const [key, value] of Object.entries(stat)) {
-      await this.redisClient.zadd(
-        `${RedisKeys.RANKING}:${key}`,
-        value.score.toString(),
-        userId.toString(),
+      for (const [key, value] of Object.entries(stat)) {
+        await this.redisClient.zadd(
+          `${RedisKeys.RANKING}:${key}`,
+          value.score.toString(),
+          userId.toString(),
+        );
+      }
+    } catch (error) {
+      throw new InternalServerErrorException(
+        `Redis 랭킹 업데이트 실패 : ${userId} `,
       );
     }
   }
 
   /** @description 해당 유저의 랭킹 전체 & 팀별 점수 계산 */
-  private async calculateUserRankings(userId: number) {
+  private async calculateUserRankings(
+    userId: number,
+    qrManger?: EntityManager,
+  ) {
+    const repository = qrManger
+      ? qrManger.getRepository(Rank)
+      : this.rankRepository;
     const thisYear = moment().year();
-    const foundUserStats = await this.rankRepository.find({
+    const foundUserStats = await repository.find({
       where: { user: { id: userId }, active_year: thisYear },
     });
     if (!foundUserStats) return {};
