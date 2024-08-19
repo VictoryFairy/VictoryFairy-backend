@@ -1,7 +1,7 @@
 import { Controller, Get, Query } from '@nestjs/common';
 import { RankService } from '../services/rank.service';
 import {
-  ApiBadRequestResponse,
+  ApiNotFoundResponse,
   ApiOkResponse,
   ApiOperation,
   ApiTags,
@@ -22,7 +22,7 @@ export class RankController {
 
   @Get('top')
   @ApiOperation({
-    summary: '랭킹 상위 3명, 없는 경우 빈 배열',
+    summary: '랭킹 상위 3명',
     description: '쿼리에 teamId 추가하면 해당 팀에 대한 랭킹 리스트 반환',
   })
   @ApiOkResponse({
@@ -55,9 +55,11 @@ export class RankController {
       },
     },
   })
+  @ApiNotFoundResponse({ description: '랭킹 리스트가 없는 경우' })
   async getRankTopThree(@Query() query: QueryTotalRankingListAboutTeamDto) {
     const { teamId } = query;
     const topResult = await this.rankService.getTopThreeRankList(teamId);
+
     const top = topResult.map((rank) => plainToInstance(ResRankDto, rank));
     return { top };
   }
@@ -92,7 +94,7 @@ export class RankController {
       },
     },
   })
-  @ApiBadRequestResponse({ description: '해당 랭킹에 유저가 없는 경우' })
+  @ApiNotFoundResponse({ description: '해당 랭킹에 유저가 없는 경우' })
   async getNearByUser(
     @Query() query: QueryTotalRankingListAboutTeamDto,
     @UserDeco('id') userId: number,
@@ -126,6 +128,7 @@ export class RankController {
       },
     ],
   })
+  @ApiNotFoundResponse({ description: '랭킹 리스트가 없는 경우' })
   async getRankList(@Query() query: QueryTotalRankingListAboutTeamDto) {
     const { teamId } = query;
 
