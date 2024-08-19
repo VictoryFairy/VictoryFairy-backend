@@ -17,7 +17,7 @@ import { GameService } from './game.service';
 import { Game } from 'src/entities/game.entity';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import { EventCreateRankDto } from 'src/dtos/rank.dto';
-import { plainToInstance } from 'class-transformer';
+import { instanceToPlain, plainToInstance } from 'class-transformer';
 
 @Injectable()
 export class RegisteredGameService {
@@ -80,7 +80,15 @@ export class RegisteredGameService {
   async findAll(user: User): Promise<RegisteredGame[]> {
     const registeredGames = await this.registeredGameRepository.find({
       where: { user },
-      relations: { cheering_team: true, game: true },
+      relations: {
+        cheering_team: true,
+        game: {
+          home_team: true,
+          away_team: true,
+          stadium: true,
+          winning_team: true,
+        },
+      },
     });
     return registeredGames;
   }
@@ -98,7 +106,15 @@ export class RegisteredGameService {
         user,
         created_at: Between(startDate, endDate),
       },
-      relations: { cheering_team: true, game: true },
+      relations: {
+        cheering_team: true,
+        game: {
+          home_team: true,
+          away_team: true,
+          stadium: true,
+          winning_team: true,
+        },
+      },
     });
 
     return registeredGames;
@@ -107,7 +123,15 @@ export class RegisteredGameService {
   async findOne(id: number, user: User): Promise<RegisteredGame> {
     const registeredGame = await this.registeredGameRepository.findOne({
       where: { id, user },
-      relations: { cheering_team: true, game: true },
+      relations: {
+        cheering_team: true,
+        game: {
+          home_team: true,
+          away_team: true,
+          stadium: true,
+          winning_team: true,
+        },
+      },
     });
     if (!registeredGame) {
       throw new NotFoundException(`Registered game with ID ${id} not found`);
