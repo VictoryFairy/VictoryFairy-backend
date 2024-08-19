@@ -54,7 +54,7 @@ export class CheeringSongController {
         {
           id: 271,
           title: '고승민 응원가',
-          lyrics_preview: '롯~데의 고승민 안타 안타~',
+          lyricsPreview: '롯~데의 고승민 안타 안타~',
           team: {
             id: 1,
             name: '롯데',
@@ -69,7 +69,7 @@ export class CheeringSongController {
         {
           id: 286,
           title: '오늘도 승리한다',
-          lyrics_preview: '롯데 롯데 롯데',
+          lyricsPreview: '롯데 롯데 롯데',
           team: {
             id: 1,
             name: '롯데',
@@ -80,7 +80,7 @@ export class CheeringSongController {
         {
           id: 293,
           title: '마! 최강롯데 아이가',
-          lyrics_preview: '워어어 워어어어 필승 롯데',
+          lyricsPreview: '워어어 워어어어 필승 롯데',
           team: {
             id: 1,
             name: '롯데',
@@ -91,7 +91,7 @@ export class CheeringSongController {
         {
           id: 294,
           title: '우리들의 빛나는 이 순간',
-          lyrics_preview: '워 워어어어 승리를 위해',
+          lyricsPreview: '워 워어어어 승리를 위해',
           team: {
             id: 1,
             name: '롯데',
@@ -102,7 +102,7 @@ export class CheeringSongController {
         {
           id: 307,
           title: '박세혁 응원가',
-          lyrics_preview: '워어우워어어 NC 박세혁 워어우워어어 NC 박세혁',
+          lyricsPreview: '워어우워어어 NC 박세혁 워어우워어어 NC 박세혁',
           team: {
             id: 6,
             name: 'NC',
@@ -169,7 +169,7 @@ export class CheeringSongController {
         {
           id: 271,
           title: '고승민 응원가',
-          lyrics_preview: '롯~데의 고승민 안타 안타~',
+          lyricsPreview: '롯~데의 고승민 안타 안타~',
           team: {
             id: 1,
             name: '롯데',
@@ -184,7 +184,7 @@ export class CheeringSongController {
         {
           id: 286,
           title: '오늘도 승리한다',
-          lyrics_preview: '롯데 롯데 롯데',
+          lyricsPreview: '롯데 롯데 롯데',
           team: {
             id: 1,
             name: '롯데',
@@ -195,7 +195,7 @@ export class CheeringSongController {
         {
           id: 293,
           title: '마! 최강롯데 아이가',
-          lyrics_preview: '워어어 워어어어 필승 롯데',
+          lyricsPreview: '워어어 워어어어 필승 롯데',
           team: {
             id: 1,
             name: '롯데',
@@ -206,7 +206,7 @@ export class CheeringSongController {
         {
           id: 294,
           title: '우리들의 빛나는 이 순간',
-          lyrics_preview: '워 워어어어 승리를 위해',
+          lyricsPreview: '워 워어어어 승리를 위해',
           team: {
             id: 1,
             name: '롯데',
@@ -217,7 +217,7 @@ export class CheeringSongController {
         {
           id: 307,
           title: '박세혁 응원가',
-          lyrics_preview: '워어우워어어 NC 박세혁 워어우워어어 NC 박세혁',
+          lyricsPreview: '워어우워어어 NC 박세혁 워어우워어어 NC 박세혁',
           team: {
             id: 6,
             name: 'NC',
@@ -316,7 +316,7 @@ export class CheeringSongController {
         {
           id: 273,
           title: '부산 갈매기',
-          lyrics_preview: '빠바바빠바밤~',
+          lyricsPreview: '빠바바빠바밤~',
           team: {
             id: 1,
             name: '롯데',
@@ -327,7 +327,7 @@ export class CheeringSongController {
         {
           id: 274,
           title: '돌아와요 부산항에',
-          lyrics_preview: '꽃 피는 동백섬에',
+          lyricsPreview: '꽃 피는 동백섬에',
           team: {
             id: 1,
             name: '롯데',
@@ -338,7 +338,7 @@ export class CheeringSongController {
         {
           id: 275,
           title: '바다새',
-          lyrics_preview: '롯데! 롯데!',
+          lyricsPreview: '롯데! 롯데!',
           team: {
             id: 1,
             name: '롯데',
@@ -349,7 +349,7 @@ export class CheeringSongController {
         {
           id: 276,
           title: '뱃노래',
-          lyrics_preview: '어기여차에애~ 어기여차에~ (워!)',
+          lyricsPreview: '어기여차에애~ 어기여차에~ (워!)',
           team: {
             id: 1,
             name: '롯데',
@@ -360,7 +360,7 @@ export class CheeringSongController {
         {
           id: 277,
           title: '승전가',
-          lyrics_preview: '롯데 롯데 롯데 롯~데~',
+          lyricsPreview: '롯데 롯데 롯데 롯~데~',
           team: {
             id: 1,
             name: '롯데',
