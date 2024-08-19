@@ -44,7 +44,12 @@ export class GameService {
       where: {
         date: dateString,
       },
-      relations: ['home_team', 'away_team', 'winning_team', 'stadium'],
+      relations: {
+        home_team: true,
+        away_team: true,
+        winning_team: true,
+        stadium: true,
+      }
     });
 
     return games;

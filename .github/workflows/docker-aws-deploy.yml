@@ -79,7 +79,7 @@ jobs:
       with:
         aws_access_key: ${{ secrets.AWS_EB_ACCESS_KEY }}
         aws_secret_key: ${{ secrets.AWS_EB_SECRET_ACCESS_KEY }}
-        version_label: "#${{ github.run_number }}-${{ github.run_attempt }}-${{ github.sha }}"
+        version_label: "${{ github.run_number }}-${{ github.run_attempt }}-${{ github.sha }}"
         application_name: VictoryFairy
         environment_name: VictoryFairy-env-1
         region: ap-northeast-2
