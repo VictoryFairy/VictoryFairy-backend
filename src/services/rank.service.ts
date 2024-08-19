@@ -1,8 +1,8 @@
 import {
-  BadRequestException,
   Injectable,
   InternalServerErrorException,
   Logger,
+  NotFoundException,
 } from '@nestjs/common';
 import { Cron, CronExpression } from '@nestjs/schedule';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -123,6 +123,9 @@ export class RankService {
       2,
       'WITHSCORES',
     );
+    if (!rankList.length) {
+      throw new NotFoundException('랭킹 리스트 없음');
+    }
 
     return this.processRankList(rankList);
   }
@@ -134,7 +137,7 @@ export class RankService {
       userId.toString(),
     );
     if (userRank === null) {
-      throw new BadRequestException('해당 유저가 랭킹 리스트에 없습니다');
+      throw new NotFoundException('해당 유저가 랭킹 리스트에 없습니다');
     }
     const start = Math.max(userRank - 1, 0);
     const end = userRank + 1;
@@ -170,6 +173,10 @@ export class RankService {
       -1,
       'WITHSCORES',
     );
+
+    if (!rankList.length) {
+      throw new NotFoundException('랭킹 리스트 없음');
+    }
 
     return this.processRankList(rankList);
   }
@@ -229,7 +236,7 @@ export class RankService {
     for (const stat of foundUserStats) {
       const { id, team_id, active_year, ...rest } = stat;
 
-      const score = 1000 + (rest.win || 0) * 5 - (rest.lose || 0) * 5;
+      const score = this.calculateScore(rest.win || 0, rest.lose || 0);
       // 서포트 팀 아이디가 key 값
       data[team_id] = { ...rest, score };
       totals.win += rest.win || 0;
@@ -237,7 +244,7 @@ export class RankService {
       totals.tie += rest.tie || 0;
       totals.cancel += rest.cancel || 0;
     }
-    const totalScore = 1000 + (totals.win - totals.lose) * 5;
+    const totalScore = this.calculateScore(totals.win, totals.lose);
     data['total'] = { ...totals, score: totalScore };
 
     return data;
@@ -262,7 +269,8 @@ export class RankService {
         },
         { win: 0, lose: 0, tie: 0, cancel: 0, total: 0 },
       );
-      return sum;
+      const score = this.calculateScore(sum.win, sum.lose);
+      return { ...sum, score };
     } catch (error) {
       throw new InternalServerErrorException('Rank Entity DB 조회 실패');
     }
@@ -319,5 +327,10 @@ export class RankService {
     }
 
     return { totalWin, homeWin, oppTeam };
+  }
+
+  private calculateScore(win: number, lose: number): number {
+    const score = 1000 + (win - lose) * 5;
+    return score;
   }
 }

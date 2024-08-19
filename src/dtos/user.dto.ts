@@ -130,8 +130,6 @@ export class UserMyPageDto {
   })
   user: UserResDto;
 
-  @ApiProperty({
-    example: { win: 1, lose: 0, tie: 0, cancel: 0, total: 1 },
-  })
+  @ApiProperty()
   record: UserRecordDto;
 }

@@ -22,20 +22,23 @@ export class QueryTotalRankingListAboutTeamDto {
 }
 
 export class UserRecordDto {
-  @ApiProperty()
+  @ApiProperty({ example: 1 })
   win: number;
 
-  @ApiProperty()
+  @ApiProperty({ example: 0 })
   lose: number;
 
-  @ApiProperty()
+  @ApiProperty({ example: 0 })
   tie: number;
 
-  @ApiProperty()
+  @ApiProperty({ example: 0 })
   cancel: number;
 
-  @ApiProperty()
+  @ApiProperty({ example: 1 })
   total: number;
+
+  @ApiProperty({ example: 1005 })
+  score: number;
 }
 
 export class OppTeamDto {
