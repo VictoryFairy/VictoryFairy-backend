@@ -40,7 +40,7 @@ export class RegisteredGameService {
       createRegisteredGameDto.cheeringTeamId,
     );
 
-    const duplcate = await this.registeredGameRepository.findOne({
+    const duplcate = await qrManager.getRepository(RegisteredGame).findOne({
       where: {
         game: game,
         user: user,
