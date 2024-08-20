@@ -94,6 +94,32 @@ export class PatchUserProfileDto {
   @ValidateIf((obj) => obj.field !== 'teamId')
   @IsString()
   value: any;
+
+  static getExample() {
+    return {
+      updateNickname: {
+        summary: 'Nickname 업데이트 예제',
+        value: {
+          field: 'nickname',
+          value: 'evans',
+        },
+      },
+      updateImage: {
+        summary: 'Image 업데이트 예제',
+        value: {
+          field: 'image',
+          value: 'http://example.com/image.jpg',
+        },
+      },
+      updateTeamId: {
+        summary: 'Team ID 업데이트 예제',
+        value: {
+          field: 'teamId',
+          value: 1,
+        },
+      },
+    };
+  }
 }
 
 export class EmailWithCodeDto extends PickType(BaseUserDto, [
@@ -132,4 +158,22 @@ export class UserMyPageDto {
 
   @ApiProperty()
   record: UserRecordDto;
+}
+
+export class ResCheckPwDto {
+  @ApiProperty()
+  isCorrect: boolean;
+
+  static getExamples() {
+    return {
+      incorrect: {
+        summary: '비밀번호 불일치',
+        value: { isCorrect: false },
+      },
+      correct: {
+        summary: '비밀번호 일치',
+        value: { isCorrect: true },
+      },
+    };
+  }
 }

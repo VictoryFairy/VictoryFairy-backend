@@ -2,7 +2,6 @@ import {
   Injectable,
   InternalServerErrorException,
   Logger,
-  NotFoundException,
 } from '@nestjs/common';
 import { Cron, CronExpression } from '@nestjs/schedule';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -122,9 +121,6 @@ export class RankService {
       2,
       'WITHSCORES',
     );
-    if (!rankList.length) {
-      throw new NotFoundException('랭킹 리스트 없음');
-    }
 
     return this.processRankList(rankList);
   }
@@ -136,7 +132,7 @@ export class RankService {
       userId.toString(),
     );
     if (userRank === null) {
-      throw new NotFoundException('해당 유저가 랭킹 리스트에 없습니다');
+      return [];
     }
     const start = Math.max(userRank - 1, 0);
     const end = userRank + 1;
@@ -159,6 +155,7 @@ export class RankService {
 
     return calculated.map((data, i) => {
       data.rank = searchRank[i];
+
       return data;
     });
   }
@@ -172,10 +169,6 @@ export class RankService {
       -1,
       'WITHSCORES',
     );
-
-    if (!rankList.length) {
-      throw new NotFoundException('랭킹 리스트 없음');
-    }
 
     return this.processRankList(rankList);
   }
