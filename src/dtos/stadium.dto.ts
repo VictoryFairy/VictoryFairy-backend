@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { Exclude, Expose } from 'class-transformer';
+import { Exclude, Expose, Transform } from 'class-transformer';
 import { IsNumber, IsString } from 'class-validator';
 
 @Exclude()
@@ -25,6 +25,7 @@ export class StadiumDto {
     example: '잠실종합운동장잠실야구장',
   })
   @IsString()
+  @Transform(({ obj }) => obj.full_name)
   @Expose()
   fullName: string;
 
