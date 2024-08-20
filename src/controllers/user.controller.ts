@@ -28,6 +28,7 @@ import {
   LoginUserDto,
   NicknameDto,
   PatchUserProfileDto,
+  ResCheckPwDto,
   UserMyPageDto,
   UserResDto,
 } from 'src/dtos/user.dto';
@@ -88,24 +89,7 @@ export class UserController {
   @ApiBody({ schema: { properties: { password: { type: 'string' } } } })
   @ApiOkResponse({
     description: '비밀번호 확인 결과를 반환. 틀린 경우 isCorrect : false',
-    content: {
-      'application/json': {
-        schema: {
-          type: 'object',
-          properties: { isCorrect: { type: 'boolean' } },
-        },
-        examples: {
-          incorrect: {
-            summary: '비밀번호 불일치',
-            value: { isCorrect: false },
-          },
-          correct: {
-            summary: '비밀번호 일치',
-            value: { isCorrect: true },
-          },
-        },
-      },
-    },
+    content: { 'application/json': { examples: ResCheckPwDto.getExamples() } },
   })
   async checkPassword(
     @UserDeco() user: User,
@@ -113,7 +97,7 @@ export class UserController {
   ) {
     const { password } = body;
     const isCorrect = await this.userService.checkUserPw(user, password);
-    return { isCorrect };
+    return plainToInstance(ResCheckPwDto, { isCorrect });
   }
 
   /** 비밀번호 변경 , 프로필과 따로 뺀 이유 : 이메일 인증 코드 확인 후 변경 */
@@ -137,29 +121,7 @@ export class UserController {
   @ApiBody({
     description: '사용자 프로필의 특정 필드를 업데이트합니다.',
     type: PatchUserProfileDto,
-    examples: {
-      updateNickname: {
-        summary: 'Nickname 업데이트 예제',
-        value: {
-          field: 'nickname',
-          value: 'evans',
-        },
-      },
-      updateImage: {
-        summary: 'Image 업데이트 예제',
-        value: {
-          field: 'image',
-          value: 'http://example.com/image.jpg',
-        },
-      },
-      updateTeamId: {
-        summary: 'Team ID 업데이트 예제',
-        value: {
-          field: 'teamId',
-          value: 1,
-        },
-      },
-    },
+    examples: PatchUserProfileDto.getExample(),
   })
   @ApiNoContentResponse({ description: '성공 시 데이터 없이 상태코드만 응답' })
   @ApiInternalServerErrorResponse({ description: 'DB 업데이트 실패한 경우' })
@@ -187,9 +149,7 @@ export class UserController {
   @Get('me')
   @JwtAuth('access')
   @ApiOperation({ summary: '해당 유저의 간단한 정보와 직관 전적 가져오기' })
-  @ApiOkResponse({
-    type: UserMyPageDto,
-  })
+  @ApiOkResponse({ type: UserMyPageDto })
   @ApiInternalServerErrorResponse({ description: 'DB 문제인 경우' })
   async getUserInfo(@UserDeco() user: User) {
     const record = await this.rankService.userOverallGameStats(user.id);
