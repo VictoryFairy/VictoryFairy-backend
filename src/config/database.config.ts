@@ -5,7 +5,6 @@ export const getDatabaseConfig = (
   configService: ConfigService,
 ): TypeOrmModuleOptions => {
   const nodeEnv = configService.get<string>('NODE_ENV');
-  const isProduction = nodeEnv === 'production';
 
   return {
     type: 'postgres',
@@ -16,6 +15,5 @@ export const getDatabaseConfig = (
     password: configService.get<string>('DB_PASSWORD'),
     entities: ['dist/**/entities/*.entity.{ts,js}'],
     synchronize: true, //nodeEnv !== 'production',
-    ssl: isProduction,
   };
 };
