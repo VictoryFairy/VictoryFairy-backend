@@ -2,7 +2,7 @@ name: Docker Build and AWS EB Deploy
 
 on:
   push:
-    branches: [ main, chore/deploy-test ]
+    branches: [ main ]
 
 jobs:
   build-and-push:
