@@ -14,6 +14,6 @@ export const getDatabaseConfig = (
     username: configService.get<string>('DB_USER'),
     password: configService.get<string>('DB_PASSWORD'),
     entities: ['dist/**/entities/*.entity.{ts,js}'],
-    synchronize: true, //nodeEnv !== 'production',
+    synchronize: nodeEnv !== 'production',
   };
 };
