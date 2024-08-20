@@ -33,7 +33,7 @@ services:
     volumes:
       - ./src:/usr/src/app/src
   postgres:
-    container_name: ${DB_CONTAINER_NAME}
+    container_name: postgres
     image: postgres:alpine
     restart: always
     shm_size: 128mb

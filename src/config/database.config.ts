@@ -8,12 +8,12 @@ export const getDatabaseConfig = (
 
   return {
     type: 'postgres',
-    host: configService.get<string>('DB_CONTAINER_NAME') || 'localhost',
+    host: configService.get<string>('DB_HOST') || 'localhost',
     port: configService.get<number>('DB_TCP_PORT'),
     database: configService.get<string>('DB_DATABASE_NAME'),
     username: configService.get<string>('DB_USER'),
     password: configService.get<string>('DB_PASSWORD'),
     entities: ['dist/**/entities/*.entity.{ts,js}'],
-    synchronize: nodeEnv !== 'production',
+    synchronize: true //nodeEnv !== 'production',
   };
 };
