@@ -70,7 +70,7 @@ jobs:
 
     - name: Create deployment package
       run: |
-        mv docker-compose.yml docker-compose.dev.yml
+        mv docker-compose.yml docker-compose.temp.yml
         mv docker-compose.prod.yml docker-compose.yml
         zip -r deploy.zip .ebextensions docker-compose.yml
    
