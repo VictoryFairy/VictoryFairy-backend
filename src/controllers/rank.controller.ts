@@ -1,11 +1,6 @@
 import { Controller, Get, Query } from '@nestjs/common';
 import { RankService } from '../services/rank.service';
-import {
-  ApiNotFoundResponse,
-  ApiOkResponse,
-  ApiOperation,
-  ApiTags,
-} from '@nestjs/swagger';
+import { ApiOkResponse, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { JwtAuth } from 'src/decorator/jwt-token.decorator';
 import {
   QueryTotalRankingListAboutTeamDto,
@@ -23,7 +18,8 @@ export class RankController {
   @Get('top')
   @ApiOperation({
     summary: '랭킹 상위 3명',
-    description: '쿼리에 teamId 추가하면 해당 팀에 대한 랭킹 리스트 반환',
+    description:
+      '쿼리에 teamId 추가하면 해당 팀에 대한 랭킹 리스트 반환. 데이터가 없으면 빈 배열 반환',
   })
   @ApiOkResponse({
     description: 'top 3명의 유저가 반환',
@@ -55,7 +51,6 @@ export class RankController {
       },
     },
   })
-  @ApiNotFoundResponse({ description: '랭킹 리스트가 없는 경우' })
   async getRankTopThree(@Query() query: QueryTotalRankingListAboutTeamDto) {
     const { teamId } = query;
     const topResult = await this.rankService.getTopThreeRankList(teamId);
@@ -71,7 +66,7 @@ export class RankController {
   })
   @ApiOkResponse({
     description:
-      'nearBy 3명의 유저와 해당 유저의 데이터 반환. 단 1등이거나 꼴등이면 nearBy에서 2명이 반환 될 수 있음.',
+      'nearBy 3명의 유저와 해당 유저의 데이터 반환. 단 1등이거나 꼴등이면 nearBy에서 2명이 반환 될 수 있음. 데이터가 없으면 빈 배열 반환',
     schema: {
       example: {
         nearBy: [
@@ -94,7 +89,6 @@ export class RankController {
       },
     },
   })
-  @ApiNotFoundResponse({ description: '해당 랭킹에 유저가 없는 경우' })
   async getNearByUser(
     @Query() query: QueryTotalRankingListAboutTeamDto,
     @UserDeco('id') userId: number,
@@ -114,7 +108,7 @@ export class RankController {
   @ApiOperation({
     summary: '랭킹 리스트 전부 가져오기',
     description:
-      '쿼리에 teamId 추가하면 해당 팀에 대한 랭킹 리스트 전부를 반환',
+      '쿼리에 teamId 추가하면 해당 팀에 대한 랭킹 리스트 전부를 반환. 데이터가 없으면 빈 배열 반환',
   })
   @ApiOkResponse({
     description: '배열 형태로 반환, ',
@@ -128,7 +122,6 @@ export class RankController {
       },
     ],
   })
-  @ApiNotFoundResponse({ description: '랭킹 리스트가 없는 경우' })
   async getRankList(@Query() query: QueryTotalRankingListAboutTeamDto) {
     const { teamId } = query;
 
