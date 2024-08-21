@@ -49,7 +49,7 @@ export class GameService {
         away_team: true,
         winning_team: true,
         stadium: true,
-      }
+      },
     });
 
     return games;
@@ -58,7 +58,12 @@ export class GameService {
   async findOne(gameId: string): Promise<Game> {
     const game = await this.gameRepository.findOne({
       where: { id: gameId },
-      relations: { home_team: true, away_team: true, winning_team: true, stadium: true },
+      relations: {
+        home_team: true,
+        away_team: true,
+        winning_team: true,
+        stadium: true,
+      },
     });
     if (!game) {
       throw new NotFoundException(`Game with id ${gameId} not found.`);
@@ -208,18 +213,15 @@ export class GameService {
    * 크롤링 관련 로직:
    * Thanks to EvansKJ57
    */
-  getSchedules(): Observable<void> {
-    const date = new Date();
-    const curYear = date.getFullYear();
-
+  getSchedules(year: number, month: number): Observable<void> {
     return this.httpService
       .post<IRawScheduleList>(
         'https://www.koreabaseball.com/ws/Schedule.asmx/GetScheduleList',
         {
           leId: 1, // 1 => 1부 | 2 => 퓨쳐스 리그
           srIdList: [0 /*9, 6, 3, 4, 5, 7*/].join(','), // 0 => 프로팀 경기 | 1 => 시범경기 | 3,4,5,7 => 포스트 시즌 | 9 => 올스타전 | 6 => 모름
-          seasonId: curYear,
-          gameMonth: date.getMonth() + 1,
+          seasonId: year,
+          gameMonth: month,
           teamid: '', //LG => LG | 롯데 => LT | 두산 => OB | KIA => HT | 삼성 => SS | SSG => SK | NC => NC | 키움 => WO | KT => KT | 한화 => HH
         },
         {
@@ -235,7 +237,7 @@ export class GameService {
           );
           const refinedGameData: TGameSchedule = this.refineGamesData(
             convertRowsToArray,
-            curYear,
+            year,
           );
 
           return from(this.createMany(refinedGameData));

@@ -1,6 +1,11 @@
 import { ApiProperty, OmitType, PartialType } from '@nestjs/swagger';
 import { Exclude, Expose, Transform, Type } from 'class-transformer';
-import { IsNumber, IsOptional, IsString, ValidateNested } from 'class-validator';
+import {
+  IsNumber,
+  IsOptional,
+  IsString,
+  ValidateNested,
+} from 'class-validator';
 import { TRegisteredGameStatus } from 'src/types/registered-game-status.type';
 import { TeamDto } from './team.dto';
 import { GameDto } from './game.dto';
