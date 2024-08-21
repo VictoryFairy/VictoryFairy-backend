@@ -1,6 +1,6 @@
 import { ApiProperty, OmitType, PartialType } from '@nestjs/swagger';
 import { Exclude, Expose, Transform, Type } from 'class-transformer';
-import { IsNumber, IsString, ValidateNested } from 'class-validator';
+import { IsNumber, IsOptional, IsString, ValidateNested } from 'class-validator';
 import { TRegisteredGameStatus } from 'src/types/registered-game-status.type';
 import { TeamDto } from './team.dto';
 import { GameDto } from './game.dto';
@@ -16,12 +16,13 @@ export class RegisteredGameDto {
   id: number;
 
   @ApiProperty({
-    description: '',
+    description: 'S3에 등록되어 있는 직관 등록 경기 이미지로의 URL',
     example: 'http://example.com/url/to/image.jpg',
   })
   @IsString()
+  @IsOptional()
   @Expose()
-  image: string;
+  image?: string;
 
   @ApiProperty({
     description: '좌석 상세',
