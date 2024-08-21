@@ -202,7 +202,7 @@ export class RankService {
       for (const [key, value] of Object.entries(stat)) {
         await this.redisClient.zadd(
           `${RedisKeys.RANKING}:${key}`,
-          value.score.toString(),
+          this.calculateScore(value).toString(),
           userId.toString(),
         );
       }
@@ -241,7 +241,7 @@ export class RankService {
     for (const stat of foundUserStats) {
       const { id, team_id, active_year, ...rest } = stat;
 
-      const score = this.calculateScore(rest.win || 0, rest.lose || 0);
+      const score = this.calculateScore(rest);
       // 서포트 팀 아이디가 key 값
       data[team_id] = { ...rest, score };
       totals.win += rest.win || 0;
@@ -249,7 +249,7 @@ export class RankService {
       totals.tie += rest.tie || 0;
       totals.cancel += rest.cancel || 0;
     }
-    const totalScore = this.calculateScore(totals.win, totals.lose);
+    const totalScore = this.calculateScore(totals);
     data['total'] = { ...totals, score: totalScore };
 
     return data;
@@ -274,7 +274,7 @@ export class RankService {
         },
         { win: 0, lose: 0, tie: 0, cancel: 0, total: 0 },
       );
-      const score = this.calculateScore(sum.win, sum.lose);
+      const score = this.calculateScore(sum);
       return { ...sum, score };
     } catch (error) {
       throw new InternalServerErrorException('Rank Entity DB 조회 실패');
@@ -334,8 +334,18 @@ export class RankService {
     return { totalWin, homeWin, oppTeam };
   }
 
-  private calculateScore(win: number, lose: number): number {
-    const score = 1000 + (win - lose) * 5;
+  private calculateScore({
+    win = 0,
+    lose = 0,
+    tie = 0,
+    cancel = 0,
+  }: {
+    win?: number;
+    lose?: number;
+    tie?: number;
+    cancel?: number;
+  }): number {
+    const score = 1000 + (win - lose) * 5 + (win + lose + tie + cancel) / 1000;
     return score;
   }
 }
