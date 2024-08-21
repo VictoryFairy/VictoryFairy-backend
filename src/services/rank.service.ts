@@ -125,13 +125,18 @@ export class RankService {
     return this.processRankList(rankList);
   }
   /** @description 랭킹 리스트에서 유저와 근처 유저 1명씩 가져오기 */
-  async getUserRankWithNeighbors(userId: number, teamId?: number) {
+  async getUserRankWithNeighbors(user: User, teamId?: number) {
+    const { id: userId } = user;
     const key = teamId ? teamId : 'total';
     const userRank = await this.redisClient.zrevrank(
       `${RedisKeys.RANKING}:${key}`,
       userId.toString(),
     );
     if (userRank === null) {
+      if (teamId === undefined || teamId === user.support_team.id) {
+        const { profile_image, nickname } = user;
+        return [{ rank: null, score: 1000, profile_image, nickname, userId }];
+      }
       return [];
     }
     const start = Math.max(userRank - 1, 0);
