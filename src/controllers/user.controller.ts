@@ -7,6 +7,7 @@ import {
   Patch,
   Delete,
   Get,
+  UseInterceptors,
 } from '@nestjs/common';
 import {
   ApiBadRequestResponse,
@@ -20,6 +21,7 @@ import {
 } from '@nestjs/swagger';
 import { plainToInstance } from 'class-transformer';
 import { JwtAuth } from 'src/decorator/jwt-token.decorator';
+import { QueryRunnerManager } from 'src/decorator/queryrunner-manager.decorator';
 import { UserDeco } from 'src/decorator/user.decorator';
 import { OverallOppTeamDto } from 'src/dtos/rank.dto';
 import {
@@ -33,8 +35,10 @@ import {
   UserResDto,
 } from 'src/dtos/user.dto';
 import { User } from 'src/entities/user.entity';
+import { TransactionInterceptor } from 'src/interceptor/transaction.interceptor';
 import { RankService } from 'src/services/rank.service';
 import { UserService } from 'src/services/user.service';
+import { EntityManager } from 'typeorm';
 
 @ApiTags('User')
 @Controller('users')
@@ -46,12 +50,16 @@ export class UserController {
 
   /** 유저 회원가입 */
   @Post('signup')
+  @UseInterceptors(TransactionInterceptor)
   @ApiOperation({ summary: '회원가입' })
   @ApiBody({ type: CreateUserDto, description: '회원가입에 필요한 정보' })
   @ApiCreatedResponse({ description: '성공 시 데이터 없이 상태코드만 응답' })
   @ApiInternalServerErrorResponse({ description: 'DB 유저 저장 실패한 경우' })
-  async signIn(@Body() body: CreateUserDto) {
-    await this.userService.createUser(body);
+  async signIn(
+    @Body() body: CreateUserDto,
+    @QueryRunnerManager() qrManager: EntityManager,
+  ) {
+    await this.userService.createUser(body, qrManager);
   }
 
   /** 이메일 중복 확인 */

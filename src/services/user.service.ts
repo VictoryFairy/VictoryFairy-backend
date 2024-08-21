@@ -7,7 +7,12 @@ import {
 import * as bcrypt from 'bcrypt';
 import { HASH_ROUND } from 'src/const/user.const';
 import { InjectRepository } from '@nestjs/typeorm';
-import { FindOptionsRelations, FindOptionsSelect, Repository } from 'typeorm';
+import {
+  EntityManager,
+  FindOptionsRelations,
+  FindOptionsSelect,
+  Repository,
+} from 'typeorm';
 import { User } from 'src/entities/user.entity';
 import { CreateUserDto, LoginUserDto } from 'src/dtos/user.dto';
 import { Redis } from 'ioredis';
@@ -16,6 +21,9 @@ import { EventName } from 'src/const/event.const';
 import { RedisKeys } from 'src/const/redis.const';
 import { InjectRedisClient } from 'src/decorator/redis-inject.decorator';
 import { Team } from 'src/entities/team.entity';
+import { RankService } from './rank.service';
+import { Rank } from 'src/entities/rank.entity';
+import * as moment from 'moment';
 
 @Injectable()
 export class UserService {
@@ -26,6 +34,7 @@ export class UserService {
     @InjectRedisClient()
     private readonly redisClient: Redis,
     private readonly eventEmitter: EventEmitter2,
+    private readonly rankService: RankService,
   ) {}
 
   /** 레디스 연결 시 미리 저장 */
@@ -91,22 +100,32 @@ export class UserService {
     }
   }
 
-  async createUser(dto: CreateUserDto) {
+  async createUser(dto: CreateUserDto, qrManager: EntityManager) {
     const { email, image, nickname, password, teamId } = dto;
 
     try {
       const hashPw = await bcrypt.hash(password, HASH_ROUND);
-      const result = await this.userRepository.insert({
+      const createdUser = await qrManager.getRepository(User).save({
         email,
         profile_image: image,
         support_team: { id: teamId },
         nickname,
         password: hashPw,
       });
-      const createdUserId = result.identifiers[0].id;
-      //redis caching
-      await this.cachingUser(createdUserId);
-      return { id: createdUserId };
+
+      //Redis caching
+      await this.cachingUser(createdUser);
+
+      // Rank table 업데이트
+      await qrManager.getRepository(Rank).insert({
+        team_id: teamId,
+        active_year: moment().utc().year(),
+        user: createdUser,
+      });
+      // Redis Rank caching
+      await this.rankService.updateRedisRankings(createdUser.id, qrManager);
+
+      return { id: createdUser.id };
     } catch (error) {
       this.logger.error(`유저 생성 실패 : ${error.message}`, error.stack);
       throw new InternalServerErrorException('유저 생성 실패');

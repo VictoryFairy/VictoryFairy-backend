@@ -133,10 +133,6 @@ export class RankService {
       userId.toString(),
     );
     if (userRank === null) {
-      if (teamId === undefined || teamId === user.support_team.id) {
-        const { profile_image, nickname } = user;
-        return [{ rank: null, score: 1000, profile_image, nickname, userId }];
-      }
       return [];
     }
     const start = Math.max(userRank - 1, 0);
