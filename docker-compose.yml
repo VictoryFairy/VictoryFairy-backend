@@ -56,5 +56,5 @@ services:
       --requirepass ${REDIS_PASSWORD}
       --save ""
       --appendonly no
-      --maxmemory 1gb
+      --maxmemory 100mb
       --maxmemory-policy allkeys-lru
