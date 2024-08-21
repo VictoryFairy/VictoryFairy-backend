@@ -52,6 +52,7 @@ export class AuthController {
   @ApiUnauthorizedResponse({ description: '아이디 또는 비밀번호가 틀린 경우' })
   async login(@Body() body: LoginUserDto, @Res() res: Response) {
     const domain = this.configService.get('DOMAIN');
+    const nodeEnv = this.configService.get('NODE_ENV');
     const { acToken, rfToken, user } = await this.authService.loginUser(body);
 
     const rfExTime = this.configService.get('REFRESH_EXPIRE_TIME');
@@ -59,6 +60,7 @@ export class AuthController {
       maxAge: parseInt(rfExTime),
       domain: domain || 'localhost',
       httpOnly: true,
+      secure: nodeEnv === 'production',
     };
     res.cookie('token', rfToken, cookieOptions);
     return res.json({
@@ -75,10 +77,12 @@ export class AuthController {
   @ApiOperation({ summary: '로그아웃' })
   @ApiOkResponse({ description: '성공 시 데이터 없이 상태코드만 응답' })
   logout(@Res() res: Response) {
+    const nodeEnv = this.configService.get('NODE_ENV');
     const domain = this.configService.get('DOMAIN');
     res.clearCookie('token', {
       domain: domain || 'localhost',
       httpOnly: true,
+      secure: nodeEnv === 'production',
     });
     return res.sendStatus(HttpStatus.OK);
   }
