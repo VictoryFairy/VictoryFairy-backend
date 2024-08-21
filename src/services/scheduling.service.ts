@@ -5,6 +5,8 @@ import { firstValueFrom } from 'rxjs';
 import { CronJob } from 'cron';
 import * as moment from 'moment-timezone';
 import { RegisteredGameService } from './registered-game.service';
+import { EventEmitter2 } from '@nestjs/event-emitter';
+import { EventName } from 'src/const/event.const';
 
 @Injectable()
 export class SchedulingService {
@@ -14,6 +16,7 @@ export class SchedulingService {
     private readonly gameService: GameService,
     private readonly registeredGameService: RegisteredGameService,
     private readonly schedulerRegistry: SchedulerRegistry,
+    private readonly eventEmitter: EventEmitter2,
   ) {}
 
   @Cron(CronExpression.EVERY_DAY_AT_4PM, {
@@ -104,12 +107,14 @@ export class SchedulingService {
           if (currentStatus.status === '경기종료') {
             this.schedulerRegistry.deleteCronJob(`batchUpdate${gameId}`);
             this.logger.log(`Game ${gameId} ended. Stopping updates.`);
-            this.registeredGameService.batchBulkUpdateByGameId(gameId);
+            await this.registeredGameService.batchBulkUpdateByGameId(gameId);
+            this.eventEmitter.emit(EventName.FINISHED_GAME, { gameId });
             intervalJob.stop(); // Updates stopped
           } else if (/.*취소$/.test(currentStatus.status)) {
             this.schedulerRegistry.deleteCronJob(`batchUpdate${gameId}`);
             this.logger.log(`Game ${gameId} cancled. Stopping updates.`);
-            this.registeredGameService.batchBulkUpdateByGameId(gameId);
+            await this.registeredGameService.batchBulkUpdateByGameId(gameId);
+            this.eventEmitter.emit(EventName.FINISHED_GAME, { gameId });
             intervalJob.stop(); // Updates stopped
           }
         },
