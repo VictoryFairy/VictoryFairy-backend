@@ -156,7 +156,7 @@ export class RegisteredGameService {
       throw new NotFoundException(`Registered game with ID ${id} not found`);
     }
 
-    if (updateRegisteredGameDto.cheeringTeamId) {
+    if (updateRegisteredGameDto.cheeringTeamId !== undefined) {
       const cheeringTeam = await this.teamService.findOne(
         updateRegisteredGameDto.cheeringTeamId,
       );
@@ -168,13 +168,13 @@ export class RegisteredGameService {
       }
       registeredGame.cheering_team = cheeringTeam;
     }
-    if (updateRegisteredGameDto.image) {
+    if (updateRegisteredGameDto.image !== undefined) {
       registeredGame.image = updateRegisteredGameDto.image;
     }
-    if (updateRegisteredGameDto.seat) {
+    if (updateRegisteredGameDto.seat !== undefined) {
       registeredGame.seat = updateRegisteredGameDto.seat;
     }
-    if (updateRegisteredGameDto.review) {
+    if (updateRegisteredGameDto.review !== undefined) {
       registeredGame.review = updateRegisteredGameDto.review;
     }
 

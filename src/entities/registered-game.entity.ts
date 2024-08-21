@@ -19,8 +19,8 @@ export class RegisteredGame {
   @PrimaryGeneratedColumn()
   id: number;
 
-  @Column()
-  image: string;
+  @Column({ nullable: true })
+  image?: string;
 
   @Column()
   seat: string;
