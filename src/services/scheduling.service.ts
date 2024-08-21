@@ -1,10 +1,11 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { Cron, CronExpression, SchedulerRegistry } from '@nestjs/schedule';
 import { GameService } from './game.service';
-import { firstValueFrom } from 'rxjs';
+import { firstValueFrom, forkJoin } from 'rxjs';
 import { CronJob } from 'cron';
 import * as moment from 'moment-timezone';
 import { RegisteredGameService } from './registered-game.service';
+import { getNextMonth } from 'src/utils/get-next-month.util';
 
 @Injectable()
 export class SchedulingService {
@@ -21,13 +22,24 @@ export class SchedulingService {
     timeZone: 'Asia/Seoul',
   })
   async batchUpdateGames() {
-    // 모든 경기 일정을 가져오고, 오늘의 경기에 대한 업데이트 스케줄을 설정합니다.
-    this.gameService.getSchedules().subscribe({
-      complete: () => {
-        this.logger.log('Game Data Saved Successfully.');
-        this.batchUpdateTodayGames();
+    // 이번 달과 다음 달의 모든 경기 일정을 가져오고, 오늘의 경기에 대한 업데이트 스케줄을 설정합니다.
+    const date = new Date();
+    const currentYear = date.getFullYear();
+    const currentMonth = date.getMonth() + 1;
+
+    const { nextYear, nextMonth } = getNextMonth(currentYear, currentMonth);
+
+    forkJoin([
+      this.gameService.getSchedules(currentYear, currentMonth),
+      this.gameService.getSchedules(nextYear, nextMonth),
+    ]).subscribe({
+      next: () => {
+        // 성공적으로 두 Observable의 결과를 가져온 경우
+        this.logger.log('Game Data for both months saved successfully.');
+        this.batchUpdateTodayGames(); // 오늘의 경기 업데이트
       },
       error: (error) => {
+        // 오류가 발생한 경우
         this.logger.error('Error in batchUpdateGames', error.stack);
       },
     });
