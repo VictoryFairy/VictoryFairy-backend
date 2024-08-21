@@ -31,8 +31,7 @@ export class RankController {
     const { teamId } = query;
     const topResult = await this.rankService.getTopThreeRankList(teamId);
 
-    const top = plainToInstance(ResRankTopThreeDto, topResult);
-    return { top };
+    return plainToInstance(ResRankTopThreeDto, { top: topResult });
   }
 
   @Get('nearby')
@@ -54,10 +53,10 @@ export class RankController {
       this.rankService.getUserRankWithNeighbors(userId, teamId),
       this.rankService.userOverallGameStats(userId),
     ]);
-    return {
+    return plainToInstance(ResNearByDto, {
       nearBy,
       user: { userId, totalGames: userStats.total, win: userStats.win },
-    };
+    });
   }
 
   @Get()

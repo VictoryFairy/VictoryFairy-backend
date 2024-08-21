@@ -1,5 +1,5 @@
 import { ApiProperty, ApiPropertyOptional, OmitType } from '@nestjs/swagger';
-import { Exclude, Expose, Transform } from 'class-transformer';
+import { Exclude, Expose, Transform, Type } from 'class-transformer';
 import { IsNumber, IsOptional } from 'class-validator';
 import { TRegisteredGameStatus } from 'src/types/registered-game-status.type';
 
@@ -118,6 +118,7 @@ export class ResRankTopThreeDto {
       },
     ],
   })
+  @Type(() => ResRankDto)
   top: ResRankDto[];
 }
 
@@ -152,6 +153,7 @@ export class ResNearByDto {
       },
     ],
   })
+  @Type(() => ResRankDto)
   nearBy: ResRankDto[];
 
   @ApiProperty({
