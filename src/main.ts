@@ -5,6 +5,7 @@ import { SwaggerModule } from '@nestjs/swagger';
 import { swaggerConfig } from './config/swagger.config';
 import * as cookieParser from 'cookie-parser';
 import { ConfigService } from '@nestjs/config';
+import { ApiLoggingInterceptor } from './interceptor/api-logger.interceptor';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
@@ -25,7 +26,7 @@ async function bootstrap() {
     origin: [frontendRootUrl, backendRootUrl],
     credentials: true,
   });
-
+  app.useGlobalInterceptors(new ApiLoggingInterceptor());
   const document = SwaggerModule.createDocument(app, swaggerConfig);
   SwaggerModule.setup('api-doc', app, document);
   await app.listen(3000);
