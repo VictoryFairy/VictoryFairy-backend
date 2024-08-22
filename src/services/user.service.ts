@@ -173,7 +173,7 @@ export class UserService {
         await this.cachingUser(updatedUser);
         if (field === 'image') {
           // s3 이미지 삭제
-          await this.awsS3Service.deleteImage({ fileUrl: user.profile_image });
+          await this.awsS3Service.deleteImage({ fileUrl: value });
         }
       }
 
