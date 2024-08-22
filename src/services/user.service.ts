@@ -7,15 +7,23 @@ import {
 import * as bcrypt from 'bcrypt';
 import { HASH_ROUND } from 'src/const/user.const';
 import { InjectRepository } from '@nestjs/typeorm';
-import { FindOptionsRelations, FindOptionsSelect, Repository } from 'typeorm';
+import {
+  EntityManager,
+  FindOptionsRelations,
+  FindOptionsSelect,
+  Repository,
+} from 'typeorm';
 import { User } from 'src/entities/user.entity';
 import { CreateUserDto, LoginUserDto } from 'src/dtos/user.dto';
-import { QueryDeepPartialEntity } from 'typeorm/query-builder/QueryPartialEntity';
 import { Redis } from 'ioredis';
 import { EventEmitter2, OnEvent } from '@nestjs/event-emitter';
 import { EventName } from 'src/const/event.const';
 import { RedisKeys } from 'src/const/redis.const';
 import { InjectRedisClient } from 'src/decorator/redis-inject.decorator';
+import { Team } from 'src/entities/team.entity';
+import { RankService } from './rank.service';
+import { Rank } from 'src/entities/rank.entity';
+import * as moment from 'moment';
 
 @Injectable()
 export class UserService {
@@ -26,6 +34,7 @@ export class UserService {
     @InjectRedisClient()
     private readonly redisClient: Redis,
     private readonly eventEmitter: EventEmitter2,
+    private readonly rankService: RankService,
   ) {}
 
   /** 레디스 연결 시 미리 저장 */
@@ -36,7 +45,7 @@ export class UserService {
       const userIds = [];
       const cachingPromises = users.map((user) => {
         userIds.push(user.id);
-        return this.cachingUser(user.id);
+        return this.cachingUser(user);
       });
       await Promise.all(cachingPromises);
       this.eventEmitter.emit(EventName.CACHED_USERS, userIds);
@@ -91,22 +100,32 @@ export class UserService {
     }
   }
 
-  async createUser(dto: CreateUserDto) {
+  async createUser(dto: CreateUserDto, qrManager: EntityManager) {
     const { email, image, nickname, password, teamId } = dto;
 
     try {
       const hashPw = await bcrypt.hash(password, HASH_ROUND);
-      const result = await this.userRepository.insert({
+      const createdUser = await qrManager.getRepository(User).save({
         email,
         profile_image: image,
         support_team: { id: teamId },
         nickname,
         password: hashPw,
       });
-      const createdUserId = result.identifiers[0].id;
-      //redis caching
-      await this.cachingUser(createdUserId);
-      return { id: createdUserId };
+
+      //Redis caching
+      await this.cachingUser(createdUser);
+
+      // Rank table 업데이트
+      await qrManager.getRepository(Rank).insert({
+        team_id: teamId,
+        active_year: moment().utc().year(),
+        user: createdUser,
+      });
+      // Redis Rank caching
+      await this.rankService.updateRedisRankings(createdUser.id, qrManager);
+
+      return { id: createdUser.id };
     } catch (error) {
       this.logger.error(`유저 생성 실패 : ${error.message}`, error.stack);
       throw new InternalServerErrorException('유저 생성 실패');
@@ -141,20 +160,22 @@ export class UserService {
   ) {
     try {
       const { field, value } = updateInput;
-      const condition: QueryDeepPartialEntity<User> = {};
       if (field === 'teamId') {
-        condition.support_team = { id: value };
+        user.support_team = { id: value } as Team;
       } else if (field === 'image') {
-        condition.profile_image = value;
+        user.profile_image = value;
       } else {
-        condition[field] = value;
+        user[field] = value;
       }
 
-      await this.userRepository.update({ id: user.id }, condition);
+      const updatedUser = await this.userRepository.save(user);
+
       // redis caching
       if (field === 'image' || field === 'nickname') {
-        await this.cachingUser(user.id);
+        await this.cachingUser(updatedUser);
       }
+
+      return updatedUser; // 필요한 경우 업데이트된 결과 반환
     } catch (error) {
       throw new InternalServerErrorException('유저 프로필 업데이트 실패');
     }
@@ -174,16 +195,9 @@ export class UserService {
   }
 
   // --------------------- redis 관련 ------------------------
-  async cachingUser(id: number) {
-    const userInfo = await this.findUserById(
-      id,
-      {},
-      {
-        id: true,
-        nickname: true,
-        profile_image: true,
-      },
-    );
+  async cachingUser(user: User) {
+    const { id, nickname, profile_image } = user;
+    const userInfo = { id, nickname, profile_image };
     try {
       const cached = await this.redisClient.hset(
         RedisKeys.USER_INFO,

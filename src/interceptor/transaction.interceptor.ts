@@ -3,7 +3,7 @@ import {
   ExecutionContext,
   HttpException,
   Injectable,
-  InternalServerErrorException,
+  Logger,
   NestInterceptor,
 } from '@nestjs/common';
 import { catchError, Observable, tap } from 'rxjs';
@@ -11,6 +11,7 @@ import { DataSource } from 'typeorm';
 
 @Injectable()
 export class TransactionInterceptor implements NestInterceptor {
+  private readonly logger = new Logger(TransactionInterceptor.name);
   constructor(private readonly dataSource: DataSource) {}
   async intercept(
     context: ExecutionContext,
@@ -28,12 +29,9 @@ export class TransactionInterceptor implements NestInterceptor {
       catchError(async (e) => {
         await queryRunner.rollbackTransaction();
         await queryRunner.release();
+        this.logger.error(`트랜잭션 실패 후 롤백. error:${e.message}`, e.stack);
 
-        if (e instanceof HttpException) {
-          throw new HttpException(e.message, e.getStatus());
-        } else {
-          throw new InternalServerErrorException(e.message);
-        }
+        throw new HttpException(e.message, e.getStatus());
       }),
       tap(async () => {
         await queryRunner.commitTransaction();

@@ -10,6 +10,7 @@ import {
 } from 'src/dtos/rank.dto';
 import { UserDeco } from 'src/decorator/user.decorator';
 import { plainToInstance } from 'class-transformer';
+import { User } from 'src/entities/user.entity';
 
 @ApiTags('rankings')
 @Controller('rankings')
@@ -31,8 +32,7 @@ export class RankController {
     const { teamId } = query;
     const topResult = await this.rankService.getTopThreeRankList(teamId);
 
-    const top = plainToInstance(ResRankTopThreeDto, topResult);
-    return { top };
+    return plainToInstance(ResRankTopThreeDto, { top: topResult });
   }
 
   @Get('nearby')
@@ -47,17 +47,21 @@ export class RankController {
   })
   async getNearByUser(
     @Query() query: QueryTotalRankingListAboutTeamDto,
-    @UserDeco('id') userId: number,
+    @UserDeco() user: User,
   ) {
     const { teamId } = query;
     const [nearBy, userStats] = await Promise.all([
-      this.rankService.getUserRankWithNeighbors(userId, teamId),
-      this.rankService.userOverallGameStats(userId),
+      this.rankService.getUserRankWithNeighbors(user, teamId),
+      this.rankService.userOverallGameStats(user.id),
     ]);
-    return {
+    return plainToInstance(ResNearByDto, {
       nearBy,
-      user: { userId, totalGames: userStats.total, win: userStats.win },
-    };
+      user: {
+        userId: user.id,
+        totalGames: userStats.total,
+        win: userStats.win,
+      },
+    });
   }
 
   @Get()
