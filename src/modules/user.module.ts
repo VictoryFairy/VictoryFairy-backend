@@ -6,6 +6,7 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { User } from 'src/entities/user.entity';
 import { RedisModule } from './redis.module';
 import { RankModule } from './rank.module';
+import { AwsS3Module } from './aws-s3.module';
 
 @Module({
   imports: [
@@ -13,6 +14,7 @@ import { RankModule } from './rank.module';
     TypeOrmModule.forFeature([User]),
     RedisModule,
     RankModule,
+    AwsS3Module,
   ],
   controllers: [UserController],
   providers: [UserService],
