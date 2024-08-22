@@ -124,7 +124,6 @@ export class UserService {
 
       return { id: createdUser.id };
     } catch (error) {
-      // this.logger.error(`유저 생성 실패 : ${error.message}`, error.stack);
       throw new InternalServerErrorException('유저 생성 실패');
     }
   }
