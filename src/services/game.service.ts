@@ -130,7 +130,7 @@ export class GameService {
       const statusElement = root.querySelector('span.date');
 
       const status: string | null =
-        (statusElement.innerText.match(/\[(.*?)\]/) || [])[1] ?? null;
+        (statusElement.innerText?.match(/\[(.*?)\]/) || [])[1] ?? null;
 
       return {
         status,
