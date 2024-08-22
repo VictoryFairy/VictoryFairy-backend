@@ -25,7 +25,7 @@ export class AwsS3Controller {
   /** 프로필 사진 s3에 업로드하고 이미지 url 반환 */
   @Post('profile')
   @UseInterceptors(
-    FileInterceptor('file', { limits: { fileSize: 1 * 1024 * 1024 } }),
+    FileInterceptor('file', { limits: { fileSize: 6 * 1024 * 1024 } }),
   )
   @ApiOperation({ summary: '프로필 이미지 업로드' })
   @ApiResponse({
@@ -46,7 +46,7 @@ export class AwsS3Controller {
 
   @Post('registered-game')
   @UseInterceptors(
-    FileInterceptor('file', { limits: { fileSize: 1 * 1024 * 1024 } }),
+    FileInterceptor('file', { limits: { fileSize: 6 * 1024 * 1024 } }),
   )
   @ApiOperation({ summary: '직관 이미지 업로드' })
   @ApiResponse({
