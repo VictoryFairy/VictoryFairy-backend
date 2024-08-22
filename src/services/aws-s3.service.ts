@@ -27,7 +27,8 @@ export class AwsS3Service {
       Body: file,
       ContentType: mimeType,
     });
-    await this.s3Client.send(command);
+    const result = await this.s3Client.send(command);
+    this.logger.log(`Image putting command sent. The result is:\n${result}`);
     const fileUrl = `https://${bucketName}.s3.${region}.amazonaws.com/${uploadName}`;
     return fileUrl;
   }
@@ -41,7 +42,8 @@ export class AwsS3Service {
       Body: file,
       ContentType: mimeType,
     });
-    await this.s3Client.send(command);
+    const result = await this.s3Client.send(command);
+    this.logger.log(`Image putting command sent. The result is:\n${result}`);
     const fileUrl = `https://${bucketName}.s3.${region}.amazonaws.com/${uploadName}`;
     return fileUrl;
   }

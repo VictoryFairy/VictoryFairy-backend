@@ -64,13 +64,4 @@ export class AwsS3Controller {
     );
     return { registeredGameImgUrl };
   }
-
-  @Delete('')
-  @ApiOperation({ summary: '이미지 삭제' })
-  @ApiNoContentResponse()
-  async deleteImage(
-    @Body() deleteImageAwsS3Dto: DeleteImageAwsS3Dto,
-  ): Promise<void> {
-    return this.awsS3Service.deleteImage(deleteImageAwsS3Dto);
-  }
 }
