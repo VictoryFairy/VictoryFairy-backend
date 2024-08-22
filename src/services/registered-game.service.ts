@@ -17,6 +17,7 @@ import { GameService } from './game.service';
 import { Game } from 'src/entities/game.entity';
 import * as moment from 'moment';
 import { RankService } from './rank.service';
+import { AwsS3Service } from './aws-s3.service';
 
 @Injectable()
 export class RegisteredGameService {
@@ -28,6 +29,7 @@ export class RegisteredGameService {
     private readonly gameService: GameService,
     private readonly teamService: TeamService,
     private readonly rankService: RankService,
+    private readonly awsS3Service: AwsS3Service,
   ) {}
 
   async create(
@@ -169,6 +171,9 @@ export class RegisteredGameService {
       registeredGame.cheering_team = cheeringTeam;
     }
     if (updateRegisteredGameDto.image !== undefined) {
+      this.awsS3Service.deleteImage({
+        fileUrl: registeredGame.image,
+      });
       registeredGame.image = updateRegisteredGameDto.image;
     }
     if (updateRegisteredGameDto.seat !== undefined) {
@@ -182,6 +187,10 @@ export class RegisteredGameService {
   }
 
   async delete(id: number, user: User): Promise<void> {
+    const registeredGame = await this.findOne(id, user);
+    this.awsS3Service.deleteImage({
+      fileUrl: registeredGame.image,
+    });
     const result = await this.registeredGameRepository.delete({ id, user });
     if (result.affected === 0) {
       throw new NotFoundException(`Registered game with ID ${id} not found`);

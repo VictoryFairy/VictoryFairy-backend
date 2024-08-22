@@ -14,5 +14,6 @@ import { AwsS3Controller } from 'src/controllers/aws-s3.controller';
       useFactory: s3Config,
     },
   ],
+  exports: [AwsS3Service],
 })
 export class AwsS3Module {}
