@@ -7,6 +7,7 @@ import { GameModule } from './game.module';
 import { TeamModule } from './team.module';
 import { AuthModule } from 'src/auth/auth.module';
 import { RankModule } from './rank.module';
+import { AwsS3Module } from './aws-s3.module';
 
 @Module({
   imports: [
@@ -15,6 +16,7 @@ import { RankModule } from './rank.module';
     GameModule,
     TeamModule,
     RankModule,
+    AwsS3Module,
   ],
   controllers: [RegisteredGameController],
   providers: [RegisteredGameService],
