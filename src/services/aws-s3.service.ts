@@ -56,6 +56,7 @@ export class AwsS3Service {
       Key: uploadName,
     });
     const result = await this.s3Client.send(command);
+    this.logger.log(`Image deleting command sent. The result is:\n${result}`);
   }
 
   private extractKeyFromUrl(url: string): string {
