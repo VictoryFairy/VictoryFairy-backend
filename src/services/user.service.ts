@@ -24,6 +24,7 @@ import { Team } from 'src/entities/team.entity';
 import { RankService } from './rank.service';
 import { Rank } from 'src/entities/rank.entity';
 import * as moment from 'moment';
+import { AwsS3Service } from 'src/services/aws-s3.service';
 
 @Injectable()
 export class UserService {
@@ -35,6 +36,7 @@ export class UserService {
     private readonly redisClient: Redis,
     private readonly eventEmitter: EventEmitter2,
     private readonly rankService: RankService,
+    private readonly awsS3Service: AwsS3Service,
   ) {}
 
   /** 레디스 연결 시 미리 저장 */
@@ -166,9 +168,13 @@ export class UserService {
 
       const updatedUser = await this.userRepository.save(user);
 
-      // redis caching
       if (field === 'image' || field === 'nickname') {
+        // redis caching
         await this.cachingUser(updatedUser);
+        if (field === 'image') {
+          // s3 이미지 삭제
+          await this.awsS3Service.deleteImage({ fileUrl: user.profile_image });
+        }
       }
 
       return updatedUser; // 필요한 경우 업데이트된 결과 반환
@@ -182,8 +188,10 @@ export class UserService {
       id: user.id,
       email: user.email,
     });
+    // s3 이미지 삭제
+    await this.awsS3Service.deleteImage({ fileUrl: user.profile_image });
     if (affected !== 1) {
-      throw new InternalServerErrorException('DB 삭제 실패');
+      throw new InternalServerErrorException('유저 삭제 실패');
     }
     // redis caching 동기화
     await this.redisClient.hdel(RedisKeys.USER_INFO, user.id.toString());
