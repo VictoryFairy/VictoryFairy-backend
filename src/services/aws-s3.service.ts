@@ -5,6 +5,7 @@ import {
 } from '@aws-sdk/client-s3';
 import { Inject, Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
+import { instanceToPlain } from 'class-transformer';
 import { DeleteImageAwsS3Dto } from 'src/dtos/aws-s3.dto';
 import { v4 as uuid4 } from 'uuid';
 
@@ -28,7 +29,7 @@ export class AwsS3Service {
       ContentType: mimeType,
     });
     const result = await this.s3Client.send(command);
-    this.logger.log(`Image putting command sent. The result is:\n${result}`);
+    this.logger.log(`Image putting command sent. The result is:\n${instanceToPlain(result)}`);
     const fileUrl = `https://${bucketName}.s3.${region}.amazonaws.com/${uploadName}`;
     return fileUrl;
   }
@@ -43,7 +44,7 @@ export class AwsS3Service {
       ContentType: mimeType,
     });
     const result = await this.s3Client.send(command);
-    this.logger.log(`Image putting command sent. The result is:\n${result}`);
+    this.logger.log(`Image putting command sent. The result is:\n${instanceToPlain(result)}`);
     const fileUrl = `https://${bucketName}.s3.${region}.amazonaws.com/${uploadName}`;
     return fileUrl;
   }
@@ -58,7 +59,7 @@ export class AwsS3Service {
       Key: uploadName,
     });
     const result = await this.s3Client.send(command);
-    this.logger.log(`Image deleting command sent. The result is:\n${result}`);
+    this.logger.log(`Image deleting command sent. The result is:\n${instanceToPlain(result)}`);
   }
 
   private extractKeyFromUrl(url: string): string {
