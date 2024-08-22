@@ -157,6 +157,7 @@ export class UserService {
     user: User,
   ) {
     try {
+      const { profile_image } = user;
       const { field, value } = updateInput;
       if (field === 'teamId') {
         user.support_team = { id: value } as Team;
@@ -173,7 +174,7 @@ export class UserService {
         await this.cachingUser(updatedUser);
         if (field === 'image') {
           // s3 이미지 삭제
-          await this.awsS3Service.deleteImage({ fileUrl: user.profile_image });
+          await this.awsS3Service.deleteImage({ fileUrl: profile_image });
         }
       }
 
@@ -184,12 +185,13 @@ export class UserService {
   }
 
   async deleteUser(user: User) {
+    const { profile_image } = user;
     const { affected } = await this.userRepository.delete({
       id: user.id,
       email: user.email,
     });
     // s3 이미지 삭제
-    await this.awsS3Service.deleteImage({ fileUrl: user.profile_image });
+    await this.awsS3Service.deleteImage({ fileUrl: profile_image });
     if (affected !== 1) {
       throw new InternalServerErrorException('유저 삭제 실패');
     }
