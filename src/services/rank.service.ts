@@ -267,7 +267,7 @@ export class RankService {
         },
         { win: 0, lose: 0, tie: 0, cancel: 0, total: 0 },
       );
-      const score = this.calculateScore(sum);
+      const score = Math.floor(this.calculateScore(sum));
       return { ...sum, score };
     } catch (error) {
       throw new InternalServerErrorException('Rank Entity DB 조회 실패');
