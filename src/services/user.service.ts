@@ -51,10 +51,7 @@ export class UserService {
       this.eventEmitter.emit(EventName.CACHED_USERS, userIds);
       this.logger.log('유저 정보 레디스 초기 캐싱 완료');
     } catch (error) {
-      this.logger.error(
-        `유저 정보 레디스 초기 캐싱 실패 : ${error.message}`,
-        error.stack,
-      );
+      this.logger.error(`유저 정보 레디스 초기 캐싱 실패 : ${error.message}`);
       throw new InternalServerErrorException('유저 정보 레디스 초기 캐싱 실패');
     }
   }
@@ -127,7 +124,7 @@ export class UserService {
 
       return { id: createdUser.id };
     } catch (error) {
-      this.logger.error(`유저 생성 실패 : ${error.message}`, error.stack);
+      // this.logger.error(`유저 생성 실패 : ${error.message}`, error.stack);
       throw new InternalServerErrorException('유저 생성 실패');
     }
   }
