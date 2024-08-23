@@ -20,7 +20,7 @@ export class SchedulingService {
     private readonly eventEmitter: EventEmitter2,
   ) {}
 
-  @Cron(CronExpression.EVERY_DAY_AT_4AM, {
+  @Cron(CronExpression.EVERY_DAY_AT_4PM, {
     name: 'batchUpdateGames',
     timeZone: 'Asia/Seoul',
   })
@@ -69,7 +69,7 @@ export class SchedulingService {
     );
   }
 
-  setupGameUpdateScheduler(gameId: string, startTime: string) {
+  private setupGameUpdateScheduler(gameId: string, startTime: string) {
     const [startHour, startMinute] = startTime.split(':').map(Number);
     const now = moment(); // 현재 시간을 가져옵니다.
     const startDateTime = moment.tz(
@@ -116,20 +116,18 @@ export class SchedulingService {
           await this.gameService.updateCurrentStatus(gameId, currentStatus);
           this.logger.log(`Score for Game ${gameId} updated.`);
 
-          if (currentStatus.status === '경기중') return;
-
-          // 경기가 끝났을 때
-          this.schedulerRegistry.deleteCronJob(`batchUpdate${gameId}`);
-          await this.registeredGameService.batchBulkUpdateByGameId(gameId);
-          this.eventEmitter.emit(EventName.FINISHED_GAME, { gameId });
-          intervalJob.stop(); // Updates stopped
-
           if (currentStatus.status === '경기종료') {
-            this.logger.log(`Game ${gameId} ended. Stopped update.`);
+            this.schedulerRegistry.deleteCronJob(`batchUpdate${gameId}`);
+            this.logger.log(`Game ${gameId} ended. Stopping updates.`);
+            await this.registeredGameService.batchBulkUpdateByGameId(gameId);
+            this.eventEmitter.emit(EventName.FINISHED_GAME, { gameId });
+            intervalJob.stop(); // Updates stopped
           } else if (/.*취소$/.test(currentStatus.status)) {
-            this.logger.log(`Game ${gameId} cancled. Stopped update.`);
-          } else {
-            this.logger.log(`Game ${gameId} was unavailable. Stopped update.`);
+            this.schedulerRegistry.deleteCronJob(`batchUpdate${gameId}`);
+            this.logger.log(`Game ${gameId} cancled. Stopping updates.`);
+            await this.registeredGameService.batchBulkUpdateByGameId(gameId);
+            this.eventEmitter.emit(EventName.FINISHED_GAME, { gameId });
+            intervalJob.stop(); // Updates stopped
           }
         },
         null,
