@@ -338,7 +338,7 @@ export class RankService {
     tie?: number;
     cancel?: number;
   }): number {
-    const score = 1000 + (win - lose) * 10 + (win + lose + tie + cancel) / 1000;
+    const score = 1000 + (win - lose) * 5 + (win + lose + tie + cancel) / 1000;
     return score;
   }
 }
