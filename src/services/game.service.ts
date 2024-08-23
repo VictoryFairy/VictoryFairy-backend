@@ -18,6 +18,7 @@ import parse from 'node-html-parser';
 import * as moment from 'moment';
 import { BatchUpdateGameDto } from 'src/dtos/batch-update-game.dto';
 import { teamNameToTeamId } from 'src/utils/teamid-mapper';
+import { gameMonths } from 'src/seeds/game-months.seed';
 
 @Injectable()
 export class GameService {
@@ -30,6 +31,21 @@ export class GameService {
     private readonly teamService: TeamService,
     private readonly stadiumService: StadiumService,
   ) {}
+
+  async seed() {
+    const seedingFunctions = gameMonths.map((seedableMonth) => this.upsertSchedules(seedableMonth.year, seedableMonth.month));
+
+    forkJoin(seedingFunctions).subscribe({
+      next: () => {
+        // 성공적으로 시드의 업데이트를 성공한 경우
+        this.logger.log('Game seeding data saved successfully.');
+      },
+      error: (error) => {
+        // 오류가 발생한 경우
+        this.logger.error('Error occured while seeding games', error.stack);
+      },
+    });
+  }
 
   async findAllDaily(
     year: number,
@@ -213,7 +229,7 @@ export class GameService {
    * 크롤링 관련 로직:
    * Thanks to EvansKJ57
    */
-  getSchedules(year: number, month: number): Observable<void> {
+  upsertSchedules(year: number, month: number): Observable<void> {
     return this.httpService
       .post<IRawScheduleList>(
         'https://www.koreabaseball.com/ws/Schedule.asmx/GetScheduleList',
@@ -240,9 +256,33 @@ export class GameService {
             year,
           );
 
-          return from(this.createMany(refinedGameData));
+          const doubleHeaderProcessedGameData: TGameSchedule = this.processDoubleHeader(refinedGameData);
+
+          return from(this.createMany(doubleHeaderProcessedGameData));
         }),
       );
+  }
+
+  private processDoubleHeader(schedule: TGameSchedule): TGameSchedule {
+    const countMap = new Map<string, number>();
+
+    return schedule.slice().map(game => {
+      const id = game.id;
+
+      if (id.endsWith('0')) {
+        const baseId = id.slice(0, -1);
+        const count = countMap.get(baseId) ?? 0;
+
+        if (count < 2) {
+          game.id = `${baseId}${count + 1}`;
+          countMap.set(baseId, count + 1);
+        } else {
+          this.logger.warn(`More than 2 items with base ID '${baseId}' found.`);
+        }
+      }
+
+      return game;
+    });
   }
 
   private async createMany(gameSchedules: TGameSchedule): Promise<void> {

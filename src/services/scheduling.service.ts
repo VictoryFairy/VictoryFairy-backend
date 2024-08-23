@@ -33,8 +33,8 @@ export class SchedulingService {
     const { nextYear, nextMonth } = getNextMonth(currentYear, currentMonth);
 
     forkJoin([
-      this.gameService.getSchedules(currentYear, currentMonth),
-      this.gameService.getSchedules(nextYear, nextMonth),
+      this.gameService.upsertSchedules(currentYear, currentMonth),
+      this.gameService.upsertSchedules(nextYear, nextMonth),
     ]).subscribe({
       next: () => {
         // 성공적으로 두 Observable의 결과를 가져온 경우
