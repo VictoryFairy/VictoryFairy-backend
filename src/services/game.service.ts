@@ -93,16 +93,21 @@ export class GameService {
     return await this.gameRepository.manager.transaction(async (manager) => {
       const game = await this.findOne(gameId);
       if (
-        (currentStatus.awayScore ||
-          currentStatus.awayScore ||
-          isNaN(currentStatus.awayScore),
-        isNaN(currentStatus.homeScore))
-      )
-        return;
-      game.home_team_score = currentStatus.homeScore;
-      game.away_team_score = currentStatus.awayScore;
-
-      await manager.update(Game, { id: gameId }, game);
+        !currentStatus.status ||
+        !currentStatus.awayScore ||
+        !currentStatus.awayScore ||
+        isNaN(currentStatus.awayScore) ||
+        isNaN(currentStatus.homeScore)
+      ) {
+        this.logger.warn(
+          `Current status for the Game ${gameId} was unavailable. Skip score updating.`,
+        );
+      } else {
+        game.home_team_score = currentStatus.homeScore;
+        game.away_team_score = currentStatus.awayScore;
+        game.status = currentStatus.status;
+        await manager.update(Game, { id: gameId }, game);
+      }
     });
   }
 

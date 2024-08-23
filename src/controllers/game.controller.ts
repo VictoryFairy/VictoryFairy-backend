@@ -1,12 +1,15 @@
 import {
+  Body,
   Controller,
   Get,
   HttpCode,
   HttpStatus,
   Param,
+  ParseIntPipe,
   Query,
 } from '@nestjs/common';
 import {
+  ApiBody,
   ApiNotFoundResponse,
   ApiOkResponse,
   ApiOperation,
@@ -18,6 +21,7 @@ import { plainToInstance } from 'class-transformer';
 import { JwtAuth } from 'src/decorator/jwt-token.decorator';
 import { FindAllDailyQueryDto, GameDto } from 'src/dtos/game.dto';
 import { GameService } from 'src/services/game.service';
+import { SchedulingService } from 'src/services/scheduling.service';
 
 @ApiTags('Game')
 @Controller('games')
