@@ -20,7 +20,7 @@ export class SchedulingService {
     private readonly eventEmitter: EventEmitter2,
   ) {}
 
-  @Cron(CronExpression.EVERY_DAY_AT_4PM, {
+  @Cron(CronExpression.EVERY_DAY_AT_1AM, {
     name: 'batchUpdateGames',
     timeZone: 'Asia/Seoul',
   })
@@ -39,7 +39,7 @@ export class SchedulingService {
       next: () => {
         // 성공적으로 두 Observable의 결과를 가져온 경우
         this.logger.log('Game Data for both months saved successfully.');
-        this.batchUpdateTodayGames(); // 오늘의 경기 업데이트
+        this.batchUpdateTodayGames(); // 오늘의 경기 업데이트 스케쥴 작성
       },
       error: (error) => {
         // 오류가 발생한 경우
@@ -51,8 +51,9 @@ export class SchedulingService {
   private async batchUpdateTodayGames() {
     // 기존의 batchUpdate{gameId} 형식의 CronJob을 중지하고 삭제합니다.
     const allCronJobs = this.schedulerRegistry.getCronJobs();
-    allCronJobs.forEach((_, jobName) => {
+    allCronJobs.forEach((job, jobName) => {
       if (/^batchUpdate.*$/.test(jobName)) {
+        job.stop();
         this.schedulerRegistry.deleteCronJob(jobName);
         this.logger.log(`Stopped and removed existing job ${jobName}.`);
       }
@@ -83,14 +84,6 @@ export class SchedulingService {
       'Asia/Seoul', // 원하는 타임존을 설정합니다.
     );
 
-    // 시작 시간이 현재 시간보다 이전일 경우 실행하지 않습니다.
-    // if (startDateTime < now) {
-    //   this.logger.warn(
-    //     `Start time ${startDateTime} for game ${gameId} is in the past. Skipping.`,
-    //   );
-    //   return;
-    // }
-
     // 현재 시간과 시작 시간 사이의 차이를 계산합니다.
     const timeUntilStart = startDateTime.diff(now);
 
@@ -117,20 +110,18 @@ export class SchedulingService {
           this.logger.log(`Score for Game ${gameId} updated.`);
 
           if (currentStatus.status === '경기종료') {
-            this.schedulerRegistry.deleteCronJob(`batchUpdate${gameId}`);
             this.logger.log(`Game ${gameId} ended. Stopping updates.`);
-            await this.registeredGameService.batchBulkUpdateByGameId(gameId);
-            this.eventEmitter.emit(EventName.FINISHED_GAME, { gameId });
             intervalJob.stop(); // Updates stopped
           } else if (/.*취소$/.test(currentStatus.status)) {
-            this.schedulerRegistry.deleteCronJob(`batchUpdate${gameId}`);
             this.logger.log(`Game ${gameId} cancled. Stopping updates.`);
-            await this.registeredGameService.batchBulkUpdateByGameId(gameId);
-            this.eventEmitter.emit(EventName.FINISHED_GAME, { gameId });
             intervalJob.stop(); // Updates stopped
           }
         },
-        null,
+        async () => {
+          // Cronjob 종료 시
+          await this.registeredGameService.batchBulkUpdateByGameId(gameId);
+          this.eventEmitter.emit(EventName.FINISHED_GAME, { gameId });
+        },
         true,
         'Asia/Seoul',
       );
