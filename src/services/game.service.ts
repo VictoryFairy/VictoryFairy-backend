@@ -34,7 +34,7 @@ export class GameService {
 
   async seed() {
     const seedingFunctions = gameMonths.map((seedableMonth) => this.upsertSchedules(seedableMonth.year, seedableMonth.month));
-
+    
     forkJoin(seedingFunctions).subscribe({
       next: () => {
         // 성공적으로 시드의 업데이트를 성공한 경우
@@ -264,25 +264,34 @@ export class GameService {
   }
 
   private processDoubleHeader(schedule: TGameSchedule): TGameSchedule {
-    const countMap = new Map<string, number>();
-
-    return schedule.slice().map(game => {
+    const idCount = new Map<string, number>();
+    const result = new Array<IGameData>();
+  
+    // 첫 번째 패스: ID 카운트 집계
+    for (const game of schedule) {
       const id = game.id;
-
       if (id.endsWith('0')) {
-        const baseId = id.slice(0, -1);
-        const count = countMap.get(baseId) ?? 0;
-
-        if (count < 2) {
-          game.id = `${baseId}${count + 1}`;
-          countMap.set(baseId, count + 1);
-        } else {
-          this.logger.warn(`More than 2 items with base ID '${baseId}' found.`);
+        const baseId = id.slice(0, -1); // 마지막 0 제거
+        idCount.set(baseId, (idCount.get(baseId) ?? 0) + 1);
+      }
+    }
+  
+    // 두 번째 패스: ID 업데이트
+    for (const game of schedule) {
+      const id = game.id;
+      if (id.endsWith('0')) {
+        const baseId = id.slice(0, -1); // 마지막 0 제거
+        const count = idCount.get(baseId) ?? 0;
+        if (count > 1) {
+          // 중복된 ID일 경우, ID를 새로 설정
+          const currentIndex = result.filter(g => g.id.startsWith(baseId)).length;
+          game.id = `${baseId}${currentIndex + 1}`;
         }
       }
-
-      return game;
-    });
+      result.push(game);
+    }
+  
+    return result;
   }
 
   private async createMany(gameSchedules: TGameSchedule): Promise<void> {
