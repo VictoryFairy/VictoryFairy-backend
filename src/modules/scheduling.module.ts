@@ -4,6 +4,7 @@ import { ScheduleModule } from '@nestjs/schedule';
 import { GameModule } from './game.module';
 import { AuthModule } from 'src/auth/auth.module';
 import { RegisteredGameModule } from './registered-game.module';
+import { SchedulingController } from 'src/controllers/scheduling.controller';
 
 @Module({
   imports: [
@@ -12,6 +13,7 @@ import { RegisteredGameModule } from './registered-game.module';
     AuthModule,
     RegisteredGameModule,
   ],
+  controllers: [SchedulingController],
   providers: [SchedulingService],
   exports: [SchedulingService],
 })
