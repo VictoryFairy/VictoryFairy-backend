@@ -1,7 +1,7 @@
 import { HttpService } from '@nestjs/axios';
 import { Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { forkJoin, from, map, Observable, switchMap } from 'rxjs';
+import { forkJoin, from, map, mergeMap, Observable, switchMap } from 'rxjs';
 import { Game } from 'src/entities/game.entity';
 import {
   TGameSchedule,
@@ -18,6 +18,7 @@ import parse from 'node-html-parser';
 import * as moment from 'moment';
 import { BatchUpdateGameDto } from 'src/dtos/batch-update-game.dto';
 import { teamNameToTeamId } from 'src/utils/teamid-mapper';
+import { gameMonths } from 'src/seeds/game-months.seed';
 
 @Injectable()
 export class GameService {
@@ -30,6 +31,24 @@ export class GameService {
     private readonly teamService: TeamService,
     private readonly stadiumService: StadiumService,
   ) {}
+
+  async seed() {
+    const seedingFunctions = gameMonths.map((seedableMonth) => this.upsertSchedules(seedableMonth.year, seedableMonth.month));
+    
+    from(seedingFunctions)
+    .pipe(
+      mergeMap(obs => obs, 2) // 한 번에 2개의 업데이트 실행
+    )
+    .subscribe({
+      error: (error) => {
+        // 오류가 발생한 경우
+        this.logger.error('Error occured while seeding games', error.stack);
+      },
+      complete: () => {
+        this.logger.log(`Game seeding data saving completed.`);
+      }
+    });
+  }
 
   async findAllDaily(
     year: number,
@@ -259,9 +278,42 @@ export class GameService {
             year,
           );
 
-          return from(this.upsertMany(refinedGameData));
+          const doubleHeaderProcessedGameData: TGameSchedule = this.processDoubleHeader(refinedGameData);
+
+          return from(this.upsertMany(doubleHeaderProcessedGameData));
         }),
       );
+  }
+
+  private processDoubleHeader(schedule: TGameSchedule): TGameSchedule {
+    const idCount = new Map<string, number>();
+    const result = new Array<IGameData>();
+  
+    // 첫 번째 패스: ID 카운트 집계
+    for (const game of schedule) {
+      const id = game.id;
+      if (id.endsWith('0')) {
+        const baseId = id.slice(0, -1); // 마지막 0 제거
+        idCount.set(baseId, (idCount.get(baseId) ?? 0) + 1);
+      }
+    }
+  
+    // 두 번째 패스: ID 업데이트
+    for (const game of schedule) {
+      const id = game.id;
+      if (id.endsWith('0')) {
+        const baseId = id.slice(0, -1); // 마지막 0 제거
+        const count = idCount.get(baseId) ?? 0;
+        if (count > 1) {
+          // 중복된 ID일 경우, ID를 새로 설정
+          const currentIndex = result.filter(g => g.id.startsWith(baseId)).length;
+          game.id = `${baseId}${currentIndex + 1}`;
+        }
+      }
+      result.push(game);
+    }
+  
+    return result;
   }
 
   private async upsertMany(gameSchedules: TGameSchedule): Promise<void> {
