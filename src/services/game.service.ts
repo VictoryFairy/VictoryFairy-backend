@@ -102,7 +102,7 @@ export class GameService {
     return game.time;
   }
 
-  async updateCurrentStatus(
+  async updateStatusRepeatedly(
     gameId: string,
     currentStatus: BatchUpdateGameDto,
   ): Promise<void> {
@@ -117,6 +117,25 @@ export class GameService {
         return;
       game.home_team_score = currentStatus.homeScore;
       game.away_team_score = currentStatus.awayScore;
+
+      await manager.update(Game, { id: gameId }, game);
+    });
+  }
+
+  async updateStatusFinally(
+    gameId: string,
+    currentStatus: BatchUpdateGameDto,
+  ): Promise<void> {
+    return await this.gameRepository.manager.transaction(async (manager) => {
+      const game = await this.findOne(gameId);
+      game.status = currentStatus.status;
+      if (currentStatus.awayScore > currentStatus.homeScore) {
+        game.winning_team = game.away_team;
+      } else if (currentStatus.awayScore < currentStatus.homeScore) {
+        game.winning_team = game.home_team;
+      } else {
+        game.winning_team = null;
+      }
 
       await manager.update(Game, { id: gameId }, game);
     });
@@ -258,7 +277,7 @@ export class GameService {
 
           const doubleHeaderProcessedGameData: TGameSchedule = this.processDoubleHeader(refinedGameData);
 
-          return from(this.createMany(doubleHeaderProcessedGameData));
+          return from(this.upsertMany(doubleHeaderProcessedGameData));
         }),
       );
   }
@@ -294,7 +313,7 @@ export class GameService {
     return result;
   }
 
-  private async createMany(gameSchedules: TGameSchedule): Promise<void> {
+  private async upsertMany(gameSchedules: TGameSchedule): Promise<void> {
     await this.gameRepository.manager.transaction(async (manager) => {
       for (const schedule of gameSchedules) {
         // Create or update game entity
@@ -435,9 +454,9 @@ export class GameService {
                 : null;
           gameData['homeScore'] = homeTeam.score;
           gameData['awayScore'] = awayTeam.score;
-          gameData['status'] = '경기 종료';
+          gameData['status'] = '경기종료';
         } else if (review === '프리뷰') {
-          gameData['status'] = '경기 전';
+          gameData['status'] = '경기전';
         }
 
         groupedData.push(gameData);

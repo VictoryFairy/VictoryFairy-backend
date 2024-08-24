@@ -106,14 +106,15 @@ export class SchedulingService {
           );
 
           this.logger.log(`Current game status is ${currentStatus.status}.`);
-          await this.gameService.updateCurrentStatus(gameId, currentStatus);
+          await this.gameService.updateStatusRepeatedly(gameId, currentStatus);
           this.logger.log(`Score for Game ${gameId} updated.`);
-
           if (currentStatus.status === '경기종료') {
             this.logger.log(`Game ${gameId} ended. Stopping updates.`);
+            await this.gameService.updateStatusFinally(gameId, currentStatus);
             intervalJob.stop(); // Updates stopped
           } else if (/.*취소$/.test(currentStatus.status)) {
             this.logger.log(`Game ${gameId} cancled. Stopping updates.`);
+            await this.gameService.updateStatusFinally(gameId, currentStatus);
             intervalJob.stop(); // Updates stopped
           }
         },

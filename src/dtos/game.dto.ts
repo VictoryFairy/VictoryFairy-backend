@@ -32,7 +32,7 @@ export class GameDto {
 
   @ApiProperty({
     description: '경기 상태',
-    example: '경기 종료',
+    example: '경기종료',
   })
   @IsString()
   @Expose()
