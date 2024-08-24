@@ -33,8 +33,8 @@ export class SchedulingService {
     const { nextYear, nextMonth } = getNextMonth(currentYear, currentMonth);
 
     forkJoin([
-      this.gameService.getSchedules(currentYear, currentMonth),
-      this.gameService.getSchedules(nextYear, nextMonth),
+      this.gameService.upsertSchedules(currentYear, currentMonth),
+      this.gameService.upsertSchedules(nextYear, nextMonth),
     ]).subscribe({
       next: () => {
         // 성공적으로 두 Observable의 결과를 가져온 경우
@@ -106,14 +106,15 @@ export class SchedulingService {
           );
 
           this.logger.log(`Current game status is ${currentStatus.status}.`);
-          await this.gameService.updateCurrentStatus(gameId, currentStatus);
+          await this.gameService.updateStatusRepeatedly(gameId, currentStatus);
           this.logger.log(`Score for Game ${gameId} updated.`);
-
           if (currentStatus.status === '경기종료') {
             this.logger.log(`Game ${gameId} ended. Stopping updates.`);
+            await this.gameService.updateStatusFinally(gameId, currentStatus);
             intervalJob.stop(); // Updates stopped
           } else if (/.*취소$/.test(currentStatus.status)) {
             this.logger.log(`Game ${gameId} cancled. Stopping updates.`);
+            await this.gameService.updateStatusFinally(gameId, currentStatus);
             intervalJob.stop(); // Updates stopped
           }
         },
