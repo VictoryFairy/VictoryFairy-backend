@@ -21,7 +21,7 @@ export type TStadium =
   | '사직'
   | '광주';
 
-export type TGameStatus = '경기 전' | '우천취소' | '경기 종료';
+export type TGameStatus = '경기전' | '경기종료';
 
 export type TGameSchedule = IGameData[];
 
