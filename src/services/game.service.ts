@@ -1,7 +1,7 @@
 import { HttpService } from '@nestjs/axios';
 import { Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { forkJoin, from, map, Observable, switchMap } from 'rxjs';
+import { forkJoin, from, map, mergeMap, Observable, switchMap } from 'rxjs';
 import { Game } from 'src/entities/game.entity';
 import {
   TGameSchedule,
@@ -35,15 +35,18 @@ export class GameService {
   async seed() {
     const seedingFunctions = gameMonths.map((seedableMonth) => this.upsertSchedules(seedableMonth.year, seedableMonth.month));
     
-    forkJoin(seedingFunctions).subscribe({
-      next: () => {
-        // 성공적으로 시드의 업데이트를 성공한 경우
-        this.logger.log('Game seeding data saved successfully.');
-      },
+    from(seedingFunctions)
+    .pipe(
+      mergeMap(obs => obs, 2) // 한 번에 2개의 업데이트 실행
+    )
+    .subscribe({
       error: (error) => {
         // 오류가 발생한 경우
         this.logger.error('Error occured while seeding games', error.stack);
       },
+      complete: () => {
+        this.logger.log(`Game seeding data saving completed.`);
+      }
     });
   }
 
