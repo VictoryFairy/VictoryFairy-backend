@@ -32,6 +32,8 @@ export class UserService {
   constructor(
     @InjectRepository(User)
     private readonly userRepository: Repository<User>,
+    @InjectRepository(Team)
+    private readonly teamRepository: Repository<Team>,
     @InjectRedisClient()
     private readonly redisClient: Redis,
     private readonly eventEmitter: EventEmitter2,
@@ -184,19 +186,29 @@ export class UserService {
     }
   }
 
-  async deleteUser(user: User) {
-    const { profile_image } = user;
-    const { affected } = await this.userRepository.delete({
-      id: user.id,
-      email: user.email,
-    });
+  async deleteUser(user: User, qrManager: EntityManager) {
+    const teams = await this.teamRepository.find({ select: { id: true } });
+    const { profile_image, id, email } = user;
+
+    const { affected } = await qrManager
+      .getRepository(User)
+      .delete({ id, email });
     // s3 이미지 삭제
     await this.awsS3Service.deleteImage({ fileUrl: profile_image });
-    if (affected !== 1) {
-      throw new InternalServerErrorException('유저 삭제 실패');
-    }
+
+    // Redis 트랜잭션
+    const redisTransaction = this.redisClient.multi();
     // redis caching 동기화
-    await this.redisClient.hdel(RedisKeys.USER_INFO, user.id.toString());
+    redisTransaction.hdel(RedisKeys.USER_INFO, id.toString());
+    redisTransaction.zrem(`${RedisKeys.RANKING}:total`, [id]);
+    for (const team of teams) {
+      redisTransaction.zrem(`${RedisKeys.RANKING}:${team.id}`, [id]);
+    }
+    const redisExecResult = await redisTransaction.exec();
+    if (!redisExecResult) {
+      throw new InternalServerErrorException('Redis 캐시 동기화 실패');
+    }
+
     return { affected };
   }
 

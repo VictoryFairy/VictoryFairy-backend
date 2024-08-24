@@ -171,10 +171,14 @@ export class UserController {
   @Delete('me')
   @HttpCode(HttpStatus.NO_CONTENT)
   @JwtAuth('access')
+  @UseInterceptors(TransactionInterceptor)
   @ApiOperation({ summary: '회원탈퇴' })
   @ApiNoContentResponse({ description: '삭제 성공한 경우 상태코드만 응답' })
   @ApiInternalServerErrorResponse({ description: 'DB 삭제 실패한 경우' })
-  async deleteUser(@UserDeco() user: User) {
-    await this.userService.deleteUser(user);
+  async deleteUser(
+    @UserDeco() user: User,
+    @QueryRunnerManager() qrManager: EntityManager,
+  ) {
+    await this.userService.deleteUser(user, qrManager);
   }
 }
