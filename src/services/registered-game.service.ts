@@ -245,7 +245,7 @@ export class RegisteredGameService {
       }
 
       await qrRunner.commitTransaction();
-      this.logger.log(`당일 경기:${gameId} 상태 데이트 후 트랜잭션 성공`);
+      this.logger.log(`당일 경기:${gameId} 상태 업데이트 후 트랜잭션 성공`);
     } catch (error) {
       await qrRunner.rollbackTransaction();
       this.logger.error(
