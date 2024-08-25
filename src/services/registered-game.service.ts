@@ -220,9 +220,14 @@ export class RegisteredGameService {
 
   private defineStatus(game: Game, registeredGame: RegisteredGame): void {
     if (game.status === '경기종료') {
-      if (game.winning_team) {
+      if (game.away_team_score > game.home_team_score) {
         registeredGame.status =
-          registeredGame.cheering_team.id === game.winning_team.id
+          registeredGame.cheering_team.id === game.away_team.id
+            ? 'Win'
+            : 'Lose';
+      } else if (game.away_team_score > game.home_team_score) {
+        registeredGame.status =
+          registeredGame.cheering_team.id === game.home_team.id
             ? 'Win'
             : 'Lose';
       } else {
