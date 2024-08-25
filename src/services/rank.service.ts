@@ -62,9 +62,12 @@ export class RankService {
       .getRawMany();
 
     for (const watched of todayRegisteredGame) {
+      const { team_id, user_id, date, status } = watched;
       await this.updateRankEntity({
-        ...watched,
-        thisYear: moment(watched.date).year(),
+        team_id,
+        user_id,
+        status,
+        year: moment(date).year(),
       });
       await this.updateRedisRankings(watched.user_id);
     }
