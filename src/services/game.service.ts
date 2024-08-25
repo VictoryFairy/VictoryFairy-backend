@@ -15,7 +15,7 @@ import { Repository } from 'typeorm';
 import { TeamService } from './team.service';
 import { StadiumService } from './stadium.service';
 import parse from 'node-html-parser';
-import * as moment from 'moment';
+import * as moment from 'moment-timezone';
 import { BatchUpdateGameDto } from 'src/dtos/batch-update-game.dto';
 import { teamNameToTeamId } from 'src/utils/teamid-mapper';
 import { gameMonths } from 'src/seeds/game-months.seed';
@@ -145,7 +145,7 @@ export class GameService {
   }
 
   async getTodayGameIds(): Promise<string[]> {
-    const today = moment().startOf('day').format('YYYY-MM-DD');
+    const today = moment.tz('Asia/Seoul').startOf('day').format('YYYY-MM-DD');
 
     const todayGames = await this.gameRepository.find({
       where: {
