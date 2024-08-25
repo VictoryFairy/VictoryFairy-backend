@@ -27,6 +27,10 @@ export class ApiLoggingInterceptor implements NestInterceptor {
         const responseTime = endTime - startTime;
         const statusCode = response.statusCode;
 
+        if (userAgent.includes('ELB-HealthChecker')) {
+          return;
+        }
+
         this.logger.log(
           `${method} ${url} ${statusCode} - ${responseTime}ms  \n${userAgent} ${ip} `,
         );
@@ -37,6 +41,7 @@ export class ApiLoggingInterceptor implements NestInterceptor {
 
         const statusCode =
           error instanceof HttpException ? error.getStatus() : 500;
+
         this.logger.error(
           `${method} ${url} ${statusCode} - ${responseTime}ms \n${userAgent} ${ip}  \nError: ${error.message} \nErrorStack : ${error.stack}`,
         );
