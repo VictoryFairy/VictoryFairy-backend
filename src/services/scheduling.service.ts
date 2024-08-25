@@ -7,7 +7,6 @@ import * as moment from 'moment-timezone';
 import { RegisteredGameService } from './registered-game.service';
 import { getNextMonth } from 'src/utils/get-next-month.util';
 import { EventEmitter2 } from '@nestjs/event-emitter';
-import { EventName } from 'src/const/event.const';
 
 @Injectable()
 export class SchedulingService {
@@ -121,7 +120,6 @@ export class SchedulingService {
         async () => {
           // Cronjob 종료 시
           await this.registeredGameService.batchBulkUpdateByGameId(gameId);
-          this.eventEmitter.emit(EventName.FINISHED_GAME, { gameId });
         },
         true,
         'Asia/Seoul',

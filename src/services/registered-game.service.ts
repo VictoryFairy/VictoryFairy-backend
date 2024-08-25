@@ -5,7 +5,13 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Between, EntityManager, Repository } from 'typeorm';
+import {
+  Between,
+  DataSource,
+  EntityManager,
+  QueryRunner,
+  Repository,
+} from 'typeorm';
 import {
   CreateRegisteredGameDto,
   UpdateRegisteredGameDto,
@@ -30,6 +36,7 @@ export class RegisteredGameService {
     private readonly teamService: TeamService,
     private readonly rankService: RankService,
     private readonly awsS3Service: AwsS3Service,
+    private readonly dataSource: DataSource,
   ) {}
 
   async create(
@@ -197,25 +204,57 @@ export class RegisteredGameService {
     }
   }
 
-  async batchBulkUpdateByGameId(gameId: string): Promise<void> {
-    const game = await this.gameService.findOne(gameId);
-    const registeredGames = await this.registeredGameRepository.find({
-      where: {
-        game,
-      },
-      relations: { cheering_team: true, game: true },
-    });
-    // const registeredGames = await this.registeredGameRepository.find();
+  async batchBulkUpdateByGameId(gameId: string) {
+    const qrRunner: QueryRunner = this.dataSource.createQueryRunner();
 
-    const promises = registeredGames.map(async (registeredGame) => {
-      const game = registeredGame.game;
+    await qrRunner.connect();
+    await qrRunner.startTransaction();
 
-      this.defineStatus(game, registeredGame);
+    try {
+      const game = await this.gameService.findOne(gameId);
+      const registeredGames = await this.registeredGameRepository.find({
+        where: {
+          game,
+          status: null,
+        },
+        relations: { cheering_team: true, game: true, user: true },
+      });
 
-      return this.registeredGameRepository.save(registeredGame);
-    });
+      for (const registeredGame of registeredGames) {
+        const team_id = registeredGame.cheering_team.id;
+        const user_id = registeredGame.user.id;
+        const game = registeredGame.game;
 
-    await Promise.all(promises);
+        this.defineStatus(game, registeredGame);
+
+        // 직관 경기 저장
+        const updatedGame = await qrRunner.manager
+          .getRepository(RegisteredGame)
+          .save(registeredGame);
+        const status = updatedGame.status;
+        // Rank 업데이트
+        await this.rankService.updateRankEntity(
+          {
+            status,
+            team_id,
+            user_id,
+            year: moment(game.date).year(),
+          },
+          qrRunner.manager,
+        );
+      }
+
+      await qrRunner.commitTransaction();
+      this.logger.log(`당일 경기:${gameId} 상태 업데이트 후 트랜잭션 성공`);
+    } catch (error) {
+      await qrRunner.rollbackTransaction();
+      this.logger.error(
+        `당일 경기:${gameId} 상태 업데이트 후 트랜잭션 실패`,
+        error.stack,
+      );
+    } finally {
+      await qrRunner.release();
+    }
   }
 
   private defineStatus(game: Game, registeredGame: RegisteredGame): void {

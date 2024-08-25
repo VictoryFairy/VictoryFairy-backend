@@ -44,33 +44,6 @@ export class RankService {
     }
   }
 
-  /** @description 당일 직관 등록 경기 종료되면 바로 업데이트하기 */
-  @OnEvent(EventName.FINISHED_GAME)
-  async rankTodayUpdate(payload: { gameId: string }) {
-    const todayRegisteredGame = await this.registeredGameRepository
-      .createQueryBuilder('registered_game')
-      .innerJoin('registered_game.game', 'game')
-      .innerJoin('registered_game.cheering_team', 'team')
-      .innerJoin('registered_game.user', 'user')
-      .where('registered_game.game.id = :gameId', payload)
-      .select([
-        'registered_game.status AS status',
-        'team.id AS team_id',
-        'user.id AS user_id',
-        'game.date AS date',
-      ])
-      .getRawMany();
-
-    for (const watched of todayRegisteredGame) {
-      await this.updateRankEntity({
-        ...watched,
-        thisYear: moment(watched.date).year(),
-      });
-      await this.updateRedisRankings(watched.user_id);
-    }
-    this.logger.log(`${payload.gameId}로 등록된 직관 경기 랭킹 업데이트 완료`);
-  }
-
   /** @description rank entity에 저장 */
   async updateRankEntity(
     watchedGame: CreateRankDto,
