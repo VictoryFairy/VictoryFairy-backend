@@ -58,6 +58,8 @@ export class AwsS3Service {
     const { fileUrl } = deleteImageAwsS3Dto;
     const uploadName = this.extractKeyFromUrl(fileUrl);
 
+    if (!uploadName) return;
+
     const command = new DeleteObjectCommand({
       Bucket: bucketName,
       Key: uploadName,
@@ -68,9 +70,14 @@ export class AwsS3Service {
     );
   }
 
-  private extractKeyFromUrl(url: string): string {
-    const urlObj = new URL(url);
-    return decodeURIComponent(urlObj.pathname.substring(1));
+  private extractKeyFromUrl(url: string): string | null {
+    try {
+      const urlObj = new URL(url);
+      return decodeURIComponent(urlObj.pathname.substring(1));
+    } catch (error) {
+      this.logger.warn(`${error.name}`);
+      return null;
+    }
   }
 
   /** 환경변수 게터 함수 */
