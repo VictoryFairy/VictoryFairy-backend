@@ -24,7 +24,6 @@ import { Game } from 'src/entities/game.entity';
 import * as moment from 'moment';
 import { RankService } from './rank.service';
 import { AwsS3Service } from './aws-s3.service';
-import { TGameStatus } from 'src/types/crawling-game.type';
 import { TRegisteredGameStatus } from 'src/types/registered-game-status.type';
 
 @Injectable()
@@ -83,6 +82,7 @@ export class RegisteredGameService {
           status: registeredGame.status,
           year: moment(game.date).year(),
         },
+        true,
         qrManager,
       );
 
@@ -135,8 +135,15 @@ export class RegisteredGameService {
     return registeredGames;
   }
 
-  async findOne(id: number, user: User): Promise<RegisteredGame> {
-    const registeredGame = await this.registeredGameRepository.findOne({
+  async findOne(
+    id: number,
+    user: User,
+    qrManager?: EntityManager,
+  ): Promise<RegisteredGame> {
+    const repository = qrManager
+      ? qrManager.getRepository(RegisteredGame)
+      : this.registeredGameRepository;
+    const registeredGame = await repository.findOne({
       where: { id, user },
       relations: {
         cheering_team: true,
@@ -196,14 +203,33 @@ export class RegisteredGameService {
     await this.registeredGameRepository.save(registeredGame);
   }
 
-  async delete(id: number, user: User): Promise<void> {
-    const registeredGame = await this.findOne(id, user);
-    this.awsS3Service.deleteImage({
+  async delete(
+    id: number,
+    user: User,
+    qrManager: EntityManager,
+  ): Promise<void> {
+    const registeredGame = await this.findOne(id, user, qrManager);
+    const status = registeredGame.status;
+    const team_id = registeredGame.cheering_team.id;
+    const user_id = user.id;
+    const year = moment(registeredGame.game.date).year();
+
+    await this.awsS3Service.deleteImage({
       fileUrl: registeredGame.image,
     });
-    const result = await this.registeredGameRepository.delete({ id, user });
+    const result = await qrManager
+      .getRepository(RegisteredGame)
+      .delete({ id, user });
     if (result.affected === 0) {
       throw new NotFoundException(`Registered game with ID ${id} not found`);
+    }
+    if (status !== null) {
+      await this.rankService.updateRankEntity(
+        { status, team_id, user_id, year },
+        false,
+        qrManager,
+      );
+      await this.rankService.updateRedisRankings(user_id, qrManager);
     }
   }
 
@@ -244,6 +270,7 @@ export class RegisteredGameService {
             user_id,
             year: moment(game.date).year(),
           },
+          true,
           qrRunner.manager,
         );
       }
@@ -261,7 +288,10 @@ export class RegisteredGameService {
     }
   }
 
-  private getStatus(game: Game, registeredGame: RegisteredGame): TRegisteredGameStatus | null {
+  private getStatus(
+    game: Game,
+    registeredGame: RegisteredGame,
+  ): TRegisteredGameStatus | null {
     if (/.*취소$/.test(game.status) || game.status === '그라운드사정') {
       return 'No game';
     }
@@ -269,7 +299,10 @@ export class RegisteredGameService {
       if (game.away_team_score === game.home_team_score) {
         return 'Tie';
       }
-      const winningTeamId = game.away_team_score > game.home_team_score ? game.away_team.id : game.home_team.id;
+      const winningTeamId =
+        game.away_team_score > game.home_team_score
+          ? game.away_team.id
+          : game.home_team.id;
       return registeredGame.cheering_team.id === winningTeamId ? 'Win' : 'Lose';
     }
     return null;
