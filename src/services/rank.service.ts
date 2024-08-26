@@ -47,6 +47,7 @@ export class RankService {
   /** @description rank entity에 저장 */
   async updateRankEntity(
     watchedGame: CreateRankDto,
+    isAdd: boolean,
     qrManager?: EntityManager,
   ) {
     const { status, team_id, user_id, year } = watchedGame;
@@ -62,19 +63,29 @@ export class RankService {
       ? qrManager.getRepository(Rank)
       : this.rankRepository;
 
-    const updateCount = await repository.increment(
-      { team_id, user: { id: user_id }, active_year: year },
-      columnToUpdate[status],
-      1,
-    );
+    if (isAdd) {
+      // 생성하거나 추가한 경우
+      const updateCount = await repository.increment(
+        { team_id, user: { id: user_id }, active_year: year },
+        columnToUpdate[status],
+        1,
+      );
 
-    if (updateCount.affected === 0) {
-      const rankData = new Rank();
-      rankData.team_id = team_id;
-      rankData.user = { id: user_id } as User;
-      rankData.active_year = year;
-      rankData[columnToUpdate[status]] = 1;
-      await repository.insert(rankData);
+      if (updateCount.affected === 0) {
+        const rankData = new Rank();
+        rankData.team_id = team_id;
+        rankData.user = { id: user_id } as User;
+        rankData.active_year = year;
+        rankData[columnToUpdate[status]] = 1;
+        await repository.insert(rankData);
+      }
+    } else {
+      // 삭제한 경우
+      await repository.decrement(
+        { team_id, user: { id: user_id }, active_year: year },
+        columnToUpdate[status],
+        1,
+      );
     }
   }
 

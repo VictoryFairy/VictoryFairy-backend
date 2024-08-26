@@ -155,6 +155,7 @@ export class RegisteredGameController {
   }
 
   @Delete(':id')
+  @UseInterceptors(TransactionInterceptor)
   @HttpCode(HttpStatus.NO_CONTENT)
   @ApiOperation({ summary: '유저가 등록한 해당하는 ID의 직관 경기 삭제' })
   @ApiParam({
@@ -171,7 +172,8 @@ export class RegisteredGameController {
   async delete(
     @Param('id', ParseIntPipe) id: number,
     @UserDeco() user: User,
+    @QueryRunnerManager() qrManager: EntityManager,
   ): Promise<void> {
-    await this.registeredGameService.delete(id, user);
+    await this.registeredGameService.delete(id, user, qrManager);
   }
 }
