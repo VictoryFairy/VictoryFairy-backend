@@ -24,6 +24,8 @@ import { Game } from 'src/entities/game.entity';
 import * as moment from 'moment';
 import { RankService } from './rank.service';
 import { AwsS3Service } from './aws-s3.service';
+import { TGameStatus } from 'src/types/crawling-game.type';
+import { TRegisteredGameStatus } from 'src/types/registered-game-status.type';
 
 @Injectable()
 export class RegisteredGameService {
@@ -68,7 +70,8 @@ export class RegisteredGameService {
       user,
     });
 
-    this.defineStatus(game, registeredGame);
+    const registeredGameStatus = this.getStatus(game, registeredGame);
+    registeredGame.status = registeredGameStatus;
 
     await qrManager.save(registeredGame);
 
@@ -225,7 +228,8 @@ export class RegisteredGameService {
         const user_id = registeredGame.user.id;
         const game = registeredGame.game;
 
-        this.defineStatus(game, registeredGame);
+        const registeredGameStatus = this.getStatus(game, registeredGame);
+        registeredGame.status = registeredGameStatus;
 
         // 직관 경기 저장
         const updatedGame = await qrRunner.manager
@@ -257,25 +261,17 @@ export class RegisteredGameService {
     }
   }
 
-  private defineStatus(game: Game, registeredGame: RegisteredGame): void {
-    if (game.status === '경기종료') {
-      if (game.away_team_score > game.home_team_score) {
-        registeredGame.status =
-          registeredGame.cheering_team.id === game.away_team.id
-            ? 'Win'
-            : 'Lose';
-      } else if (game.away_team_score < game.home_team_score) {
-        registeredGame.status =
-          registeredGame.cheering_team.id === game.home_team.id
-            ? 'Win'
-            : 'Lose';
-      } else {
-        registeredGame.status = 'Tie';
-      }
-    } else if (/.*취소$/.test(game.status)) {
-      registeredGame.status = 'No game';
-    } else {
-      registeredGame.status = null;
+  private getStatus(game: Game, registeredGame: RegisteredGame): TRegisteredGameStatus | null {
+    if (/.*취소$/.test(game.status) || game.status === '그라운드사정') {
+      return 'No game';
     }
+    if (game.status === '경기종료') {
+      if (game.away_team_score === game.home_team_score) {
+        return 'Tie';
+      }
+      const winningTeamId = game.away_team_score > game.home_team_score ? game.away_team.id : game.home_team.id;
+      return registeredGame.cheering_team.id === winningTeamId ? 'Win' : 'Lose';
+    }
+    return null;
   }
 }
