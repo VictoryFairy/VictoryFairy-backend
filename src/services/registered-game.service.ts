@@ -264,7 +264,7 @@ export class RegisteredGameService {
           registeredGame.cheering_team.id === game.away_team.id
             ? 'Win'
             : 'Lose';
-      } else if (game.away_team_score > game.home_team_score) {
+      } else if (game.away_team_score < game.home_team_score) {
         registeredGame.status =
           registeredGame.cheering_team.id === game.home_team.id
             ? 'Win'
