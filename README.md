@@ -30,5 +30,5 @@
 ## 역할
 |                   | 양기정                                                                                       | 허대웅                                                                                       |
 |:-----------------:|:---------------------------------------------------------------------------------------------:|:---------------------------------------------------------------------------------------------:|
-| **GitHub 프로필** | [![양기정](https://avatars.githubusercontent.com/EvansKJ57)](https://github.com/EvansKJ57) | [![허대웅](https://avatars.githubusercontent.com/gjeodnd12165)](https://github.com/gjeodnd12165) |
-| **역할** | 로그인 및 랭킹, REDIS | 크롤링 및 기타 REST API |
+| **GitHub 프로필** | <img src="https://avatars.githubusercontent.com/EvansKJ57" width="100" height="100"> | <img src="https://avatars.githubusercontent.com/gjeodnd12165" width="100" height="100"> |
+| **역할** | - 유저, 인증 관련 API <br/>  - 랭킹 관련 API <br/> - S3이미지 업로드 | - 주차장 & 응원가 기능 API <br/> - 경기 일정 크롤링 및 기능 API </br> - 직관 관련 기능 API <br/> - CI/CD <br/> - AWS 관리 |
