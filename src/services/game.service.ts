@@ -120,6 +120,7 @@ export class GameService {
         return;
       game.home_team_score = currentStatus.homeScore;
       game.away_team_score = currentStatus.awayScore;
+      game.status = currentStatus.status;
 
       await manager.update(Game, { id: gameId }, game);
     });

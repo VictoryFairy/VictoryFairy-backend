@@ -252,7 +252,6 @@ export class RegisteredGameService {
       for (const registeredGame of registeredGames) {
         const team_id = registeredGame.cheering_team.id;
         const user_id = registeredGame.user.id;
-        const game = registeredGame.game;
 
         const registeredGameStatus = this.getStatus(game, registeredGame);
         registeredGame.status = registeredGameStatus;
