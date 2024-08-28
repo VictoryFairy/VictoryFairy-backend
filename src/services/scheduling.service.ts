@@ -51,6 +51,7 @@ export class SchedulingService {
     // 기존의 batchUpdate{gameId} 형식의 CronJob을 중지하고 삭제합니다.
     const allCronJobs = this.schedulerRegistry.getCronJobs();
     allCronJobs.forEach((job, jobName) => {
+      if (jobName === 'batchUpdateGames') return;
       if (/^batchUpdate.*$/.test(jobName)) {
         job.stop();
         this.schedulerRegistry.deleteCronJob(jobName);
