@@ -130,6 +130,12 @@ export class RegisteredGameService {
           winning_team: true,
         },
       },
+      order: {
+        game: {
+          date: 'DESC',
+          time: 'DESC',
+        }
+      }
     });
 
     return registeredGames;
