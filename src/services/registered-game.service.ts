@@ -133,7 +133,6 @@ export class RegisteredGameService {
       order: {
         game: {
           date: 'DESC',
-          time: 'DESC',
         }
       }
     });
