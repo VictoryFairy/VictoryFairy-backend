@@ -31,17 +31,13 @@ export class User {
   @OneToMany(() => Rank, (rank) => rank.id)
   rank: Rank[];
 
-  @ManyToOne(() => Team, (team) => team.users, { cascade: true })
+  @ManyToOne(() => Team, (team) => team.users)
   @JoinColumn({ name: 'support_team_id' })
   support_team: Team;
 
-  @OneToMany(() => RegisteredGame, (registeredGame) => registeredGame.user, {
-    cascade: true,
-  })
+  @OneToMany(() => RegisteredGame, (registeredGame) => registeredGame.user)
   registeredGames: RegisteredGame[];
 
-  @OneToMany(() => LikeCheeringSong, (like) => like.user, {
-    cascade: true,
-  })
+  @OneToMany(() => LikeCheeringSong, (like) => like.user)
   likeCheeringSongs: LikeCheeringSong[];
 }
