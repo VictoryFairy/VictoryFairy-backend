@@ -39,7 +39,6 @@ export class CheeringSong {
 
   @OneToMany(() => LikeCheeringSong, (like) => like.cheeringSong, {
     cascade: true,
-    onDelete: 'CASCADE',
   })
   likeCheeringSongs: LikeCheeringSong[];
 }
