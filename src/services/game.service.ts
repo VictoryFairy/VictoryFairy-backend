@@ -33,21 +33,23 @@ export class GameService {
   ) {}
 
   async seed() {
-    const seedingFunctions = gameMonths.map((seedableMonth) => this.upsertSchedules(seedableMonth.year, seedableMonth.month));
-    
+    const seedingFunctions = gameMonths.map((seedableMonth) =>
+      this.upsertSchedules(seedableMonth.year, seedableMonth.month),
+    );
+
     from(seedingFunctions)
-    .pipe(
-      mergeMap(obs => obs, 2) // 한 번에 2개의 업데이트 실행
-    )
-    .subscribe({
-      error: (error) => {
-        // 오류가 발생한 경우
-        this.logger.error('Error occured while seeding games', error.stack);
-      },
-      complete: () => {
-        this.logger.log(`Game seeding data saving completed.`);
-      }
-    });
+      .pipe(
+        mergeMap((obs) => obs, 2), // 한 번에 2개의 업데이트 실행
+      )
+      .subscribe({
+        error: (error) => {
+          // 오류가 발생한 경우
+          this.logger.error('Error occured while seeding games', error.stack);
+        },
+        complete: () => {
+          this.logger.log(`Game seeding data saving completed.`);
+        },
+      });
   }
 
   async findAllDaily(
@@ -281,7 +283,8 @@ export class GameService {
             year,
           );
 
-          const doubleHeaderProcessedGameData: TGameSchedule = this.processDoubleHeader(refinedGameData);
+          const doubleHeaderProcessedGameData: TGameSchedule =
+            this.processDoubleHeader(refinedGameData);
 
           return from(this.upsertMany(doubleHeaderProcessedGameData));
         }),
@@ -291,7 +294,7 @@ export class GameService {
   private processDoubleHeader(schedule: TGameSchedule): TGameSchedule {
     const idCount = new Map<string, number>();
     const result = new Array<IGameData>();
-  
+
     // 첫 번째 패스: ID 카운트 집계
     for (const game of schedule) {
       const id = game.id;
@@ -300,7 +303,7 @@ export class GameService {
         idCount.set(baseId, (idCount.get(baseId) ?? 0) + 1);
       }
     }
-  
+
     // 두 번째 패스: ID 업데이트
     for (const game of schedule) {
       const id = game.id;
@@ -309,13 +312,15 @@ export class GameService {
         const count = idCount.get(baseId) ?? 0;
         if (count > 1) {
           // 중복된 ID일 경우, ID를 새로 설정
-          const currentIndex = result.filter(g => g.id.startsWith(baseId)).length;
+          const currentIndex = result.filter((g) =>
+            g.id.startsWith(baseId),
+          ).length;
           game.id = `${baseId}${currentIndex + 1}`;
         }
       }
       result.push(game);
     }
-  
+
     return result;
   }
 
