@@ -285,6 +285,7 @@ export class RegisteredGameService {
           true,
           qrRunner.manager,
         );
+        await this.rankService.updateRedisRankings(user_id, qrRunner.manager);
       }
 
       await qrRunner.commitTransaction();
