@@ -389,7 +389,7 @@ export class GameService {
         }
 
         try {
-          await manager.upsert(Game, game, ['date', 'time', 'stadium']);
+          await manager.upsert(Game, game, ['id']);
         } catch (error) {
           console.error('게임 저장 중 오류 발생:', error);
           throw error; // Rethrow error to trigger rollback
