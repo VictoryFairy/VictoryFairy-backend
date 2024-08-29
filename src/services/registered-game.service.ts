@@ -113,13 +113,21 @@ export class RegisteredGameService {
     month: number,
     user: User,
   ): Promise<RegisteredGame[]> {
-    const startDate = new Date(year, month - 1, 1);
-    const endDate = new Date(year, month, 0, 23, 59, 59, 999); // month를 넘어가지 않도록 조정
+    const startDate = moment
+      .tz(`${year}-${month}-01`, 'Asia/Seoul')
+      .startOf('day')
+      .format('YYYY-MM-DD');
+    const endDate = moment
+      .tz(`${year}-${month}-01`, 'Asia/Seoul')
+      .endOf('month')
+      .format('YYYY-MM-DD');
 
     const registeredGames = await this.registeredGameRepository.find({
       where: {
         user,
-        created_at: Between(startDate, endDate),
+        game: {
+          date: Between(startDate, endDate),
+        },
       },
       relations: {
         cheering_team: true,
@@ -133,8 +141,8 @@ export class RegisteredGameService {
       order: {
         game: {
           date: 'DESC',
-        }
-      }
+        },
+      },
     });
 
     return registeredGames;
