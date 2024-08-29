@@ -16,6 +16,7 @@ export class LikeCheeringSong {
   @ManyToOne(
     () => CheeringSong,
     (cheeringSong) => cheeringSong.likeCheeringSongs,
+    { onDelete: 'CASCADE' },
   )
   @JoinColumn({ name: 'cheering_song_id' })
   cheeringSong: CheeringSong;
