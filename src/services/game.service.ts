@@ -19,6 +19,7 @@ import * as moment from 'moment-timezone';
 import { BatchUpdateGameDto } from 'src/dtos/batch-update-game.dto';
 import { teamNameToTeamId } from 'src/utils/teamid-mapper';
 import { gameMonths } from 'src/seeds/game-months.seed';
+import isNumber from 'is-number';
 
 @Injectable()
 export class GameService {
@@ -113,12 +114,7 @@ export class GameService {
   ): Promise<void> {
     return await this.gameRepository.manager.transaction(async (manager) => {
       const game = await this.findOne(gameId);
-      if (
-        currentStatus.awayScore ||
-        currentStatus.awayScore ||
-        isNaN(currentStatus.awayScore) ||
-        isNaN(currentStatus.homeScore)
-      )
+      if (currentStatus.awayScore === null || currentStatus.homeScore === null)
         return;
       game.home_team_score = currentStatus.homeScore;
       game.away_team_score = currentStatus.awayScore;
@@ -185,16 +181,18 @@ export class GameService {
       const homeScoreElement = root.querySelector('.teamHome em');
       const awayScoreElement = root.querySelector('.teamAway em');
 
-      const homeScore: number | null = homeScoreElement
-        ? parseInt(homeScoreElement.innerText)
-        : null;
-      const awayScore: number | null = awayScoreElement
-        ? parseInt(awayScoreElement.innerText)
-        : null;
+      const homeScore: number | null =
+        homeScoreElement && isNumber(homeScoreElement.innerText)
+          ? parseInt(homeScoreElement.innerText)
+          : null;
+      const awayScore: number | null =
+        awayScoreElement && isNumber(awayScoreElement.innerText)
+          ? parseInt(awayScoreElement.innerText)
+          : null;
 
       return {
-        homeScore,
-        awayScore,
+        homeScore: homeScore,
+        awayScore: awayScore,
       };
     };
 
