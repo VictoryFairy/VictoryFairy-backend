@@ -387,6 +387,16 @@ export class GameService {
         }
 
         try {
+          if (!game.id.endsWith('0')) {
+            // 더블 헤더인 경우 변경 전 경기의 아이디로 등록된 레코드를 삭제해야함
+            // 삭제 하지 않아도 되는 경우에도 계속 이 스코프가 실행되므로 수정 필요
+            const preDoulbeHeaderGameId = `${game.id.slice(0, -1)}0`;
+            await manager.delete(Game, {
+              where: {
+                id: preDoulbeHeaderGameId,
+              },
+            });
+          }
           await manager.upsert(Game, game, ['id']);
         } catch (error) {
           console.error('게임 저장 중 오류 발생:', error);
