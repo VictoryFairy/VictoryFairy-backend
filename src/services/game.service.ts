@@ -19,7 +19,7 @@ import * as moment from 'moment-timezone';
 import { BatchUpdateGameDto } from 'src/dtos/batch-update-game.dto';
 import { teamNameToTeamId } from 'src/utils/teamid-mapper';
 import { gameMonths } from 'src/seeds/game-months.seed';
-import isNumber from 'is-number';
+import { isNumber } from 'src/utils/is-number.util';
 
 @Injectable()
 export class GameService {
