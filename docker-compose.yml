@@ -31,6 +31,8 @@ services:
       - REFRESH_EXPIRE_TIME=${REFRESH_EXPIRE_TIME}
       - BACK_END_URL=${BACK_END_URL}
       - FRONT_END_URL=${FRONT_END_URL}
+      - SWAGGER_USER=${SWAGGER_USER}
+      - SWAGGER_PW=${SWAGGER_PW}
     volumes:
       - ./src:/usr/src/app/src
   postgres:
