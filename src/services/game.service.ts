@@ -245,6 +245,7 @@ export class GameService {
         this.logger.log(
           `Scrapped data for game ${gameId} -> homeScore: ${data.homeScore}, awayScore: ${data.awayScore}, status: ${data.status}`,
         );
+        console.log(data);
         return data;
       }),
     );
@@ -392,9 +393,7 @@ export class GameService {
             // 삭제 하지 않아도 되는 경우에도 계속 이 스코프가 실행되므로 수정 필요
             const preDoulbeHeaderGameId = `${game.id.slice(0, -1)}0`;
             await manager.delete(Game, {
-              where: {
-                id: preDoulbeHeaderGameId,
-              },
+              id: preDoulbeHeaderGameId,
             });
           }
           await manager.upsert(Game, game, ['id']);
