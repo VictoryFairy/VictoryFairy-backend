@@ -32,7 +32,7 @@ export class ApiLoggingInterceptor implements NestInterceptor {
         }
 
         this.logger.log(
-          `${method} ${url} ${statusCode} - \x1b[33m+${responseTime}ms\x1b[0m \n${userAgent} ${ip} `,
+          `${method} ${url} ${statusCode} - \x1b[33m+${responseTime}ms\x1b[32m \n${userAgent} ${ip} `,
         );
       }),
       catchError((error) => {
@@ -43,7 +43,7 @@ export class ApiLoggingInterceptor implements NestInterceptor {
           error instanceof HttpException ? error.getStatus() : 500;
 
         this.logger.error(
-          `${method} ${url} ${statusCode} - \x1b[33m+${responseTime}ms\x1b[0m \n${userAgent} ${ip} \nError: ${error.message} \nErrorStack : ${error.stack}`,
+          `${method} ${url} ${statusCode} - \x1b[33m+${responseTime}ms\x1b[31m \n${userAgent} ${ip} \nError: ${error.message} \nErrorStack : ${error.stack}`,
         );
 
         throw error;
