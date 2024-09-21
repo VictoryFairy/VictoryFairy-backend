@@ -15,5 +15,7 @@ export const nodeMailerConfig = (configService: ConfigService) => {
       user: account,
       pass: configService.get<string>('MAIL_PW'),
     },
+    pool: true,
+    maxConnections: 1,
   });
 };
