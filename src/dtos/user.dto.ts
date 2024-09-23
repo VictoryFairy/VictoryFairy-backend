@@ -59,8 +59,15 @@ export class CreateUserDto extends OmitType(BaseUserDto, ['id']) {
   @ApiProperty({
     example: 'should be hidden',
   })
+  @IsNotEmpty()
   @IsString()
   password: string;
+
+  @IsString()
+  image: string;
+
+  @IsString()
+  nickname: string;
 }
 
 export class LoginUserDto extends PickType(BaseUserDto, ['email']) {
