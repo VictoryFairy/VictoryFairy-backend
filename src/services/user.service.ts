@@ -68,9 +68,12 @@ export class UserService {
     }
   }
 
-  async isExistNickname(nickname: string) {
+  async isExistNickname(nickname: string, qrManager?: EntityManager) {
     try {
-      return this.userRepository.exists({ where: { nickname } });
+      const repository = qrManager
+        ? qrManager.getRepository<User>(User)
+        : this.userRepository;
+      return repository.exists({ where: { nickname } });
     } catch (error) {
       throw new InternalServerErrorException('DB 조회 실패');
     }
@@ -102,9 +105,25 @@ export class UserService {
   }
 
   async createUser(dto: CreateUserDto, qrManager: EntityManager) {
-    const { email, image, nickname, password, teamId } = dto;
-
     try {
+      const { email, password, teamId } = dto;
+      let { image, nickname } = dto;
+      if (!image || image.trim() === '') {
+        image =
+          'https://sngyo-image.s3.ap-northeast-2.amazonaws.com/fairyImg/0.png';
+      }
+
+      if (!nickname || nickname.trim() === '') {
+        let isExist = true;
+        let randomNum: number;
+        while (isExist) {
+          randomNum = Math.floor(Math.random() * 10000);
+
+          isExist = await this.isExistNickname(nickname, qrManager);
+        }
+        nickname = `승리요정#${randomNum.toString().padStart(4, '0')}`;
+      }
+
       const hashPw = await bcrypt.hash(password, HASH_ROUND);
       const createdUser = await qrManager.getRepository(User).save({
         email,

@@ -245,7 +245,6 @@ export class GameService {
         this.logger.log(
           `Scrapped data for game ${gameId} -> homeScore: ${data.homeScore}, awayScore: ${data.awayScore}, status: ${data.status}`,
         );
-        console.log(data);
         return data;
       }),
     );
