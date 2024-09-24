@@ -119,9 +119,9 @@ export class UserService {
         while (isExist) {
           randomNum = Math.floor(Math.random() * 10000);
 
+          nickname = `승리요정#${randomNum.toString().padStart(4, '0')}`;
           isExist = await this.isExistNickname(nickname, qrManager);
         }
-        nickname = `승리요정#${randomNum.toString().padStart(4, '0')}`;
       }
 
       const hashPw = await bcrypt.hash(password, HASH_ROUND);
