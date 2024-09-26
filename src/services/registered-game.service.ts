@@ -181,7 +181,15 @@ export class RegisteredGameService {
   ): Promise<void> {
     const registeredGame = await this.registeredGameRepository.findOne({
       where: { id, user },
-      relations: { cheering_team: true, game: true },
+      relations: {
+        cheering_team: true,
+        game: {
+          home_team: true,
+          away_team: true,
+          stadium: true,
+          winning_team: true,
+        },
+      },
     });
 
     if (!registeredGame) {
@@ -199,6 +207,10 @@ export class RegisteredGameService {
         );
       }
       registeredGame.cheering_team = cheeringTeam;
+      registeredGame.status = this.getStatus(
+        registeredGame.game,
+        registeredGame,
+      );
     }
     if (updateRegisteredGameDto.image !== undefined) {
       this.awsS3Service.deleteImage({
