@@ -1,10 +1,12 @@
 import {
   Column,
+  CreateDateColumn,
   Entity,
   JoinColumn,
   ManyToOne,
   OneToMany,
   PrimaryGeneratedColumn,
+  UpdateDateColumn,
 } from 'typeorm';
 import { Team } from './team.entity';
 import { RegisteredGame } from './registered-game.entity';
@@ -40,4 +42,10 @@ export class User {
 
   @OneToMany(() => LikeCheeringSong, (like) => like.user)
   likeCheeringSongs: LikeCheeringSong[];
+
+  @CreateDateColumn({ type: 'timestamptz' })
+  created_at: Date;
+
+  @UpdateDateColumn({ type: 'timestamptz' })
+  updated_at: Date;
 }

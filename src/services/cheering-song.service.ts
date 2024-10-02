@@ -6,7 +6,7 @@ import {
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { CheeringSong } from 'src/entities/cheering-song.entity';
-import { ICheeringSongSeed, TCheeringSongType } from 'src/types/seed.type';
+import { TCheeringSongType } from 'src/types/seed.type';
 import { Brackets, FindOptionsWhere, MoreThan, Repository } from 'typeorm';
 import { TeamService } from './team.service';
 import { Player } from 'src/entities/player.entity';
@@ -199,7 +199,7 @@ export class CheeringSongService {
     const duplicate = await this.likeCheeringSongRepository.findOne({
       where: {
         cheeringSong,
-        user,
+        user: { id: user.id },
       },
     });
 
@@ -218,7 +218,7 @@ export class CheeringSongService {
     const cheeringSong = await this.findOne(cheeringSongId);
     const result = await this.likeCheeringSongRepository.delete({
       cheeringSong,
-      user,
+      user: { id: user.id },
     });
     if (result.affected === 0) {
       throw new NotFoundException(
@@ -235,7 +235,7 @@ export class CheeringSongService {
     const result = await this.likeCheeringSongRepository.findOne({
       where: {
         cheeringSong,
-        user,
+        user: { id: user.id },
       },
     });
 
