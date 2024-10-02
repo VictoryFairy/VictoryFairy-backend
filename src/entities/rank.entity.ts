@@ -5,6 +5,7 @@ import {
   ManyToOne,
   PrimaryGeneratedColumn,
   Unique,
+  UpdateDateColumn,
 } from 'typeorm';
 import { User } from './user.entity';
 
@@ -38,4 +39,7 @@ export class Rank {
 
   @Column()
   active_year: number;
+
+  @UpdateDateColumn({ type: 'timestamptz' })
+  updated_date: Date;
 }
