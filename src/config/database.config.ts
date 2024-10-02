@@ -13,6 +13,6 @@ export const getDatabaseConfig = (
     username: configService.get<string>('DB_USER'),
     password: configService.get<string>('DB_PASSWORD'),
     autoLoadEntities: true,
-    synchronize: nodeEnv !== 'production',
+    synchronize: false,
   };
 };
