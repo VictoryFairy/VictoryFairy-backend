@@ -7,6 +7,7 @@ import * as moment from 'moment-timezone';
 import { RegisteredGameService } from './registered-game.service';
 import { getNextMonth } from 'src/utils/get-next-month.util';
 import { EventEmitter2 } from '@nestjs/event-emitter';
+import { ConfigService } from '@nestjs/config';
 
 @Injectable()
 export class SchedulingService {
@@ -16,6 +17,7 @@ export class SchedulingService {
     private readonly gameService: GameService,
     private readonly registeredGameService: RegisteredGameService,
     private readonly schedulerRegistry: SchedulerRegistry,
+    private readonly configService: ConfigService,
     private readonly eventEmitter: EventEmitter2,
   ) {}
 
@@ -71,6 +73,7 @@ export class SchedulingService {
   }
 
   private setupGameUpdateScheduler(gameId: string, startTime: string) {
+    const seriesId = this.configService.get<number>('SERIES_ID');
     const [startHour, startMinute] = startTime.split(':').map(Number);
     const now = moment(); // 현재 시간을 가져옵니다.
     const startDateTime = moment.tz(
@@ -99,7 +102,7 @@ export class SchedulingService {
           const currentStatus = await firstValueFrom(
             this.gameService.getCurrentGameStatus(
               1,
-              0,
+              seriesId,
               gameId,
               new Date().getFullYear(),
             ),
