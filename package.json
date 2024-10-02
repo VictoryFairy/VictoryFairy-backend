@@ -18,7 +18,16 @@
     "test:cov": "jest --coverage",
     "test:debug": "node --inspect-brk -r tsconfig-paths/register -r ts-node/register node_modules/.bin/jest --runInBand",
     "test:e2e": "jest --config ./test/jest-e2e.json",
-    "convert-song": "ts-node ./src/seeds/cheering-song-converter.ts"
+    "convert-song": "ts-node ./src/seeds/cheering-song-converter.ts",
+    "typeorm": "typeorm-ts-node-commonjs",
+    "migration:create": "npm run typeorm -- migration:create ./src/migration/files/schema-update",
+    "migration:generate": "npm run typeorm -- migration:generate ./src/migration/files/schema-update -d ./src/migration/datasource.ts",
+    "migration:show": "npm run typeorm -- migration:show -d ./dist/migration/datasource.js",
+    "migration:show:dev": "npm run typeorm -- migration:show -d ./src/migration/datasource.ts",
+    "migration:run": "npm run typeorm -- migration:run -d ./dist/migration/datasource.js",
+    "migration:run:dev": "npm run typeorm -- migration:run -d ./src/migration/datasource.ts",
+    "migration:revert": "npm run typeorm -- migration:revert -d ./dist/migration/datasource.js",
+    "migration:revert:dev": "npm run typeorm -- migration:revert -d ./src/migration/datasource.ts"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.623.0",
@@ -40,6 +49,7 @@
     "class-validator": "^0.14.1",
     "cookie-parser": "^1.4.6",
     "cron": "^3.1.7",
+    "dotenv": "^16.4.5",
     "express-basic-auth": "^1.2.1",
     "ioredis": "^5.4.1",
     "moment": "^2.30.1",
