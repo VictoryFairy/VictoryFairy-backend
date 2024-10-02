@@ -260,7 +260,7 @@ export class GameService {
         'https://www.koreabaseball.com/ws/Schedule.asmx/GetScheduleList',
         {
           leId: 1, // 1 => 1부 | 2 => 퓨쳐스 리그
-          srIdList: [0 /*9, 6, 3, 4, 5, 7*/].join(','), // 0 => 프로팀 경기 | 1 => 시범경기 | 3,4,5,7 => 포스트 시즌 | 9 => 올스타전 | 6 => 모름
+          srIdList: [0, 9, 6, 3, 4, 5, 7].join(','), // 0 => 프로팀 경기 | 1 => 시범경기 | 3,4,5,7 => 포스트 시즌 | 9 => 올스타전 | 6 => 모름
           seasonId: year,
           gameMonth: month,
           teamid: '', //LG => LG | 롯데 => LT | 두산 => OB | KIA => HT | 삼성 => SS | SSG => SK | NC => NC | 키움 => WO | KT => KT | 한화 => HH
