@@ -44,8 +44,8 @@ export class User {
   likeCheeringSongs: LikeCheeringSong[];
 
   @CreateDateColumn({ type: 'timestamptz' })
-  created_date: Date;
+  created_at: Date;
 
   @UpdateDateColumn({ type: 'timestamptz' })
-  updated_date: Date;
+  updated_at: Date;
 }

@@ -41,5 +41,5 @@ export class Rank {
   active_year: number;
 
   @UpdateDateColumn({ type: 'timestamptz' })
-  updated_date: Date;
+  updated_at: Date;
 }
