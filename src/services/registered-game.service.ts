@@ -53,7 +53,7 @@ export class RegisteredGameService {
     const duplcate = await qrManager.getRepository(RegisteredGame).findOne({
       where: {
         game: game,
-        user: user,
+        user: { id: user.id },
       },
     });
 
@@ -94,7 +94,7 @@ export class RegisteredGameService {
 
   async findAll(user: User): Promise<RegisteredGame[]> {
     const registeredGames = await this.registeredGameRepository.find({
-      where: { user },
+      where: { user: { id: user.id } },
       relations: {
         cheering_team: true,
         game: {
@@ -124,7 +124,7 @@ export class RegisteredGameService {
 
     const registeredGames = await this.registeredGameRepository.find({
       where: {
-        user,
+        user: { id: user.id },
         game: {
           date: Between(startDate, endDate),
         },
@@ -157,7 +157,7 @@ export class RegisteredGameService {
       ? qrManager.getRepository(RegisteredGame)
       : this.registeredGameRepository;
     const registeredGame = await repository.findOne({
-      where: { id, user },
+      where: { id, user: { id: user.id } },
       relations: {
         cheering_team: true,
         game: {
@@ -180,7 +180,7 @@ export class RegisteredGameService {
     user: User,
   ): Promise<void> {
     const registeredGame = await this.registeredGameRepository.findOne({
-      where: { id, user },
+      where: { id, user: { id: user.id } },
       relations: {
         cheering_team: true,
         game: {
