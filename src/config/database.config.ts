@@ -4,7 +4,6 @@ import { TypeOrmModuleOptions } from '@nestjs/typeorm';
 export const getDatabaseConfig = (
   configService: ConfigService,
 ): TypeOrmModuleOptions => {
-  const nodeEnv = configService.get<string>('NODE_ENV');
   return {
     type: 'postgres',
     host: configService.get<string>('DB_CONTAINER_NAME') || 'localhost',
