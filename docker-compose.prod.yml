@@ -31,6 +31,7 @@ services:
       - FRONT_END_URL=${FRONT_END_URL}
       - SWAGGER_USER=${SWAGGER_USER}
       - SWAGGER_PW=${SWAGGER_PW}
+      - SERIES_ID=${SERIES_ID}
   redis-server:
     container_name: ${REDIS_CONTAINER}
     image: redis:alpine
