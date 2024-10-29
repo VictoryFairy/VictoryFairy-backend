@@ -34,6 +34,7 @@ services:
       - SWAGGER_USER=${SWAGGER_USER}
       - SWAGGER_PW=${SWAGGER_PW}
       - SERIES_ID=${SERIES_ID}
+      - SLACK_WEBHOOK_URL=${SLACK_WEBHOOK_URL}
     volumes:
       - ./src:/usr/src/app/src
   postgres:
