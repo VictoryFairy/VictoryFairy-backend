@@ -4,10 +4,9 @@ import {
   Injectable,
   NestInterceptor,
   Logger,
-  HttpException,
 } from '@nestjs/common';
 import { Observable } from 'rxjs';
-import { tap, catchError } from 'rxjs/operators';
+import { tap } from 'rxjs/operators';
 
 @Injectable()
 export class ApiLoggingInterceptor implements NestInterceptor {
@@ -34,19 +33,6 @@ export class ApiLoggingInterceptor implements NestInterceptor {
         this.logger.log(
           `${method} ${url} ${statusCode} - \x1b[33m+${responseTime}ms\x1b[32m \n${userAgent} ${ip} `,
         );
-      }),
-      catchError((error) => {
-        const endTime = Date.now();
-        const responseTime = endTime - startTime;
-
-        const statusCode =
-          error instanceof HttpException ? error.getStatus() : 500;
-
-        this.logger.error(
-          `${method} ${url} ${statusCode} - \x1b[33m+${responseTime}ms\x1b[31m \n${userAgent} ${ip} \nError: ${error.message} \nErrorStack : ${error.stack}`,
-        );
-
-        throw error;
       }),
     );
   }
