@@ -19,6 +19,9 @@ import { SeederService } from './services/seeder.service';
 import { SchedulingModule } from './modules/scheduling.module';
 import { CheeringSongModule } from './modules/cheering-song.module';
 import { EventEmitterModule } from '@nestjs/event-emitter';
+import { APP_FILTER } from '@nestjs/core';
+import { CustomExceptionFilter } from './filters/cutstom-execption.filter';
+import { SlackModule } from './modules/slack.module';
 
 @Module({
   imports: [
@@ -43,8 +46,13 @@ import { EventEmitterModule } from '@nestjs/event-emitter';
     SchedulingModule,
     CheeringSongModule,
     RedisModule,
+    SlackModule,
   ],
   controllers: [AppController],
-  providers: [AppService, SeederService],
+  providers: [
+    AppService,
+    SeederService,
+    { provide: APP_FILTER, useClass: CustomExceptionFilter },
+  ],
 })
 export class AppModule {}

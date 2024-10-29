@@ -32,6 +32,7 @@ services:
       - SWAGGER_USER=${SWAGGER_USER}
       - SWAGGER_PW=${SWAGGER_PW}
       - SERIES_ID=${SERIES_ID}
+      - SLACK_WEBHOOK_URL=${SLACK_WEBHOOK_URL}
   redis-server:
     container_name: ${REDIS_CONTAINER}
     image: redis:alpine
