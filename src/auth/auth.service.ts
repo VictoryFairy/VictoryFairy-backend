@@ -15,7 +15,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { User } from 'src/entities/user.entity';
 import { FindOptionsRelations, FindOptionsWhere, Repository } from 'typeorm';
 import { EmailWithCodeDto, LoginUserDto } from 'src/dtos/user.dto';
-import { RedisKeys } from 'src/const/redis.const';
+import { RedisKeys } from 'src/enum/redis.enum';
 import { InjectRedisClient } from 'src/decorator/redis-inject.decorator';
 
 @Injectable()

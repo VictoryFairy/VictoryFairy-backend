@@ -12,8 +12,8 @@ import { EntityManager, Repository } from 'typeorm';
 import * as moment from 'moment';
 import { CreateRankDto } from 'src/dtos/rank.dto';
 import { OnEvent } from '@nestjs/event-emitter';
-import { EventName } from 'src/const/event.const';
-import { RedisKeys } from 'src/const/redis.const';
+import { EventName } from 'src/enum/event.enum';
+import { RedisKeys } from 'src/enum/redis.enum';
 import { InjectRedisClient } from 'src/decorator/redis-inject.decorator';
 import { TRegisteredGameStatus } from 'src/types/registered-game-status.type';
 
