@@ -12,6 +12,7 @@ import { Team } from './team.entity';
 import { RegisteredGame } from './registered-game.entity';
 import { Rank } from './rank.entity';
 import { LikeCheeringSong } from './like-cheering-song.entity';
+import { UserTerm } from './user-term.entity';
 
 @Entity()
 export class User {
@@ -48,4 +49,7 @@ export class User {
 
   @UpdateDateColumn({ type: 'timestamptz' })
   updated_at: Date;
+
+  @OneToMany(() => UserTerm, (userTerm) => userTerm.user)
+  agreed_terms: UserTerm[];
 }
