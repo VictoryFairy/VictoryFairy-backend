@@ -29,7 +29,7 @@ export class UserTerm {
   @UpdateDateColumn({ type: 'timestamptz' })
   updated_at: Date;
 
-  @ManyToOne(() => User, (user) => user.agreed_terms)
+  @ManyToOne(() => User, (user) => user.agreed_terms, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'user_id' })
   user: User;
 

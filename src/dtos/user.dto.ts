@@ -1,6 +1,7 @@
 import { ApiProperty, PickType, OmitType } from '@nestjs/swagger';
 import { Exclude, Expose, Transform } from 'class-transformer';
 import {
+  IsArray,
   IsEmail,
   IsIn,
   IsNotEmpty,
@@ -183,4 +184,12 @@ export class ResCheckPwDto {
       },
     };
   }
+}
+
+export class UserTermAgreementDto {
+  @ApiProperty({ example: [1, 2] })
+  @IsNotEmpty()
+  @IsArray({ always: true })
+  @IsNumber({}, { each: true })
+  termId: number[];
 }

@@ -24,6 +24,7 @@ import { CustomExceptionFilter } from './filters/cutstom-execption.filter';
 import { SlackModule } from './modules/slack.module';
 import { TermModule } from './modules/term.module';
 import { TypeOrmExceptionFilter } from './filters/typeorm-exception.filter';
+import { UserTermModule } from './modules/user-term.module';
 
 @Module({
   imports: [
@@ -50,6 +51,7 @@ import { TypeOrmExceptionFilter } from './filters/typeorm-exception.filter';
     RedisModule,
     SlackModule,
     TermModule,
+    UserTermModule,
   ],
   controllers: [AppController],
   providers: [

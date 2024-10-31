@@ -8,6 +8,8 @@ import { RedisModule } from './redis.module';
 import { RankModule } from './rank.module';
 import { AwsS3Module } from './aws-s3.module';
 import { Team } from 'src/entities/team.entity';
+import { TermModule } from './term.module';
+import { UserTermModule } from './user-term.module';
 
 @Module({
   imports: [
@@ -16,6 +18,8 @@ import { Team } from 'src/entities/team.entity';
     RedisModule,
     RankModule,
     AwsS3Module,
+    UserTermModule,
+    TermModule,
   ],
   controllers: [UserController],
   providers: [UserService],

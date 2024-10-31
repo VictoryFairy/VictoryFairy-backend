@@ -24,6 +24,7 @@ import { JwtAuth } from 'src/decorator/jwt-token.decorator';
 import { QueryRunnerManager } from 'src/decorator/queryrunner-manager.decorator';
 import { UserDeco } from 'src/decorator/user.decorator';
 import { OverallOppTeamDto } from 'src/dtos/rank.dto';
+import { TermListResponseDto } from 'src/dtos/term.dto';
 import {
   CreateUserDto,
   EmailDto,
@@ -33,10 +34,13 @@ import {
   ResCheckPwDto,
   UserMyPageDto,
   UserResDto,
+  UserTermAgreementDto,
 } from 'src/dtos/user.dto';
 import { User } from 'src/entities/user.entity';
 import { TransactionInterceptor } from 'src/interceptor/transaction.interceptor';
 import { RankService } from 'src/services/rank.service';
+import { TermService } from 'src/services/term.service';
+import { UserTermService } from 'src/services/user-term.service';
 import { UserService } from 'src/services/user.service';
 import { EntityManager } from 'typeorm';
 
@@ -46,6 +50,8 @@ export class UserController {
   constructor(
     private readonly userService: UserService,
     private readonly rankService: RankService,
+    private readonly termService: TermService,
+    private readonly userTermService: UserTermService,
   ) {}
 
   /** 유저 회원가입 */
@@ -180,5 +186,38 @@ export class UserController {
     @QueryRunnerManager() qrManager: EntityManager,
   ) {
     await this.userService.deleteUser(user, qrManager);
+  }
+
+  /** 해당 유저의 미 동의 약관 리스트 */
+  @Get('term/unaccepted-list')
+  @JwtAuth('access')
+  @ApiOkResponse({
+    type: [TermListResponseDto],
+    description: '없는 경우 빈배열 반환',
+  })
+  async getUserNotAgreedTerm(
+    @UserDeco('id') userId: number,
+  ): Promise<TermListResponseDto[]> {
+    const unAcceptedIdArr =
+      await this.userTermService.getUnacceptedTermAboutUser(userId);
+
+    const terms = await this.termService.getTermsById(unAcceptedIdArr);
+    return terms.map((term) => new TermListResponseDto(term));
+  }
+
+  /** 해당 유저의 약관 동의 하기 */
+  @Post('term/agreement')
+  @HttpCode(HttpStatus.CREATED)
+  @JwtAuth('access')
+  @ApiOperation({
+    summary: '약관 아이디로 요청해서 동의한 약관 서버에 저장',
+    description: 'termId에 빈배열로 보내면 필수 약관만 동의한 것으로 처리',
+  })
+  @ApiCreatedResponse({ description: '성공적인 경우 상태코드만 전송' })
+  async updateUserTerm(
+    @UserDeco('id') userId: number,
+    @Body() dto: UserTermAgreementDto,
+  ) {
+    await this.userTermService.createUserTerm(userId, dto.termId);
   }
 }
