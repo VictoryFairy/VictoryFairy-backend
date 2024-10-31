@@ -2,6 +2,7 @@ import {
   Body,
   Controller,
   Delete,
+  ForbiddenException,
   HttpCode,
   HttpStatus,
   Post,
@@ -12,6 +13,7 @@ import { UserDeco } from 'src/decorator/user.decorator';
 import { User } from 'src/entities/user.entity';
 import {
   ApiBody,
+  ApiForbiddenResponse,
   ApiInternalServerErrorResponse,
   ApiNoContentResponse,
   ApiOkResponse,
@@ -23,6 +25,7 @@ import { CookieOptions, Response } from 'express';
 import { ConfigService } from '@nestjs/config';
 import { EmailDto, EmailWithCodeDto, LoginUserDto } from 'src/dtos/user.dto';
 import { JwtAuth } from 'src/decorator/jwt-token.decorator';
+import { UserTermService } from 'src/services/user-term.service';
 
 @ApiTags('Auth')
 @Controller('auth')
@@ -30,6 +33,7 @@ export class AuthController {
   constructor(
     private readonly authService: AuthService,
     private readonly configService: ConfigService,
+    private readonly userTermService: UserTermService,
   ) {}
   /** 유저 로그인 */
   @Post('login')
@@ -89,11 +93,22 @@ export class AuthController {
 
   /** 유저 리프레쉬 토큰 확인 */
   @Post('token/check')
-  @HttpCode(HttpStatus.OK)
   @JwtAuth('refresh')
   @ApiOperation({ summary: '리프레쉬 토큰 확인' })
   @ApiOkResponse({ description: '리프레쉬 토큰이 맞는 경우 상태코드만 응답' })
-  async checkRefreshToken() {}
+  @ApiForbiddenResponse({ description: '필수 약관 동의가 필요한 경우' })
+  async checkRefreshTokenAndTerm(
+    @UserDeco('id') userId: number,
+    @Res() res: Response,
+  ) {
+    const unacceptedTermIds =
+      await this.userTermService.getUnacceptedTermAboutUser(userId);
+
+    if (unacceptedTermIds.length) {
+      throw new ForbiddenException('필수 약관 동의 필요');
+    }
+    return res.sendStatus(HttpStatus.OK);
+  }
 
   /** 엑세스 토큰 재발급 */
   @Post('token/issue')
