@@ -25,6 +25,9 @@ import { RankService } from './rank.service';
 import { Rank } from 'src/entities/rank.entity';
 import * as moment from 'moment';
 import { AwsS3Service } from 'src/services/aws-s3.service';
+import { UserTerm } from 'src/entities/user-term.entity';
+import { TermService } from './term.service';
+import { UserTermService } from './user-term.service';
 
 @Injectable()
 export class UserService {
@@ -39,6 +42,8 @@ export class UserService {
     private readonly eventEmitter: EventEmitter2,
     private readonly rankService: RankService,
     private readonly awsS3Service: AwsS3Service,
+    private readonly termService: TermService,
+    private readonly userTermService: UserTermService,
   ) {}
 
   /** 레디스 연결 시 미리 저장 */
@@ -125,7 +130,10 @@ export class UserService {
       }
 
       const hashPw = await bcrypt.hash(password, HASH_ROUND);
-      const createdUser = await qrManager.getRepository(User).save({
+
+      const requiredTermPromise = this.termService.getRequiredTermId();
+
+      const createUserPromise = qrManager.getRepository(User).save({
         email,
         profile_image: image,
         support_team: { id: teamId },
@@ -133,20 +141,44 @@ export class UserService {
         password: hashPw,
       });
 
-      //Redis caching
-      await this.cachingUser(createdUser);
+      // 필수 약관 쿼리와 유저 생성 동시 처리
+      const [requiredTerm, createdUser] = await Promise.all([
+        requiredTermPromise,
+        createUserPromise,
+      ]);
 
-      // Rank table 업데이트
-      await qrManager.getRepository(Rank).insert({
+      // 유저가 동의한 약관 테이블에 저장 프로미스
+      const userTermPromise = qrManager.getRepository(UserTerm).insert(
+        requiredTerm.map((termId) => {
+          return qrManager.getRepository(UserTerm).create({
+            user_id: createdUser.id,
+            term_id: termId,
+          });
+        }),
+      );
+
+      //Redis caching 프로미스
+      const userRedisCachingPromise = this.cachingUser(createdUser);
+
+      // Rank table 유저 반영 프로미스
+      const rankTableSaveForUserPromise = qrManager.getRepository(Rank).insert({
         team_id: teamId,
         active_year: moment().utc().year(),
         user: createdUser,
       });
+
+      // 유저 동의 약관 저장, 유저 레디스 캐싱, 유저 랭킹 테이블 반영 동시 처리
+      await Promise.all([
+        userTermPromise,
+        userRedisCachingPromise,
+        rankTableSaveForUserPromise,
+      ]);
       // Redis Rank caching
       await this.rankService.updateRedisRankings(createdUser.id, qrManager);
 
       return { id: createdUser.id };
     } catch (error) {
+      console.log(error);
       throw new InternalServerErrorException('유저 생성 실패');
     }
   }
@@ -219,6 +251,7 @@ export class UserService {
     const redisTransaction = this.redisClient.multi();
     // redis caching 동기화
     redisTransaction.hdel(RedisKeys.USER_INFO, id.toString());
+    redisTransaction.del(`${RedisKeys.TERM}:${id.toString()}`);
     redisTransaction.zrem(`${RedisKeys.RANKING}:total`, [id]);
     for (const team of teams) {
       redisTransaction.zrem(`${RedisKeys.RANKING}:${team.id}`, [id]);
