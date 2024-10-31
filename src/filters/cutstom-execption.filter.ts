@@ -41,17 +41,18 @@ export class CustomExceptionFilter implements ExceptionFilter {
     };
 
     const isProd = this.configService.get<string>('NODE_ENV') === 'production';
-    if (responseBody.statusCode >= 500 && isProd) {
-      await this.slackService.sendInternalErrorNotification(
-        responseBody.message,
-        (exception as any).name,
-        (exception as any).stack,
+    if (responseBody.statusCode >= 500) {
+      this.logger.error(
+        `${method} ${url} ${httpStatus} - \n${userAgent} ${ip} \nError: ${responseBody.message} \nErrorStack : ${(exception as any).stack}`,
       );
+      if (isProd) {
+        await this.slackService.sendInternalErrorNotification(
+          responseBody.message,
+          (exception as any).name,
+          (exception as any).stack,
+        );
+      }
     }
-
-    this.logger.error(
-      `${method} ${url} ${httpStatus} - \n${userAgent} ${ip} \nError: ${responseBody.message} \nErrorStack : ${(exception as any).stack}`,
-    );
 
     response.status(httpStatus).json(responseBody);
   }

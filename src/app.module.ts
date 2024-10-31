@@ -22,6 +22,8 @@ import { EventEmitterModule } from '@nestjs/event-emitter';
 import { APP_FILTER } from '@nestjs/core';
 import { CustomExceptionFilter } from './filters/cutstom-execption.filter';
 import { SlackModule } from './modules/slack.module';
+import { TermModule } from './modules/term.module';
+import { TypeOrmExceptionFilter } from './filters/typeorm-exception.filter';
 
 @Module({
   imports: [
@@ -47,12 +49,15 @@ import { SlackModule } from './modules/slack.module';
     CheeringSongModule,
     RedisModule,
     SlackModule,
+    TermModule,
   ],
   controllers: [AppController],
   providers: [
     AppService,
     SeederService,
+    // 가장 위가 마지막에 실행
     { provide: APP_FILTER, useClass: CustomExceptionFilter },
+    { provide: APP_FILTER, useClass: TypeOrmExceptionFilter },
   ],
 })
 export class AppModule {}
