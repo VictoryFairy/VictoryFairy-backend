@@ -16,6 +16,7 @@ import { Team } from 'src/entities/team.entity';
     RedisModule,
     RankModule,
     AwsS3Module,
+    RedisModule,
   ],
   controllers: [UserController],
   providers: [UserService],

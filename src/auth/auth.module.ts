@@ -5,12 +5,14 @@ import { JwtModule } from '@nestjs/jwt';
 import { MailModule } from 'src/modules/mail.module';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { User } from 'src/entities/user.entity';
+import { RedisModule } from 'src/modules/redis.module';
 
 @Module({
   imports: [
     JwtModule.register({}),
     MailModule,
     TypeOrmModule.forFeature([User]),
+    RedisModule,
   ],
   exports: [AuthService],
   controllers: [AuthController],
