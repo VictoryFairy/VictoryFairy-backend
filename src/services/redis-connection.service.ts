@@ -4,8 +4,8 @@ import { Redis } from 'ioredis';
 import { InjectRedisClient } from 'src/decorator/redis-inject.decorator';
 
 @Injectable()
-export class CustomRedisService implements OnModuleInit {
-  private readonly logger = new Logger(CustomRedisService.name);
+export class RedisConnectionService implements OnModuleInit {
+  private readonly logger = new Logger(RedisConnectionService.name);
   constructor(
     @InjectRedisClient()
     private readonly redisClient: Redis,
