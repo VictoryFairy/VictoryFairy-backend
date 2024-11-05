@@ -33,6 +33,7 @@ import { SlackModule } from './modules/slack.module';
       inject: [ConfigService],
     }),
     EventEmitterModule.forRoot({}),
+    RedisModule,
     ParkingInfoModule,
     StadiumModule,
     TeamModule,

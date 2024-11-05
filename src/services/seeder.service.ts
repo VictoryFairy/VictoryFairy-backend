@@ -4,7 +4,7 @@ import { StadiumService } from './stadium.service';
 import { SchedulingService } from './scheduling.service';
 import { ParkingInfoService } from './parking-info.service';
 import { CheeringSongService } from './cheering-song.service';
-import { CustomRedisService } from './custom-redis.service';
+import { RedisConnectionService } from './redis-connection.service';
 import { GameService } from './game.service';
 
 @Injectable()
@@ -15,7 +15,7 @@ export class SeederService implements OnApplicationBootstrap {
     private readonly schedulingService: SchedulingService,
     private readonly parkingInfoService: ParkingInfoService,
     private readonly cheeringSongService: CheeringSongService,
-    private readonly customRedisService: CustomRedisService,
+    private readonly customRedisService: RedisConnectionService,
     private readonly gameService: GameService,
   ) {}
 

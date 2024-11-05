@@ -1,9 +1,9 @@
-import { Global, Module } from '@nestjs/common';
+import { Module } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { redisConfig } from 'src/config/redis.config';
-import { CustomRedisService } from 'src/services/custom-redis.service';
+import { RedisConnectionService } from 'src/services/redis-connection.service';
+import { RedisCachingService } from 'src/services/redis-caching.service';
 
-@Global()
 @Module({
   providers: [
     {
@@ -11,8 +11,9 @@ import { CustomRedisService } from 'src/services/custom-redis.service';
       useFactory: redisConfig,
       inject: [ConfigService],
     },
-    CustomRedisService,
+    RedisConnectionService,
+    RedisCachingService,
   ],
-  exports: ['REDIS_CLIENT', CustomRedisService],
+  exports: [RedisConnectionService, RedisCachingService],
 })
 export class RedisModule {}

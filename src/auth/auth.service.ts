@@ -7,16 +7,14 @@ import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcrypt';
 import { IJwtPayload } from 'src/types/auth.type';
-import { Redis } from 'ioredis';
 import { MailService } from 'src/services/mail.service';
 import { createRandomCode } from 'src/utils/random-code.util';
-import { CODE_LENGTH, CODE_LIMIT_TIME } from 'src/const/auth.const';
+import { CODE_LENGTH } from 'src/const/auth.const';
 import { InjectRepository } from '@nestjs/typeorm';
 import { User } from 'src/entities/user.entity';
 import { FindOptionsRelations, FindOptionsWhere, Repository } from 'typeorm';
 import { EmailWithCodeDto, LoginUserDto } from 'src/dtos/user.dto';
-import { RedisKeys } from 'src/const/redis.const';
-import { InjectRedisClient } from 'src/decorator/redis-inject.decorator';
+import { RedisCachingService } from '../services/redis-caching.service';
 
 @Injectable()
 export class AuthService {
@@ -24,10 +22,9 @@ export class AuthService {
     private readonly jwtService: JwtService,
     private readonly configService: ConfigService,
     private readonly mailService: MailService,
-    @InjectRedisClient()
-    private readonly redisClient: Redis,
     @InjectRepository(User)
     private readonly userRepository: Repository<User>,
+    private readonly redisCachingService: RedisCachingService,
   ) {}
 
   async loginUser(dto: LoginUserDto) {
@@ -56,32 +53,18 @@ export class AuthService {
     if (!result) {
       throw new InternalServerErrorException('이메일 전송 실패');
     }
-    try {
-      await this.redisClient.set(
-        `${RedisKeys.EMAIL_CODE}:${email}`,
-        code,
-        'EX',
-        CODE_LIMIT_TIME,
-      );
-      return result;
-    } catch (error) {
-      throw new InternalServerErrorException('레디스 저장 실패');
-    }
+    await this.redisCachingService.cachingVerificationCode(email, code);
+    return result;
   }
 
   async verifyEmailCode(dto: EmailWithCodeDto) {
     const { code, email } = dto;
-    const getCachedCode = await this.redisClient.get(
-      `${RedisKeys.EMAIL_CODE}:${email}`,
-    );
+    const getCachedCode =
+      await this.redisCachingService.getCachedVerificationCode(email);
     if (!getCachedCode || getCachedCode !== code) {
       throw new UnauthorizedException('인증 코드 틀림');
     }
-    try {
-      await this.redisClient.del(`${RedisKeys.EMAIL_CODE}:${email}`);
-    } catch (error) {
-      throw new InternalServerErrorException('레디스 삭제 실패');
-    }
+    await this.redisCachingService.deleteVerificationCode(email);
 
     return true;
   }

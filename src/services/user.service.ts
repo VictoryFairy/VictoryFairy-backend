@@ -15,16 +15,14 @@ import {
 } from 'typeorm';
 import { User } from 'src/entities/user.entity';
 import { CreateUserDto, LoginUserDto } from 'src/dtos/user.dto';
-import { Redis } from 'ioredis';
 import { EventEmitter2, OnEvent } from '@nestjs/event-emitter';
 import { EventName } from 'src/const/event.const';
-import { RedisKeys } from 'src/const/redis.const';
-import { InjectRedisClient } from 'src/decorator/redis-inject.decorator';
 import { Team } from 'src/entities/team.entity';
 import { RankService } from './rank.service';
 import { Rank } from 'src/entities/rank.entity';
 import * as moment from 'moment';
 import { AwsS3Service } from 'src/services/aws-s3.service';
+import { RedisCachingService } from './redis-caching.service';
 
 @Injectable()
 export class UserService {
@@ -34,11 +32,10 @@ export class UserService {
     private readonly userRepository: Repository<User>,
     @InjectRepository(Team)
     private readonly teamRepository: Repository<Team>,
-    @InjectRedisClient()
-    private readonly redisClient: Redis,
     private readonly eventEmitter: EventEmitter2,
     private readonly rankService: RankService,
     private readonly awsS3Service: AwsS3Service,
+    private readonly redisCachingService: RedisCachingService,
   ) {}
 
   /** 레디스 연결 시 미리 저장 */
@@ -49,7 +46,7 @@ export class UserService {
       const userIds = [];
       const cachingPromises = users.map((user) => {
         userIds.push(user.id);
-        return this.cachingUser(user);
+        return this.redisCachingService.saveUser(user);
       });
       await Promise.all(cachingPromises);
       this.eventEmitter.emit(EventName.CACHED_USERS, userIds);
@@ -134,7 +131,7 @@ export class UserService {
       });
 
       //Redis caching
-      await this.cachingUser(createdUser);
+      await this.redisCachingService.saveUser(createdUser);
 
       // Rank table 업데이트
       await qrManager.getRepository(Rank).insert({
@@ -192,7 +189,7 @@ export class UserService {
 
       if (field === 'image' || field === 'nickname') {
         // redis caching
-        await this.cachingUser(updatedUser);
+        await this.redisCachingService.saveUser(updatedUser);
         if (field === 'image' && profile_image !== value) {
           // s3 이미지 삭제
           await this.awsS3Service.deleteImage({ fileUrl: profile_image });
@@ -215,47 +212,11 @@ export class UserService {
     // s3 이미지 삭제
     await this.awsS3Service.deleteImage({ fileUrl: profile_image });
 
-    // Redis 트랜잭션
-    const redisTransaction = this.redisClient.multi();
-    // redis caching 동기화
-    redisTransaction.hdel(RedisKeys.USER_INFO, id.toString());
-    redisTransaction.zrem(`${RedisKeys.RANKING}:total`, [id]);
-    for (const team of teams) {
-      redisTransaction.zrem(`${RedisKeys.RANKING}:${team.id}`, [id]);
-    }
-    const redisExecResult = await redisTransaction.exec();
-    if (!redisExecResult) {
-      throw new InternalServerErrorException('Redis 캐시 동기화 실패');
-    }
+    await this.redisCachingService.userSynchronizationTransaction(
+      id,
+      teams,
+    );
 
     return { affected };
-  }
-
-  // --------------------- redis 관련 ------------------------
-  async cachingUser(user: User) {
-    const { id, nickname, profile_image } = user;
-    const userInfo = { id, nickname, profile_image };
-    try {
-      const cached = await this.redisClient.hset(
-        RedisKeys.USER_INFO,
-        userInfo.id.toString(),
-        JSON.stringify(userInfo),
-      );
-      return cached;
-    } catch (error) {
-      throw new InternalServerErrorException('Redis userInfo 캐싱 실패');
-    }
-  }
-
-  async getCachedUsers() {
-    const userInfo = await this.redisClient.hgetall(RedisKeys.USER_INFO);
-    const cachedUsers = Object.entries(userInfo).reduce(
-      (acc, [id, userInfoString]) => {
-        acc[parseInt(id)] = JSON.parse(userInfoString);
-        return acc;
-      },
-      {},
-    );
-    return cachedUsers;
   }
 }
