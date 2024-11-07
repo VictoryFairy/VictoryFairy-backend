@@ -3,7 +3,7 @@ services:
     container_name: api
     image: gjeodnd12165/victory-fairy:alpine
     ports:
-      - '80:3000'
+      - '3000:3000'
     environment:
       - NODE_ENV=${NODE_ENV}
       - TZ=${TZ}
