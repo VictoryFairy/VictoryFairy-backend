@@ -72,7 +72,7 @@ jobs:
       run: |
         mv docker-compose.yml docker-compose.temp.yml
         mv docker-compose.prod.yml docker-compose.yml
-        zip -r deploy.zip .ebextensions docker-compose.yml
+        zip -r deploy.zip .ebextensions .platform docker-compose.yml
    
     - name: Deploy to Elastic Beanstalk
       uses: einaregilsson/beanstalk-deploy@v22
