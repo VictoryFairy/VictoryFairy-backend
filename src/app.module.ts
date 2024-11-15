@@ -22,6 +22,8 @@ import { EventEmitterModule } from '@nestjs/event-emitter';
 import { APP_FILTER } from '@nestjs/core';
 import { CustomExceptionFilter } from './filters/cutstom-execption.filter';
 import { SlackModule } from './modules/slack.module';
+import { addTransactionalDataSource } from 'typeorm-transactional';
+import { DataSource } from 'typeorm';
 
 @Module({
   imports: [
@@ -30,6 +32,12 @@ import { SlackModule } from './modules/slack.module';
     }),
     TypeOrmModule.forRootAsync({
       useFactory: getDatabaseConfig,
+      async dataSourceFactory(options) {
+        if (!options) {
+          throw new Error('Invalid options passed');
+        }
+        return addTransactionalDataSource(new DataSource(options));
+      },
       inject: [ConfigService],
     }),
     EventEmitterModule.forRoot({}),

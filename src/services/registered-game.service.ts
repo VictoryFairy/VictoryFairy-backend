@@ -5,13 +5,7 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import {
-  Between,
-  DataSource,
-  EntityManager,
-  QueryRunner,
-  Repository,
-} from 'typeorm';
+import { Between, DataSource, QueryRunner, Repository } from 'typeorm';
 import {
   CreateRegisteredGameDto,
   UpdateRegisteredGameDto,
@@ -25,6 +19,7 @@ import * as moment from 'moment';
 import { RankService } from './rank.service';
 import { AwsS3Service } from './aws-s3.service';
 import { TRegisteredGameStatus } from 'src/types/registered-game-status.type';
+import { Transactional } from 'typeorm-transactional';
 
 @Injectable()
 export class RegisteredGameService {
@@ -40,17 +35,17 @@ export class RegisteredGameService {
     private readonly dataSource: DataSource,
   ) {}
 
+  @Transactional()
   async create(
     createRegisteredGameDto: CreateRegisteredGameDto,
     user: User,
-    qrManager: EntityManager,
   ): Promise<RegisteredGame> {
     const game = await this.gameService.findOne(createRegisteredGameDto.gameId);
     const cheeringTeam = await this.teamService.findOne(
       createRegisteredGameDto.cheeringTeamId,
     );
 
-    const duplcate = await qrManager.getRepository(RegisteredGame).findOne({
+    const duplcate = await this.registeredGameRepository.findOne({
       where: {
         game: game,
         user: { id: user.id },
@@ -62,7 +57,7 @@ export class RegisteredGameService {
         'Users cannot register for more than one copy of the same game.',
       );
 
-    const registeredGame = qrManager.create(RegisteredGame, {
+    const registeredGame = this.registeredGameRepository.create({
       ...createRegisteredGameDto,
       game,
       cheering_team: cheeringTeam,
@@ -72,7 +67,7 @@ export class RegisteredGameService {
     const registeredGameStatus = this.getStatus(game, registeredGame);
     registeredGame.status = registeredGameStatus;
 
-    await qrManager.save(registeredGame);
+    await this.registeredGameRepository.save(registeredGame);
 
     if (registeredGame.status !== null) {
       await this.rankService.updateRankEntity(
@@ -83,10 +78,9 @@ export class RegisteredGameService {
           year: moment(game.date).year(),
         },
         true,
-        qrManager,
       );
 
-      await this.rankService.updateRedisRankings(user.id, qrManager);
+      await this.rankService.updateRedisRankings(user.id);
     }
 
     return registeredGame;
@@ -148,15 +142,8 @@ export class RegisteredGameService {
     return registeredGames;
   }
 
-  async findOne(
-    id: number,
-    user: User,
-    qrManager?: EntityManager,
-  ): Promise<RegisteredGame> {
-    const repository = qrManager
-      ? qrManager.getRepository(RegisteredGame)
-      : this.registeredGameRepository;
-    const registeredGame = await repository.findOne({
+  async findOne(id: number, user: User): Promise<RegisteredGame> {
+    const registeredGame = await this.registeredGameRepository.findOne({
       where: { id, user: { id: user.id } },
       relations: {
         cheering_team: true,
@@ -174,6 +161,7 @@ export class RegisteredGameService {
     return registeredGame;
   }
 
+  @Transactional()
   async update(
     id: number,
     updateRegisteredGameDto: UpdateRegisteredGameDto,
@@ -228,12 +216,9 @@ export class RegisteredGameService {
     await this.registeredGameRepository.save(registeredGame);
   }
 
-  async delete(
-    id: number,
-    user: User,
-    qrManager: EntityManager,
-  ): Promise<void> {
-    const registeredGame = await this.findOne(id, user, qrManager);
+  @Transactional()
+  async delete(id: number, user: User): Promise<void> {
+    const registeredGame = await this.findOne(id, user);
     const status = registeredGame.status;
     const team_id = registeredGame.cheering_team.id;
     const user_id = user.id;
@@ -242,9 +227,7 @@ export class RegisteredGameService {
     await this.awsS3Service.deleteImage({
       fileUrl: registeredGame.image,
     });
-    const result = await qrManager
-      .getRepository(RegisteredGame)
-      .delete({ id, user });
+    const result = await this.registeredGameRepository.delete({ id, user });
     if (result.affected === 0) {
       throw new NotFoundException(`Registered game with ID ${id} not found`);
     }
@@ -252,9 +235,8 @@ export class RegisteredGameService {
       await this.rankService.updateRankEntity(
         { status, team_id, user_id, year },
         false,
-        qrManager,
       );
-      await this.rankService.updateRedisRankings(user_id, qrManager);
+      await this.rankService.updateRedisRankings(user_id);
     }
   }
 
@@ -295,9 +277,8 @@ export class RegisteredGameService {
             year: moment(game.date).year(),
           },
           true,
-          qrRunner.manager,
         );
-        await this.rankService.updateRedisRankings(user_id, qrRunner.manager);
+        await this.rankService.updateRedisRankings(user_id);
       }
 
       await qrRunner.commitTransaction();

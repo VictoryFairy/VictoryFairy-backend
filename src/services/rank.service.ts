@@ -7,7 +7,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Rank } from 'src/entities/rank.entity';
 import { RegisteredGame } from 'src/entities/registered-game.entity';
 import { User } from 'src/entities/user.entity';
-import { EntityManager, Repository } from 'typeorm';
+import { Repository } from 'typeorm';
 import * as moment from 'moment';
 import { CreateRankDto } from 'src/dtos/rank.dto';
 import { OnEvent } from '@nestjs/event-emitter';
@@ -42,11 +42,18 @@ export class RankService {
   }
 
   /** @description rank entity에 저장 */
-  async updateRankEntity(
-    watchedGame: CreateRankDto,
-    isAdd: boolean,
-    qrManager?: EntityManager,
-  ) {
+  async initialSave(watchedGame: Omit<CreateRankDto, 'status'>) {
+    const { team_id, user_id, year } = watchedGame;
+
+    await this.rankRepository.insert({
+      team_id,
+      active_year: year,
+      user: { id: user_id },
+    });
+  }
+
+  /** @description rank entity에 업데이트 */
+  async updateRankEntity(watchedGame: CreateRankDto, isAdd: boolean) {
     const { status, team_id, user_id, year } = watchedGame;
 
     const columnToUpdate = {
@@ -56,13 +63,9 @@ export class RankService {
       'No game': 'cancel',
     };
 
-    const repository = qrManager
-      ? qrManager.getRepository(Rank)
-      : this.rankRepository;
-
     if (isAdd) {
       // 생성하거나 추가한 경우
-      const updateCount = await repository.increment(
+      const updateCount = await this.rankRepository.increment(
         { team_id, user: { id: user_id }, active_year: year },
         columnToUpdate[status],
         1,
@@ -74,11 +77,11 @@ export class RankService {
         rankData.user = { id: user_id } as User;
         rankData.active_year = year;
         rankData[columnToUpdate[status]] = 1;
-        await repository.insert(rankData);
+        await this.rankRepository.insert(rankData);
       }
     } else {
       // 삭제한 경우
-      await repository.decrement(
+      await this.rankRepository.decrement(
         { team_id, user: { id: user_id }, active_year: year },
         columnToUpdate[status],
         1,
@@ -89,11 +92,7 @@ export class RankService {
   /** @description 랭킹 상위 3명 가져오기 */
   async getTopThreeRankList(teamId?: number) {
     const key = teamId ? teamId : 'total';
-    const rankList = await this.redisCachingService.getRankingList(
-      key,
-      0,
-      2,
-    );
+    const rankList = await this.redisCachingService.getRankingList(key, 0, 2);
 
     return this.processRankList(rankList);
   }
@@ -101,10 +100,7 @@ export class RankService {
   async getUserRankWithNeighbors(user: User, teamId?: number) {
     const { id: userId } = user;
     const key = teamId ? teamId : 'total';
-    const userRank = await this.redisCachingService.getUserRank(
-      userId,
-      key,
-    );
+    const userRank = await this.redisCachingService.getUserRank(userId, key);
     if (userRank === null) {
       return [];
     }
@@ -137,11 +133,7 @@ export class RankService {
   async getRankList(teamId?: number) {
     const key = teamId ? teamId : 'total';
 
-    const rankList = await this.redisCachingService.getRankingList(
-      key,
-      0,
-      -1,
-    );
+    const rankList = await this.redisCachingService.getRankingList(key, 0, -1);
 
     return this.processRankList(rankList);
   }
@@ -162,8 +154,8 @@ export class RankService {
   }
 
   /** @description 랭킹 점수 레디스에 반영 */
-  async updateRedisRankings(userId: number, qrManger?: EntityManager) {
-    const stat = await this.calculateUserRankings(userId, qrManger);
+  async updateRedisRankings(userId: number) {
+    const stat = await this.calculateUserRankings(userId);
 
     for (const [key, value] of Object.entries(stat)) {
       const scoreString = this.calculateScore(value).toString();
@@ -177,15 +169,9 @@ export class RankService {
   }
 
   /** @description 해당 유저의 랭킹 전체 & 팀별 점수 계산 */
-  private async calculateUserRankings(
-    userId: number,
-    qrManger?: EntityManager,
-  ) {
-    const repository = qrManger
-      ? qrManger.getRepository(Rank)
-      : this.rankRepository;
+  private async calculateUserRankings(userId: number) {
     const thisYear = moment().year();
-    const foundUserStats = await repository.find({
+    const foundUserStats = await this.rankRepository.find({
       where: { user: { id: userId }, active_year: thisYear },
     });
     if (!foundUserStats) return {};
