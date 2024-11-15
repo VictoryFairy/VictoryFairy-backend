@@ -10,7 +10,6 @@ import {
   ParseIntPipe,
   Query,
   Patch,
-  UseInterceptors,
 } from '@nestjs/common';
 import {
   ApiCreatedResponse,
@@ -24,7 +23,6 @@ import {
 } from '@nestjs/swagger';
 import { plainToInstance } from 'class-transformer';
 import { JwtAuth } from 'src/decorator/jwt-token.decorator';
-import { QueryRunnerManager } from 'src/decorator/queryrunner-manager.decorator';
 import { UserDeco } from 'src/decorator/user.decorator';
 import {
   CreateRegisteredGameDto,
@@ -33,9 +31,7 @@ import {
   UpdateRegisteredGameDto,
 } from 'src/dtos/registered-game.dto';
 import { User } from 'src/entities/user.entity';
-import { TransactionInterceptor } from 'src/interceptor/transaction.interceptor';
 import { RegisteredGameService } from 'src/services/registered-game.service';
-import { EntityManager } from 'typeorm';
 
 @ApiTags('RegisteredGame')
 @Controller('registered-games')
@@ -45,7 +41,6 @@ export class RegisteredGameController {
 
   @Post()
   @HttpCode(HttpStatus.CREATED)
-  @UseInterceptors(TransactionInterceptor)
   @ApiOperation({ summary: '직관 경기 등록' })
   @ApiCreatedResponse({
     type: RegisteredGameDto,
@@ -54,12 +49,10 @@ export class RegisteredGameController {
   async create(
     @Body() createRegisteredGameDto: CreateRegisteredGameDto,
     @UserDeco() user: User,
-    @QueryRunnerManager() qrManager: EntityManager,
   ): Promise<RegisteredGameDto> {
     const registeredGame = await this.registeredGameService.create(
       createRegisteredGameDto,
       user,
-      qrManager,
     );
     return plainToInstance(RegisteredGameDto, registeredGame);
   }
@@ -155,7 +148,6 @@ export class RegisteredGameController {
   }
 
   @Delete(':id')
-  @UseInterceptors(TransactionInterceptor)
   @HttpCode(HttpStatus.NO_CONTENT)
   @ApiOperation({ summary: '유저가 등록한 해당하는 ID의 직관 경기 삭제' })
   @ApiParam({
@@ -172,8 +164,7 @@ export class RegisteredGameController {
   async delete(
     @Param('id', ParseIntPipe) id: number,
     @UserDeco() user: User,
-    @QueryRunnerManager() qrManager: EntityManager,
   ): Promise<void> {
-    await this.registeredGameService.delete(id, user, qrManager);
+    await this.registeredGameService.delete(id, user);
   }
 }

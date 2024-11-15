@@ -7,8 +7,11 @@ import * as cookieParser from 'cookie-parser';
 import { ConfigService } from '@nestjs/config';
 import { ApiLoggingInterceptor } from './interceptor/api-logger.interceptor';
 import * as basicAuth from 'express-basic-auth';
+import { initializeTransactionalContext } from 'typeorm-transactional';
 
 async function bootstrap() {
+  initializeTransactionalContext();
+
   const app = await NestFactory.create(AppModule);
   const configService = app.get(ConfigService);
   const backendRootUrl = configService.get<string>('BACK_END_URL');

@@ -7,22 +7,17 @@ import {
 import * as bcrypt from 'bcrypt';
 import { HASH_ROUND } from 'src/const/user.const';
 import { InjectRepository } from '@nestjs/typeorm';
-import {
-  EntityManager,
-  FindOptionsRelations,
-  FindOptionsSelect,
-  Repository,
-} from 'typeorm';
+import { FindOptionsRelations, FindOptionsSelect, Repository } from 'typeorm';
 import { User } from 'src/entities/user.entity';
 import { CreateUserDto, LoginUserDto } from 'src/dtos/user.dto';
 import { EventEmitter2, OnEvent } from '@nestjs/event-emitter';
 import { EventName } from 'src/const/event.const';
 import { Team } from 'src/entities/team.entity';
 import { RankService } from './rank.service';
-import { Rank } from 'src/entities/rank.entity';
 import * as moment from 'moment';
 import { AwsS3Service } from 'src/services/aws-s3.service';
 import { RedisCachingService } from './redis-caching.service';
+import { Transactional } from 'typeorm-transactional';
 
 @Injectable()
 export class UserService {
@@ -65,12 +60,9 @@ export class UserService {
     }
   }
 
-  async isExistNickname(nickname: string, qrManager?: EntityManager) {
+  async isExistNickname(nickname: string) {
     try {
-      const repository = qrManager
-        ? qrManager.getRepository<User>(User)
-        : this.userRepository;
-      return repository.exists({ where: { nickname } });
+      return this.userRepository.exists({ where: { nickname } });
     } catch (error) {
       throw new InternalServerErrorException('DB 조회 실패');
     }
@@ -101,7 +93,8 @@ export class UserService {
     }
   }
 
-  async createUser(dto: CreateUserDto, qrManager: EntityManager) {
+  @Transactional()
+  async createUser(dto: CreateUserDto) {
     try {
       const { email, password, teamId } = dto;
       let { image, nickname } = dto;
@@ -117,12 +110,12 @@ export class UserService {
           randomNum = Math.floor(Math.random() * 10000);
 
           nickname = `승리요정#${randomNum.toString().padStart(4, '0')}`;
-          isExist = await this.isExistNickname(nickname, qrManager);
+          isExist = await this.isExistNickname(nickname);
         }
       }
 
       const hashPw = await bcrypt.hash(password, HASH_ROUND);
-      const createdUser = await qrManager.getRepository(User).save({
+      const createdUser = await this.userRepository.save({
         email,
         profile_image: image,
         support_team: { id: teamId },
@@ -134,13 +127,13 @@ export class UserService {
       await this.redisCachingService.saveUser(createdUser);
 
       // Rank table 업데이트
-      await qrManager.getRepository(Rank).insert({
+      await this.rankService.initialSave({
         team_id: teamId,
-        active_year: moment().utc().year(),
-        user: createdUser,
+        year: moment().utc().year(),
+        user_id: createdUser.id,
       });
       // Redis Rank caching
-      await this.rankService.updateRedisRankings(createdUser.id, qrManager);
+      await this.rankService.updateRedisRankings(createdUser.id);
 
       return { id: createdUser.id };
     } catch (error) {
@@ -202,20 +195,16 @@ export class UserService {
     }
   }
 
-  async deleteUser(user: User, qrManager: EntityManager) {
+  @Transactional()
+  async deleteUser(user: User) {
     const teams = await this.teamRepository.find({ select: { id: true } });
     const { profile_image, id, email } = user;
 
-    const { affected } = await qrManager
-      .getRepository(User)
-      .delete({ id, email });
+    const { affected } = await this.userRepository.delete({ id, email });
     // s3 이미지 삭제
     await this.awsS3Service.deleteImage({ fileUrl: profile_image });
 
-    await this.redisCachingService.userSynchronizationTransaction(
-      id,
-      teams,
-    );
+    await this.redisCachingService.userSynchronizationTransaction(id, teams);
 
     return { affected };
   }
