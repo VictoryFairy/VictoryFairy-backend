@@ -1,11 +1,17 @@
 import * as dotenv from 'dotenv';
-import { DataSource } from 'typeorm';
+import { DataSource, DataSourceOptions } from 'typeorm';
+import { SeederOptions } from 'typeorm-extension';
+import TeamSeeder from './seeds/team.seeder';
+import StadiumSeeder from './seeds/stadium.seeder';
+import ParkingInfoSeeder from './seeds/parking-info.seeder';
+import CheeringSongSeeder from './seeds/cheering-song.seeder';
+import GameSeeder from './seeds/game.seeder';
 
 dotenv.config();
 
 const isProduction = process.env.NODE_ENV === 'production';
 
-export default new DataSource({
+const dataOptions: DataSourceOptions & SeederOptions = {
   type: 'postgres',
   host: process.env.DB_CONTAINER_NAME || 'localhost',
   port: process.env.DB_TCP_PORT ? parseInt(process.env.DB_TCP_PORT) : 5432,
@@ -21,4 +27,13 @@ export default new DataSource({
       : 'src/migration/files/**/*.ts',
   ],
   migrationsTableName: 'migrations',
-});
+  seeds: [
+    TeamSeeder,
+    StadiumSeeder,
+    ParkingInfoSeeder,
+    CheeringSongSeeder,
+    GameSeeder,
+  ],
+};
+
+export default new DataSource(dataOptions);
