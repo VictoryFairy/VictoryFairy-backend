@@ -20,7 +20,7 @@
     "test:e2e": "jest --config ./test/jest-e2e.json",
     "convert-song": "ts-node ./src/migration/seeds/data/cheering-song-converter.ts",
     "seed": "ts-node -r tsconfig-paths/register ./node_modules/typeorm-extension/bin/cli.cjs seed:run -d ./src/migration/datasource.ts",
-    "typeorm": "typeorm-ts-node-commonjs",
+    "typeorm": "ts-node -r tsconfig-paths/register ./node_modules/typeorm/cli.js",
     "migration:create": "npm run typeorm -- migration:create ./src/migration/files/schema-update",
     "migration:generate": "npm run typeorm -- migration:generate ./src/migration/files/schema-update -d ./src/migration/datasource.ts",
     "migration:show": "npm run typeorm -- migration:show -d ./dist/migration/datasource.js",
