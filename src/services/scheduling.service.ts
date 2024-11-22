@@ -1,13 +1,14 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { Cron, CronExpression, SchedulerRegistry } from '@nestjs/schedule';
 import { GameService } from './game.service';
-import { firstValueFrom, forkJoin } from 'rxjs';
+import { firstValueFrom } from 'rxjs';
 import { CronJob } from 'cron';
 import * as moment from 'moment-timezone';
 import { RegisteredGameService } from './registered-game.service';
 import { getNextMonth } from 'src/utils/get-next-month.util';
-import { EventEmitter2 } from '@nestjs/event-emitter';
 import { ConfigService } from '@nestjs/config';
+import { upsertSchedules } from 'src/utils/game-crawling.util';
+import { DataSource } from 'typeorm';
 
 @Injectable()
 export class SchedulingService {
@@ -18,7 +19,7 @@ export class SchedulingService {
     private readonly registeredGameService: RegisteredGameService,
     private readonly schedulerRegistry: SchedulerRegistry,
     private readonly configService: ConfigService,
-    private readonly eventEmitter: EventEmitter2,
+    private readonly dataSource: DataSource,
   ) {}
 
   @Cron(CronExpression.EVERY_DAY_AT_1AM, {
@@ -33,20 +34,26 @@ export class SchedulingService {
 
     const { nextYear, nextMonth } = getNextMonth(currentYear, currentMonth);
 
-    forkJoin([
-      this.gameService.upsertSchedules(currentYear, currentMonth),
-      this.gameService.upsertSchedules(nextYear, nextMonth),
-    ]).subscribe({
-      next: () => {
-        // 성공적으로 두 Observable의 결과를 가져온 경우
-        this.logger.log('Game Data for both months saved successfully.');
-        this.batchUpdateTodayGames(); // 오늘의 경기 업데이트 스케쥴 작성
-      },
-      error: (error) => {
-        // 오류가 발생한 경우
-        this.logger.error('Error in batchUpdateGames', error.stack);
-      },
-    });
+    try {
+      // 현재 달 데이터 업데이트
+      await upsertSchedules({
+        year: currentYear,
+        month: currentMonth,
+        dataSource: this.dataSource,
+      });
+      // 다음 달 데이터 업데이트
+      await upsertSchedules({
+        year: nextYear,
+        month: nextMonth,
+        dataSource: this.dataSource,
+      });
+
+      this.logger.log('Game Data for both months saved successfully.');
+      await this.batchUpdateTodayGames(); // 오늘의 경기 업데이트 스케줄 작성
+    } catch (error) {
+      this.logger.error('Error in batchUpdateGames', error.stack);
+      throw error;
+    }
   }
 
   private async batchUpdateTodayGames() {
