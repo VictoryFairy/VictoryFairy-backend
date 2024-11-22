@@ -18,7 +18,8 @@
     "test:cov": "jest --coverage",
     "test:debug": "node --inspect-brk -r tsconfig-paths/register -r ts-node/register node_modules/.bin/jest --runInBand",
     "test:e2e": "jest --config ./test/jest-e2e.json",
-    "convert-song": "ts-node ./src/seeds/cheering-song-converter.ts",
+    "convert-song": "ts-node ./src/migration/seeds/data/cheering-song-converter.ts",
+    "seed": "ts-node -r tsconfig-paths/register ./node_modules/typeorm-extension/bin/cli.cjs seed:run -d ./src/migration/datasource.ts",
     "typeorm": "typeorm-ts-node-commonjs",
     "migration:create": "npm run typeorm -- migration:create ./src/migration/files/schema-update",
     "migration:generate": "npm run typeorm -- migration:generate ./src/migration/files/schema-update -d ./src/migration/datasource.ts",
@@ -61,6 +62,7 @@
     "reflect-metadata": "^0.2.0",
     "rxjs": "^7.8.1",
     "typeorm": "^0.3.20",
+    "typeorm-extension": "^3.6.3",
     "typeorm-transactional": "^0.5.0",
     "uuid": "^10.0.0"
   },
