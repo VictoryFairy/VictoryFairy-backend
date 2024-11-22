@@ -1,7 +1,6 @@
 import {
   ConflictException,
   Injectable,
-  Logger,
   NotFoundException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -9,71 +8,19 @@ import { CheeringSong } from 'src/entities/cheering-song.entity';
 import { TCheeringSongType } from 'src/types/seed.type';
 import { Brackets, FindOptionsWhere, MoreThan, Repository } from 'typeorm';
 import { TeamService } from './team.service';
-import { Player } from 'src/entities/player.entity';
 import { User } from 'src/entities/user.entity';
 import { LikeCheeringSong } from 'src/entities/like-cheering-song.entity';
 import { CursorPageCheeringSongDto } from 'src/dtos/cursor-page.dto';
-import { refinedCheeringSongs } from 'src/seeds/cheering-song.seed';
 
 @Injectable()
 export class CheeringSongService {
-  private readonly logger = new Logger(CheeringSongService.name);
-
   constructor(
     @InjectRepository(CheeringSong)
     private readonly cheeringSongRepository: Repository<CheeringSong>,
-    @InjectRepository(Player)
-    private readonly playerRepository: Repository<Player>,
     @InjectRepository(LikeCheeringSong)
     private readonly likeCheeringSongRepository: Repository<LikeCheeringSong>,
     private readonly teamService: TeamService,
   ) {}
-
-  async seed() {
-    const cheeringSongSeeder = refinedCheeringSongs;
-
-    await this.cheeringSongRepository.manager.transaction(async (manager) => {
-      for (const seed of cheeringSongSeeder) {
-        const team = await this.teamService.findOneByName(seed.team_name);
-
-        let player: Player | undefined;
-
-        if (seed.type === 'player') {
-          player = await manager.getRepository(Player).findOne({
-            where: {
-              name: seed.player_name,
-              jersey_number: seed.jersey_number,
-            },
-          });
-
-          if (!player) {
-            player = this.playerRepository.create({
-              name: seed.player_name,
-              jersey_number: seed.jersey_number,
-              position: seed.position,
-              throws_bats: seed.throws_bats,
-              team: team,
-            });
-            await manager
-              .getRepository(Player)
-              .upsert(player, ['name', 'jersey_number']);
-          }
-        }
-
-        await manager.getRepository(CheeringSong).upsert(
-          {
-            type: seed.type,
-            title: seed.title,
-            lyrics: seed.lyrics,
-            link: seed.link,
-            team: team,
-            player: player,
-          },
-          ['link'],
-        );
-      }
-    });
-  }
 
   async findBySearchWithInfiniteScroll(
     user: User,

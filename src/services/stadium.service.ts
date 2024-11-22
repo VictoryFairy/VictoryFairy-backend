@@ -1,7 +1,6 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Stadium } from 'src/entities/stadium.entity';
-import { stadiumSeeder } from 'src/seeds/stadium.seed';
 import { Not, Repository } from 'typeorm';
 
 @Injectable()
@@ -10,22 +9,6 @@ export class StadiumService {
     @InjectRepository(Stadium)
     private readonly stadiumRepository: Repository<Stadium>,
   ) {}
-
-  async seed() {
-    await this.stadiumRepository.manager.transaction(async (manager) => {
-      for (const seed of stadiumSeeder) {
-        await manager.getRepository(Stadium).upsert(
-          {
-            name: seed.name,
-            full_name: seed.full_name,
-            latitude: seed.lat,
-            longitude: seed.lng,
-          },
-          ['name'],
-        );
-      }
-    });
-  }
 
   async findOne(id: number): Promise<Stadium> {
     const team = await this.stadiumRepository.findOne({

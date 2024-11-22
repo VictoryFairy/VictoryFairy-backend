@@ -11,4 +11,6 @@ export const teamSeeder: { name: TTeam }[] = [
   { name: '키움' },
   { name: 'KT' },
   { name: '한화' },
+  { name: '나눔' },
+  { name: '드림' },
 ];

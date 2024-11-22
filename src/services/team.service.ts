@@ -1,7 +1,6 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Team } from 'src/entities/team.entity';
-import { teamSeeder } from 'src/seeds/team.seed';
 import { Repository } from 'typeorm';
 
 @Injectable()
@@ -10,19 +9,6 @@ export class TeamService {
     @InjectRepository(Team)
     private readonly teamRepository: Repository<Team>,
   ) {}
-
-  async seed() {
-    await this.teamRepository.manager.transaction(async (manager) => {
-      for (const seed of teamSeeder) {
-        await manager.getRepository(Team).upsert(
-          {
-            name: seed.name,
-          },
-          ['name'],
-        );
-      }
-    });
-  }
 
   async findOne(id: number): Promise<Team> {
     const team = await this.teamRepository.findOne({

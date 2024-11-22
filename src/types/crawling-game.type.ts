@@ -8,7 +8,9 @@ export type TTeam =
   | 'LG'
   | '키움'
   | 'KT'
-  | '한화';
+  | '한화'
+  | '나눔'
+  | '드림';
 
 export type TStadium =
   | '잠실'
