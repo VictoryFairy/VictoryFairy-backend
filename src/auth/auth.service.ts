@@ -70,7 +70,10 @@ export class AuthService {
   }
 
   issueToken(payload: Pick<IJwtPayload, 'id' | 'email'>, isRefresh: boolean) {
-    const { rfKey, rfExTime, acKey, acExTime } = this.getEnv();
+    const rfKey = this.configService.get<string>('JWT_REFRESH_SECRET');
+    const acKey = this.configService.get<string>('JWT_ACCESS_SECRET');
+    const rfExTime = this.configService.get<string>('REFRESH_EXPIRE_TIME');
+    const acExTime = this.configService.get<string>('ACCESS_EXPIRE_TIME');
     if (isRefresh) {
       return this.jwtService.sign(
         { ...payload, type: 'rf' },
@@ -91,10 +94,11 @@ export class AuthService {
   }
 
   async verifyToken(token: string, isRefresh: boolean) {
-    const { rfKey, acKey } = this.getEnv();
+    const rfKey = this.configService.get<string>('JWT_REFRESH_SECRET');
+    const acKey = this.configService.get<string>('JWT_ACCESS_SECRET');
     const secretKey = isRefresh ? rfKey : acKey;
     try {
-      const result: IJwtPayload = await this.jwtService.verify(token, {
+      const result: IJwtPayload = await this.jwtService.verifyAsync(token, {
         secret: secretKey,
       });
       return result;
@@ -128,14 +132,5 @@ export class AuthService {
       throw new UnauthorizedException('해당 유저를 찾을 수 없음');
     }
     return findUser;
-  }
-
-  /** 환경변수 게터 함수 */
-  private getEnv() {
-    const rfKey = this.configService.get<string>('JWT_REFRESH_SECRET');
-    const acKey = this.configService.get<string>('JWT_ACCESS_SECRET');
-    const rfExTime = this.configService.get<string>('REFRESH_EXPIRE_TIME');
-    const acExTime = this.configService.get<string>('ACCESS_EXPIRE_TIME');
-    return { rfExTime, rfKey, acKey, acExTime };
   }
 }
