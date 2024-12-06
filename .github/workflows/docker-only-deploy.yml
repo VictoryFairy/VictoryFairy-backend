@@ -33,6 +33,9 @@ jobs:
       run: |
         chmod +x ./.github/workflows/health_check.sh
         ./.github/workflows/health_check.sh
+    - name : Run Test Code
+      run: |
+        docker exec -i api npm run test
 
     - name: View logs
       if: failure()
