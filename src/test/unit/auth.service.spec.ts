@@ -14,8 +14,9 @@ import { RedisCachingService } from 'src/services/redis-caching.service';
 import { IJwtPayload } from 'src/types/auth.type';
 import * as randomCodeUtil from 'src/utils/random-code.util';
 import * as bcrypt from 'bcrypt';
+import { Repository } from 'typeorm';
+import { MockRepoFactory, MockServiceFactory } from './mocks/unit-mock-factory';
 
-const mockUserRepo = { findOne: jest.fn() };
 const mockUser = {
   id: 1,
   email: 'test@test.com',
@@ -34,10 +35,12 @@ describe('AuthService Test', () => {
   let jwtService: JwtService;
   let redisCachingService: RedisCachingService;
   let mailService: MailService;
+  let mockUserRepo: Repository<User>;
 
   beforeEach(async () => {
-    const module: TestingModule = await Test.createTestingModule({
+    const moduleRef: TestingModule = await Test.createTestingModule({
       providers: [
+        AuthService,
         {
           provide: ConfigService,
           useValue: {
@@ -55,25 +58,30 @@ describe('AuthService Test', () => {
             }),
           },
         },
-        AuthService,
-        { provide: getRepositoryToken(User), useValue: mockUserRepo },
-        { provide: JwtService, useValue: { verifyAsync: jest.fn() } },
+        {
+          provide: getRepositoryToken(User),
+          useValue: MockRepoFactory.createMockRepo<User>(),
+        },
+        {
+          provide: JwtService,
+          useValue: MockServiceFactory.createMockService(JwtService),
+        },
         {
           provide: RedisCachingService,
-          useValue: {
-            getCachedVerificationCode: jest.fn(),
-            deleteVerificationCode: jest.fn(),
-            cachingVerificationCode: jest.fn(),
-          },
+          useValue: MockServiceFactory.createMockService(RedisCachingService),
         },
-        { provide: MailService, useValue: { sendAuthCodeMail: jest.fn() } },
+        {
+          provide: MailService,
+          useValue: MockServiceFactory.createMockService(MailService),
+        },
       ],
     }).compile();
 
-    authService = module.get<AuthService>(AuthService);
-    jwtService = module.get<JwtService>(JwtService);
-    redisCachingService = module.get<RedisCachingService>(RedisCachingService);
-    mailService = module.get<MailService>(MailService);
+    authService = moduleRef.get(AuthService);
+    jwtService = moduleRef.get(JwtService);
+    redisCachingService = moduleRef.get(RedisCachingService);
+    mailService = moduleRef.get(MailService);
+    mockUserRepo = moduleRef.get(getRepositoryToken(User));
   });
 
   afterEach(() => {
@@ -305,7 +313,9 @@ describe('AuthService Test', () => {
       const mockWhere = { email: 'test@test.com' };
       const mockRelations = { support_team: true };
 
-      jest.spyOn(mockUserRepo, 'findOne').mockResolvedValue(mockUser);
+      jest
+        .spyOn(mockUserRepo, 'findOne')
+        .mockResolvedValue(mockUser as unknown as User);
 
       const result = await authService.getUser(mockWhere, mockRelations);
 
