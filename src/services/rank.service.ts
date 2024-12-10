@@ -28,7 +28,11 @@ export class RankService {
 
   /** 레디스 연결 시 랭킹 데이터 미리 저장 */
   @OnEvent(EventName.CACHED_USERS)
-  async initRankCaching(payload: number[]) {
+  async initRankCaching(payload: number[]): Promise<void> {
+    if (!payload.length) {
+      this.logger.log('빈 페이로드로 랭킹 레디스 초기 캐싱 스킵');
+      return;
+    }
     try {
       const warmingPromises = payload.map((userId) =>
         this.updateRedisRankings(userId),
