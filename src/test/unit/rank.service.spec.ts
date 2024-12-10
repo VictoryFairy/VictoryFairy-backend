@@ -8,6 +8,8 @@ import { RedisCachingService } from 'src/services/redis-caching.service';
 import { RankService } from 'src/services/rank.service';
 import { InternalServerErrorException, Logger } from '@nestjs/common';
 import { CreateRankDto } from 'src/dtos/rank.dto';
+import { User } from 'src/entities/user.entity';
+import { TRegisteredGameStatus } from 'src/types/registered-game-status.type';
 
 describe('RankService', () => {
   let registeredGameRepo: Repository<RegisteredGame>;
@@ -106,5 +108,106 @@ describe('RankService', () => {
         user: { id: user_id },
       });
     });
+  });
+
+  describe('updateRankEntity', () => {
+    let mockWatchedGame: CreateRankDto;
+    let mockRankFindOneData: Rank;
+    beforeEach(() => {
+      mockWatchedGame = {
+        team_id: 1,
+        user_id: 1,
+        year: 2024,
+        status: 'Win',
+      };
+      mockRankFindOneData = {
+        active_year: mockWatchedGame.year,
+        team_id: mockWatchedGame.team_id,
+        user: { id: mockWatchedGame.user_id } as User,
+        win: 0,
+        lose: 0,
+        cancel: 0,
+        tie: 0,
+      } as Rank;
+    });
+
+    it.each([
+      ['추가', true],
+      ['삭제', false],
+    ])(
+      '기존 테이블이 있고 직관 등록을 %s인 경우, 정상적으로 작동',
+      async (_, isAdd) => {
+        const spyInsert = jest.spyOn(rankRepo, 'insert');
+        jest.spyOn(rankRepo, 'increment');
+        jest.spyOn(rankRepo, 'decrement');
+        jest.spyOn(rankRepo, 'findOne').mockResolvedValue(mockRankFindOneData);
+
+        const { team_id, user_id, year, status } = mockWatchedGame;
+
+        await rankService.updateRankEntity(mockWatchedGame, isAdd);
+
+        expect(spyInsert).not.toHaveBeenCalled();
+        if (isAdd) {
+          expect(rankRepo.increment).toHaveBeenCalledWith(
+            { team_id, user: { id: user_id }, active_year: year },
+            status.toLowerCase(),
+            1,
+          );
+          expect(rankRepo.decrement).not.toHaveBeenCalled();
+        } else {
+          expect(rankRepo.increment).not.toHaveBeenCalled();
+          expect(rankRepo.decrement).toHaveBeenCalledWith(
+            { team_id, user: { id: user_id }, active_year: year },
+            status.toLowerCase(),
+            1,
+          );
+        }
+      },
+    );
+    it.each([
+      ['추가', '생성', true],
+      ['삭제', '아무것도 작동 안함', false],
+    ])(
+      '기존 테이블이 없는 경우, %s 경우, 랭크 테이블에 %s ',
+      async (_, __, isAdd) => {
+        const { user_id, team_id, year } = mockWatchedGame;
+        const spyInsert = jest.spyOn(rankRepo, 'insert');
+        jest.spyOn(rankRepo, 'increment');
+        jest.spyOn(rankRepo, 'decrement');
+        jest.spyOn(rankRepo, 'findOne').mockResolvedValue(null);
+
+        await rankService.updateRankEntity(mockWatchedGame, isAdd);
+        if (isAdd) {
+          expect(spyInsert).toHaveBeenCalledWith({
+            team_id,
+            user: { id: user_id },
+            active_year: year,
+            win: 1,
+          });
+          expect(rankRepo.increment).not.toHaveBeenCalled();
+        } else {
+          expect(spyInsert).not.toHaveBeenCalled();
+          expect(rankRepo.decrement).not.toHaveBeenCalled();
+        }
+      },
+    );
+    it.each(['Lose', 'Tie', 'No game'])(
+      '기존 데이터가 있고, status가 %s인 경우, 데이터가 적절히 업데이트된다',
+      async (statusCase) => {
+        mockWatchedGame.status = statusCase as TRegisteredGameStatus;
+
+        const { team_id, user_id, year, status } = mockWatchedGame;
+        jest.spyOn(rankRepo, 'findOne').mockResolvedValue(mockRankFindOneData);
+        const spyIncrement = jest.spyOn(rankRepo, 'increment');
+
+        await rankService.updateRankEntity(mockWatchedGame, true);
+
+        expect(spyIncrement).toHaveBeenCalledWith(
+          { team_id, user: { id: user_id }, active_year: year },
+          status === 'No game' ? 'cancel' : status.toLowerCase(),
+          1,
+        );
+      },
+    );
   });
 });

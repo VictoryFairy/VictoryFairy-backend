@@ -57,7 +57,10 @@ export class RankService {
   }
 
   /** @description rank entity에 업데이트 */
-  async updateRankEntity(watchedGame: CreateRankDto, isAdd: boolean) {
+  async updateRankEntity(
+    watchedGame: CreateRankDto,
+    isAdd: boolean,
+  ): Promise<void> {
     const { status, team_id, user_id, year } = watchedGame;
 
     const columnToUpdate = {
@@ -67,29 +70,37 @@ export class RankService {
       'No game': 'cancel',
     };
 
-    if (isAdd) {
-      // 생성하거나 추가한 경우
-      const updateCount = await this.rankRepository.increment(
-        { team_id, user: { id: user_id }, active_year: year },
-        columnToUpdate[status],
-        1,
-      );
+    const foundRankData = await this.rankRepository.findOne({
+      where: { user: { id: user_id }, active_year: year, team_id },
+    });
 
-      if (updateCount.affected === 0) {
+    // 직관 경기 등록한 경우
+    if (isAdd) {
+      if (!foundRankData) {
         const rankData = new Rank();
         rankData.team_id = team_id;
         rankData.user = { id: user_id } as User;
         rankData.active_year = year;
         rankData[columnToUpdate[status]] = 1;
         await this.rankRepository.insert(rankData);
+      } else {
+        //테이블에 해당 팀과 유저의 조합으로 데이터가 없다면 추가
+        await this.rankRepository.increment(
+          { team_id, user: { id: user_id }, active_year: year },
+          columnToUpdate[status],
+          1,
+        );
       }
     } else {
-      // 삭제한 경우
-      await this.rankRepository.decrement(
-        { team_id, user: { id: user_id }, active_year: year },
-        columnToUpdate[status],
-        1,
-      );
+      // 직관 경기 삭제한 경우
+      // 테이블에 기존 데이터가 있는 경우만 감소
+      if (foundRankData) {
+        await this.rankRepository.decrement(
+          { team_id, user: { id: user_id }, active_year: year },
+          columnToUpdate[status],
+          1,
+        );
+      }
     }
   }
 
