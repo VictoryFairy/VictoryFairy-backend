@@ -10,6 +10,7 @@ import { InternalServerErrorException, Logger } from '@nestjs/common';
 import { CreateRankDto } from 'src/dtos/rank.dto';
 import { User } from 'src/entities/user.entity';
 import { TRegisteredGameStatus } from 'src/types/registered-game-status.type';
+import { IRefinedRankData } from 'src/types/rank.type';
 
 describe('RankService', () => {
   let registeredGameRepo: Repository<RegisteredGame>;
@@ -192,7 +193,7 @@ describe('RankService', () => {
       },
     );
     it.each(['Lose', 'Tie', 'No game'])(
-      '기존 데이터가 있고, status가 %s인 경우, 데이터가 적절히 업데이트된다',
+      '기존 데이터가 있고, status가 %s인 경우, 데이터가 적절히 업데이트',
       async (statusCase) => {
         mockWatchedGame.status = statusCase as TRegisteredGameStatus;
 
@@ -209,5 +210,57 @@ describe('RankService', () => {
         );
       },
     );
+  });
+  describe('getRankList', () => {
+    it('구체적인 팀 아이디가 주어진다면, 해당 팀에 대한 processRankList를 반환', async () => {
+      const teamId = 1;
+      const mockRefinedData: IRefinedRankData[] = [
+        {
+          nickname: 'tester2',
+          profile_image: 'img',
+          rank: 1,
+          score: 1000,
+          user_id: 2,
+        },
+      ];
+      const spyRedis = jest.spyOn(redisCachingService, 'getRankingList');
+      jest
+        .spyOn(rankService as any, 'processRankList')
+        .mockResolvedValue(mockRefinedData);
+
+      const result = await rankService.getTopThreeRankList(teamId);
+
+      expect(result).toEqual(mockRefinedData);
+      expect(spyRedis).toHaveBeenCalledWith(teamId, 0, 2);
+    });
+
+    it('구체적인 팀 아이디가 없다면, total에 대한 processRankList를 반환', async () => {
+      const mockRefinedData: IRefinedRankData[] = [
+        {
+          nickname: 'tester2',
+          profile_image: 'img',
+          rank: 1,
+          score: 1000,
+          user_id: 2,
+        },
+        {
+          nickname: 'tester1',
+          profile_image: 'img',
+          rank: 2,
+          score: 900,
+          user_id: 1,
+        },
+      ];
+      const spyRedis = jest.spyOn(redisCachingService, 'getRankingList');
+
+      jest
+        .spyOn(rankService as any, 'processRankList')
+        .mockResolvedValue(mockRefinedData);
+
+      const result = await rankService.getTopThreeRankList();
+
+      expect(result).toEqual(mockRefinedData);
+      expect(spyRedis).toHaveBeenCalledWith('total', 0, 2);
+    });
   });
 });

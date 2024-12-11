@@ -110,8 +110,10 @@ export class RankService {
     const key = teamId ? teamId : 'total';
     const rankList = await this.redisCachingService.getRankingList(key, 0, 2);
 
-    return this.processRankList(rankList);
+    const refinedRankData = await this.processRankList(rankList);
+    return refinedRankData;
   }
+
   /** @description 랭킹 리스트에서 유저와 근처 유저 1명씩 가져오기 */
   async getUserRankWithNeighbors(
     user: User,
@@ -143,7 +145,6 @@ export class RankService {
 
     const result = calculated.map((data, i) => {
       data.rank = searchRank[i];
-
       return data;
     });
     return result;
