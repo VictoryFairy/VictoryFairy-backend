@@ -29,13 +29,13 @@ export class RankService {
 
   /** 레디스 연결 시 랭킹 데이터 미리 저장 */
   @OnEvent(EventName.CACHED_USERS)
-  async initRankCaching(payload: number[]): Promise<void> {
-    if (!payload.length) {
+  async initRankCaching(userIdsArr: number[]): Promise<void> {
+    if (!userIdsArr.length) {
       this.logger.log('빈 페이로드로 랭킹 레디스 초기 캐싱 스킵');
       return;
     }
     try {
-      const warmingPromises = payload.map((userId) =>
+      const warmingPromises = userIdsArr.map((userId) =>
         this.updateRedisRankings(userId),
       );
       await Promise.all(warmingPromises);
@@ -57,7 +57,9 @@ export class RankService {
     });
   }
 
-  /** @description rank entity에 업데이트 */
+  /** @description rank entity에 업데이트
+   * @param isAdd 직관 경기 추가 / 제거에 대한 플래그
+   */
   async updateRankEntity(
     watchedGame: CreateRankDto,
     isAdd: boolean,
@@ -105,15 +107,6 @@ export class RankService {
     }
   }
 
-  /** @description 랭킹 상위 3명 가져오기 */
-  async getTopThreeRankList(teamId?: number) {
-    const key = teamId ? teamId : 'total';
-    const rankList = await this.redisCachingService.getRankingList(key, 0, 2);
-
-    const refinedRankData = await this.processRankList(rankList);
-    return refinedRankData;
-  }
-
   /** @description 랭킹 리스트에서 유저와 근처 유저 1명씩 가져오기 */
   async getUserRankWithNeighbors(
     user: User,
@@ -150,13 +143,27 @@ export class RankService {
     return result;
   }
 
-  /** @description 랭킹 리스트 전부, teamId가 들어오면 해당 팀의 랭킹 리스트 전부 */
-  async getRankList(teamId?: number): Promise<IRefinedRankData[]> {
+  /**
+   * @description 랭킹 리스트 가져오기
+   * @param start 랭킹 리스트의 시작 인덱스(첫 번쨰 인덱스는 0)
+   * @param end 랭킹 리스트의 끝 인덱스(끝까지 가져오려면 -1)
+   * @param teamId 선택적 팀 ID. 없으면 'total'로 처리
+   */
+  async getRankList(
+    start: number,
+    end: number,
+    teamId?: number,
+  ): Promise<IRefinedRankData[]> {
     const key = teamId ? teamId : 'total';
 
-    const rankList = await this.redisCachingService.getRankingList(key, 0, -1);
+    const rankList = await this.redisCachingService.getRankingList(
+      key,
+      start,
+      end,
+    );
 
-    return this.processRankList(rankList);
+    const refinedRankData = await this.processRankList(rankList);
+    return refinedRankData;
   }
 
   /** @description 레디스 랭킹과 유저 정보 데이터 합쳐서 가공 */
