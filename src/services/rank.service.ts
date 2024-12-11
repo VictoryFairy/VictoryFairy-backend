@@ -9,11 +9,12 @@ import { RegisteredGame } from 'src/entities/registered-game.entity';
 import { User } from 'src/entities/user.entity';
 import { Repository } from 'typeorm';
 import * as moment from 'moment';
-import { CreateRankDto } from 'src/dtos/rank.dto';
+import { CreateRankDto, UserRecordDto } from 'src/dtos/rank.dto';
 import { OnEvent } from '@nestjs/event-emitter';
 import { EventName } from 'src/const/event.const';
 import { TRegisteredGameStatus } from 'src/types/registered-game-status.type';
 import { RedisCachingService } from './redis-caching.service';
+import { IRefinedRankData } from 'src/types/rank.type';
 
 @Injectable()
 export class RankService {
@@ -46,7 +47,7 @@ export class RankService {
   }
 
   /** @description rank entity에 저장 */
-  async initialSave(watchedGame: Omit<CreateRankDto, 'status'>) {
+  async initialSave(watchedGame: Omit<CreateRankDto, 'status'>): Promise<void> {
     const { team_id, user_id, year } = watchedGame;
 
     await this.rankRepository.insert({
@@ -112,7 +113,10 @@ export class RankService {
     return this.processRankList(rankList);
   }
   /** @description 랭킹 리스트에서 유저와 근처 유저 1명씩 가져오기 */
-  async getUserRankWithNeighbors(user: User, teamId?: number) {
+  async getUserRankWithNeighbors(
+    user: User,
+    teamId?: number,
+  ): Promise<IRefinedRankData[]> {
     const { id: userId } = user;
     const key = teamId ? teamId : 'total';
     const userRank = await this.redisCachingService.getUserRank(userId, key);
@@ -137,15 +141,16 @@ export class RankService {
     }
     const calculated = await this.processRankList(rankList);
 
-    return calculated.map((data, i) => {
+    const result = calculated.map((data, i) => {
       data.rank = searchRank[i];
 
       return data;
     });
+    return result;
   }
 
   /** @description 랭킹 리스트 전부, teamId가 들어오면 해당 팀의 랭킹 리스트 전부 */
-  async getRankList(teamId?: number) {
+  async getRankList(teamId?: number): Promise<IRefinedRankData[]> {
     const key = teamId ? teamId : 'total';
 
     const rankList = await this.redisCachingService.getRankingList(key, 0, -1);
@@ -154,7 +159,9 @@ export class RankService {
   }
 
   /** @description 레디스 랭킹과 유저 정보 데이터 합쳐서 가공 */
-  private async processRankList(rankList: string[]) {
+  private async processRankList(
+    rankList: string[],
+  ): Promise<IRefinedRankData[]> {
     const userInfoHashmap = await this.redisCachingService.getUserInfo();
 
     const rankData = [];
@@ -169,7 +176,7 @@ export class RankService {
   }
 
   /** @description 랭킹 점수 레디스에 반영 */
-  async updateRedisRankings(userId: number) {
+  async updateRedisRankings(userId: number): Promise<void> {
     const stat = await this.calculateUserRankings(userId);
 
     for (const [key, value] of Object.entries(stat)) {
@@ -184,22 +191,16 @@ export class RankService {
   }
 
   /** @description 해당 유저의 랭킹 전체 & 팀별 점수 계산 */
-  private async calculateUserRankings(userId: number) {
+  private async calculateUserRankings(
+    userId: number,
+  ): Promise<Record<string, Omit<UserRecordDto, 'total'>> | undefined> {
     const thisYear = moment().year();
     const foundUserStats = await this.rankRepository.find({
       where: { user: { id: userId }, active_year: thisYear },
     });
     if (!foundUserStats) return {};
 
-    const data: {
-      string?: {
-        win: number;
-        lose: number;
-        tie: number;
-        cancel: number;
-        score: number;
-      };
-    } = {};
+    const data: Record<string, Omit<UserRecordDto, 'total'>> | undefined = {};
     const totals = { win: 0, lose: 0, tie: 0, cancel: 0 };
 
     for (const stat of foundUserStats) {
@@ -215,12 +216,11 @@ export class RankService {
     }
     const totalScore = this.calculateScore(totals);
     data['total'] = { ...totals, score: totalScore };
-
     return data;
   }
 
   /** @description 유저의 직관 경기 전체 기록 */
-  async userOverallGameStats(userId: number) {
+  async userOverallGameStats(userId: number): Promise<UserRecordDto> {
     try {
       const userRecord = await this.rankRepository.find({
         where: { user: { id: userId } },

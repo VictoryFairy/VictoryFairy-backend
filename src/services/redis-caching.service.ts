@@ -92,7 +92,9 @@ export class RedisCachingService {
     }
   }
 
-  async getUserInfo() {
+  async getUserInfo(): Promise<
+    Record<string, { id: number; nickname: string; profile_image: string }>
+  > {
     const rawUserInfo = await this.redisClient.hgetall(RedisKeys.USER_INFO);
     const parsedInfo = {};
     Object.values(rawUserInfo).forEach((user) => {
