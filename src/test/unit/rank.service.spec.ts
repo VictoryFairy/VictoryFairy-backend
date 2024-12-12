@@ -6,7 +6,11 @@ import { Repository } from 'typeorm';
 import { Rank } from 'src/entities/rank.entity';
 import { RedisCachingService } from 'src/services/redis-caching.service';
 import { RankService } from 'src/services/rank.service';
-import { InternalServerErrorException, Logger } from '@nestjs/common';
+import {
+  BadRequestException,
+  InternalServerErrorException,
+  Logger,
+} from '@nestjs/common';
 import { CreateRankDto } from 'src/dtos/rank.dto';
 import { User } from 'src/entities/user.entity';
 import { TRegisteredGameStatus } from 'src/types/registered-game-status.type';
@@ -211,56 +215,130 @@ describe('RankService', () => {
       },
     );
   });
+
+  describe('getUserRankWithNeighbors', () => {
+    it('정상적으로 처리되면, 해당 유저와 근처 유저 랭킹 리스트 반환', async () => {
+      jest.spyOn(redisCachingService, 'getUserRank').mockResolvedValueOnce(5); // 6등인 경우
+      jest.spyOn(redisCachingService, 'getUserRank').mockResolvedValueOnce(4);
+      jest.spyOn(redisCachingService, 'getUserRank').mockResolvedValueOnce(5); // 해당 유저의 랭킹
+      jest.spyOn(redisCachingService, 'getUserRank').mockResolvedValueOnce(6);
+      jest
+        .spyOn(rankService, 'getRankList')
+        .mockResolvedValueOnce([
+          { user_id: 2 } as IRefinedRankData,
+          { user_id: 3 } as IRefinedRankData,
+          { user_id: 4 } as IRefinedRankData,
+        ]);
+
+      const result = await rankService.getUserRankWithNeighbors({
+        id: 3,
+      } as User);
+
+      expect(rankService.getRankList).toHaveBeenCalledWith(4, 6, undefined);
+      expect(redisCachingService.getUserRank).toHaveBeenCalledTimes(4);
+      expect(result).toEqual([
+        { user_id: 2, rank: 5 },
+        { user_id: 3, rank: 6 },
+        { user_id: 4, rank: 7 },
+      ]);
+    });
+    it('유저 랭킹 리스트가 없다면, 빈 배열 반환', async () => {
+      jest
+        .spyOn(redisCachingService, 'getUserRank')
+        .mockResolvedValueOnce(null);
+
+      const result = await rankService.getUserRankWithNeighbors({
+        id: 1,
+      } as User);
+      expect(result).toEqual([]);
+      expect(redisCachingService.getUserRank).toHaveBeenCalledWith(
+        1,
+        undefined,
+      );
+    });
+  });
+
   describe('getRankList', () => {
-    it('구체적인 팀 아이디가 주어진다면, 해당 팀에 대한 processRankList를 반환', async () => {
-      const teamId = 1;
-      const mockRefinedData: IRefinedRankData[] = [
+    let mockRefinedData: IRefinedRankData[];
+    beforeEach(() => {
+      mockRefinedData = [
+        {
+          nickname: 'tester1',
+          profile_image: 'img',
+          rank: 2,
+          score: 990,
+          user_id: 1,
+        },
         {
           nickname: 'tester2',
-          profile_image: 'img',
+          profile_image: 'img2',
           rank: 1,
           score: 1000,
           user_id: 2,
         },
+        {
+          nickname: 'tester3',
+          profile_image: 'img3',
+          rank: 3,
+          score: 980,
+          user_id: 3,
+        },
       ];
+    });
+    it('팀 ID가 제공되었을 때, 해당 팀의 랭킹 리스트를 반환', async () => {
+      const teamId = 1;
+
       const spyRedis = jest.spyOn(redisCachingService, 'getRankingList');
       jest
         .spyOn(rankService as any, 'processRankList')
         .mockResolvedValue(mockRefinedData);
 
-      const result = await rankService.getTopThreeRankList(teamId);
+      const result = await rankService.getRankList(0, 2, teamId);
 
       expect(result).toEqual(mockRefinedData);
       expect(spyRedis).toHaveBeenCalledWith(teamId, 0, 2);
     });
 
-    it('구체적인 팀 아이디가 없다면, total에 대한 processRankList를 반환', async () => {
-      const mockRefinedData: IRefinedRankData[] = [
-        {
-          nickname: 'tester2',
-          profile_image: 'img',
-          rank: 1,
-          score: 1000,
-          user_id: 2,
-        },
-        {
-          nickname: 'tester1',
-          profile_image: 'img',
-          rank: 2,
-          score: 900,
-          user_id: 1,
-        },
-      ];
+    it('팀 ID가 제공되지 않았을 때, 종합 랭킹 리스트를 반환', async () => {
       const spyRedis = jest.spyOn(redisCachingService, 'getRankingList');
 
       jest
         .spyOn(rankService as any, 'processRankList')
         .mockResolvedValue(mockRefinedData);
 
-      const result = await rankService.getTopThreeRankList();
+      const result = await rankService.getRankList(0, 2);
 
       expect(result).toEqual(mockRefinedData);
       expect(spyRedis).toHaveBeenCalledWith('total', 0, 2);
+    });
+
+    it('end가 -1이 아니면서 start가 end보다 더 큰 경우, 에러를 발생', async () => {
+      const [start, end] = [5, 3];
+
+      await expect(rankService.getRankList(start, end)).rejects.toThrow(
+        BadRequestException,
+      );
+    });
+  });
+
+  describe('updateRedisRankings', () => {
+    it('', async () => {
+      jest
+        .spyOn(rankService as any, 'calculateUserRankings')
+        .mockResolvedValue({
+          '5': { win: 0, lose: 0, score: 1000 },
+          total: { win: 0, lose: 0, score: 1000 },
+        });
+      const spyRedis = jest.spyOn(
+        redisCachingService,
+        'updateRankingScoreByUserId',
+      );
+
+      await rankService.updateRedisRankings(1);
+
+      expect(spyRedis).toHaveBeenCalledTimes(2);
+      expect(spyRedis).toHaveBeenNthCalledWith(1, 1, '1000', '5');
+      expect(spyRedis).toHaveBeenNthCalledWith(2, 1, '1000', 'total');
     });
   });
 });
