@@ -1,4 +1,5 @@
 import {
+  BadRequestException,
   Injectable,
   InternalServerErrorException,
   Logger,
@@ -113,30 +114,23 @@ export class RankService {
     teamId?: number,
   ): Promise<IRefinedRankData[]> {
     const { id: userId } = user;
-    const key = teamId ? teamId : 'total';
-    const userRank = await this.redisCachingService.getUserRank(userId, key);
+    const userRank = await this.redisCachingService.getUserRank(userId, teamId);
     if (userRank === null) {
       return [];
     }
     const start = Math.max(userRank - 1, 0);
     const end = userRank + 1;
-    const rankList = await this.redisCachingService.getRankingList(
-      key,
-      start,
-      end,
-    );
+    const refinedRankData = await this.getRankList(start, end, teamId);
     const searchRank = [];
-    for (let i = 0; i < rankList.length; i += 2) {
+    for (let i = 0; i < refinedRankData.length; i++) {
       const result = await this.redisCachingService.getUserRank(
-        parseInt(rankList[i]),
-        key,
+        refinedRankData[i].user_id,
+        teamId,
       );
-      // 순위 1등은 0으로 들어옴
-      searchRank.push(result + 1);
+      searchRank.push(result + 1); // 순위 1등은 0으로 들어 옴
     }
-    const calculated = await this.processRankList(rankList);
 
-    const result = calculated.map((data, i) => {
+    const result = refinedRankData.map((data, i) => {
       data.rank = searchRank[i];
       return data;
     });
@@ -154,6 +148,8 @@ export class RankService {
     end: number,
     teamId?: number,
   ): Promise<IRefinedRankData[]> {
+    if (end !== -1 && start > end)
+      throw new BadRequestException('잘못된 랭킹 리스트 요청');
     const key = teamId ? teamId : 'total';
 
     const rankList = await this.redisCachingService.getRankingList(
