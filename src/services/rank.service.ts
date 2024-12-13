@@ -251,55 +251,59 @@ export class RankService {
 
   /** @description 직관 홈 승리 & 상대팀 전적 불러오기 */
   async userStatsWithVerseTeam(userId: number) {
-    const registeredGame: {
-      win_id: number;
-      home_id: number;
-      away_id: number;
-      sup_id: number;
-      status: TRegisteredGameStatus;
-    }[] = await this.registeredGameRepository
-      .createQueryBuilder('registered_game')
-      .innerJoin('registered_game.game', 'game')
-      .select([
-        'game.winning_team as win_id',
-        'game.home_team_id as home_id',
-        'game.away_team_id as away_id',
-        'registered_game.status status',
-        'registered_game.cheering_team.id as sup_id',
-      ])
-      .where('registered_game.user.id = :id', { id: userId })
-      .getRawMany();
+    try {
+      const registeredGame: {
+        win_id: number;
+        home_id: number;
+        away_id: number;
+        sup_id: number;
+        status: TRegisteredGameStatus;
+      }[] = await this.registeredGameRepository
+        .createQueryBuilder('registered_game')
+        .innerJoin('registered_game.game', 'game')
+        .select([
+          'game.winning_team as win_id',
+          'game.home_team_id as home_id',
+          'game.away_team_id as away_id',
+          'registered_game.status status',
+          'registered_game.cheering_team.id as sup_id',
+        ])
+        .where('registered_game.user.id = :id', { id: userId })
+        .getRawMany();
 
-    let homeWin = 0;
-    let totalWin = 0;
-    const oppTeam = {};
-    for (const game of registeredGame) {
-      const { away_id, home_id, sup_id, status } = game;
-      const isHomeGame = home_id === sup_id;
-      const opp_id = home_id === sup_id ? away_id : home_id;
-      if (status === 'No game') {
-        continue;
-      }
-      if (status === 'Tie') {
+      let homeWin = 0;
+      let totalWin = 0;
+      const oppTeam = {};
+      for (const game of registeredGame) {
+        const { away_id, home_id, sup_id, status } = game;
+        const isHomeGame = home_id === sup_id;
+        const opp_id = home_id === sup_id ? away_id : home_id;
+        if (status === 'No game') {
+          continue;
+        }
+        if (status === 'Tie') {
+          oppTeam[opp_id]
+            ? oppTeam[opp_id].total++
+            : (oppTeam[opp_id] = { total: 1, win: 0 });
+          continue;
+        }
+        if (status === 'Win') {
+          isHomeGame ? homeWin++ : null;
+          totalWin++;
+          oppTeam[opp_id]
+            ? (oppTeam[opp_id].total++, oppTeam[opp_id].win++)
+            : (oppTeam[opp_id] = { total: 1, win: 1 });
+          continue;
+        }
         oppTeam[opp_id]
           ? oppTeam[opp_id].total++
           : (oppTeam[opp_id] = { total: 1, win: 0 });
-        continue;
       }
-      if (status === 'Win') {
-        isHomeGame ? homeWin++ : null;
-        totalWin++;
-        oppTeam[opp_id]
-          ? (oppTeam[opp_id].total++, oppTeam[opp_id].win++)
-          : (oppTeam[opp_id] = { total: 1, win: 1 });
-        continue;
-      }
-      oppTeam[opp_id]
-        ? oppTeam[opp_id].total++
-        : (oppTeam[opp_id] = { total: 1, win: 0 });
-    }
 
-    return { totalWin, homeWin, oppTeam };
+      return { totalWin, homeWin, oppTeam };
+    } catch (error) {
+      throw new InternalServerErrorException('데이터 조회 중 문제가 발생');
+    }
   }
 
   private calculateScore({

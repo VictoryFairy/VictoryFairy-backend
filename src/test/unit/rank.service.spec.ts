@@ -333,12 +333,50 @@ describe('RankService', () => {
         redisCachingService,
         'updateRankingScoreByUserId',
       );
-
       await rankService.updateRedisRankings(1);
 
       expect(spyRedis).toHaveBeenCalledTimes(2);
       expect(spyRedis).toHaveBeenNthCalledWith(1, 1, '1000', '5');
       expect(spyRedis).toHaveBeenNthCalledWith(2, 1, '1000', 'total');
+    });
+  });
+
+  describe('userOverallGameStats', () => {
+    it('해당 유저의 모든 팀과 종합 기록을 반환', async () => {
+      jest
+        .spyOn(rankRepo, 'find')
+        .mockResolvedValue([
+          { team_id: 1, win: 0, lose: 2, tie: 0, cancel: 0 } as Rank,
+          { team_id: 2, win: 1, lose: 0, tie: 1, cancel: 0 } as Rank,
+        ]);
+      const result = await rankService.userOverallGameStats(1);
+      expect(result).toEqual({
+        win: 1,
+        lose: 2,
+        tie: 1,
+        cancel: 0,
+        total: 4,
+        score: 990,
+      });
+    });
+    it('해당 유저의 기록이 없는 경우, 기본값 반환', async () => {
+      jest.spyOn(rankRepo, 'find').mockResolvedValue([]);
+      const result = await rankService.userOverallGameStats(1);
+      expect(result).toEqual({
+        win: 0,
+        lose: 0,
+        tie: 0,
+        cancel: 0,
+        total: 0,
+        score: 1000,
+      });
+    });
+    it('Rank 테이블 조회 실패 시, InternalServerErrorException예외 반환', async () => {
+      jest.spyOn(rankRepo, 'find').mockRejectedValue(new Error());
+
+      await expect(rankService.userOverallGameStats(1)).rejects.toThrow(
+        InternalServerErrorException,
+      );
     });
   });
 });
