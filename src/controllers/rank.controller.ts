@@ -30,7 +30,7 @@ export class RankController {
   })
   async getRankTopThree(@Query() query: QueryTotalRankingListAboutTeamDto) {
     const { teamId } = query;
-    const topResult = await this.rankService.getTopThreeRankList(teamId);
+    const topResult = await this.rankService.getRankList(0, 2, teamId);
 
     return plainToInstance(ResRankTopThreeDto, { top: topResult });
   }
@@ -77,7 +77,7 @@ export class RankController {
   async getRankList(@Query() query: QueryTotalRankingListAboutTeamDto) {
     const { teamId } = query;
 
-    const result = await this.rankService.getRankList(teamId);
+    const result = await this.rankService.getRankList(0, -1, teamId);
 
     return result.map((rank) => plainToInstance(ResRankDto, rank));
   }

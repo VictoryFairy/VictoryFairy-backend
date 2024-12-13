@@ -92,7 +92,9 @@ export class RedisCachingService {
     }
   }
 
-  async getUserInfo() {
+  async getUserInfo(): Promise<
+    Record<string, { id: number; nickname: string; profile_image: string }>
+  > {
     const rawUserInfo = await this.redisClient.hgetall(RedisKeys.USER_INFO);
     const parsedInfo = {};
     Object.values(rawUserInfo).forEach((user) => {
@@ -116,7 +118,8 @@ export class RedisCachingService {
     }
   }
 
-  async getUserRank(userId: number, key: 'total' | number): Promise<number> {
+  async getUserRank(userId: number, teamId?: number): Promise<number | null> {
+    const key = teamId ? teamId : 'total';
     const userRank = await this.redisClient.zrevrank(
       `${RedisKeys.RANKING}:${key}`,
       userId.toString(),

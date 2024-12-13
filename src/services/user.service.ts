@@ -5,9 +5,14 @@ import {
   Logger,
 } from '@nestjs/common';
 import * as bcrypt from 'bcrypt';
-import { HASH_ROUND } from 'src/const/user.const';
+import { DEFAULT_PROFILE_IMAGE, HASH_ROUND } from 'src/const/user.const';
 import { InjectRepository } from '@nestjs/typeorm';
-import { FindOptionsRelations, FindOptionsSelect, Repository } from 'typeorm';
+import {
+  FindOptionsRelations,
+  FindOptionsSelect,
+  Repository,
+  UpdateResult,
+} from 'typeorm';
 import { User } from 'src/entities/user.entity';
 import { CreateUserDto, LoginUserDto } from 'src/dtos/user.dto';
 import { EventEmitter2, OnEvent } from '@nestjs/event-emitter';
@@ -17,7 +22,7 @@ import { RankService } from './rank.service';
 import * as moment from 'moment';
 import { AwsS3Service } from 'src/services/aws-s3.service';
 import { RedisCachingService } from './redis-caching.service';
-import { Transactional } from 'typeorm-transactional';
+import { runOnTransactionCommit, Transactional } from 'typeorm-transactional';
 
 @Injectable()
 export class UserService {
@@ -35,9 +40,10 @@ export class UserService {
 
   /** 레디스 연결 시 미리 저장 */
   @OnEvent(EventName.REDIS_CONNECT)
-  async initCacheUsers() {
+  async initCacheUsers(): Promise<void> {
     try {
       const users = await this.userRepository.find();
+      if (!users.length) return;
       const userIds = [];
       const cachingPromises = users.map((user) => {
         userIds.push(user.id);
@@ -52,7 +58,7 @@ export class UserService {
     }
   }
 
-  async isExistEmail(email: string) {
+  async isExistEmail(email: string): Promise<boolean> {
     try {
       return this.userRepository.exists({ where: { email } });
     } catch (error) {
@@ -60,7 +66,7 @@ export class UserService {
     }
   }
 
-  async isExistNickname(nickname: string) {
+  async isExistNickname(nickname: string): Promise<boolean> {
     try {
       return this.userRepository.exists({ where: { nickname } });
     } catch (error) {
@@ -72,7 +78,7 @@ export class UserService {
     userId: number,
     withEntity?: FindOptionsRelations<User>,
     select?: FindOptionsSelect<User>,
-  ) {
+  ): Promise<User> {
     try {
       const findUser = await this.userRepository.findOne({
         where: { id: userId },
@@ -85,7 +91,7 @@ export class UserService {
     }
   }
 
-  async findUserByEmail(email: string) {
+  async findUserByEmail(email: string): Promise<User> {
     try {
       return this.userRepository.findOne({ where: { email } });
     } catch (error) {
@@ -94,13 +100,12 @@ export class UserService {
   }
 
   @Transactional()
-  async createUser(dto: CreateUserDto) {
+  async createUser(dto: CreateUserDto): Promise<{ id: number }> {
     try {
       const { email, password, teamId } = dto;
       let { image, nickname } = dto;
       if (!image || image.trim() === '') {
-        image =
-          'https://sngyo-image.s3.ap-northeast-2.amazonaws.com/fairyImg/0.png';
+        image = DEFAULT_PROFILE_IMAGE;
       }
 
       if (!nickname || nickname.trim() === '') {
@@ -108,7 +113,6 @@ export class UserService {
         let randomNum: number;
         while (isExist) {
           randomNum = Math.floor(Math.random() * 10000);
-
           nickname = `승리요정#${randomNum.toString().padStart(4, '0')}`;
           isExist = await this.isExistNickname(nickname);
         }
@@ -123,17 +127,22 @@ export class UserService {
         password: hashPw,
       });
 
-      //Redis caching
-      await this.redisCachingService.saveUser(createdUser);
-
       // Rank table 업데이트
       await this.rankService.initialSave({
         team_id: teamId,
         year: moment().utc().year(),
         user_id: createdUser.id,
       });
-      // Redis Rank caching
-      await this.rankService.updateRedisRankings(createdUser.id);
+
+      runOnTransactionCommit(async () => {
+        //Redis caching
+        try {
+          await this.redisCachingService.saveUser(createdUser);
+          await this.rankService.updateRedisRankings(createdUser.id);
+        } catch (error) {
+          this.logger.warn(`유저 ${createdUser.id} 캐싱 실패`, error.stack);
+        }
+      });
 
       return { id: createdUser.id };
     } catch (error) {
@@ -141,12 +150,12 @@ export class UserService {
     }
   }
 
-  async checkUserPw(user: User, password) {
+  async checkUserPw(user: User, password): Promise<boolean> {
     const isVerifiedPw = await bcrypt.compare(password, user.password);
     return isVerifiedPw;
   }
 
-  async changeUserPw({ email, password }: LoginUserDto) {
+  async changeUserPw({ email, password }: LoginUserDto): Promise<UpdateResult> {
     const user = await this.findUserByEmail(email);
     if (!user) {
       throw new BadRequestException('해당 이메일로 가입된 계정 없음');
@@ -166,7 +175,7 @@ export class UserService {
   async changeUserProfile(
     updateInput: { field: 'teamId' | 'image' | 'nickname'; value: any },
     user: User,
-  ) {
+  ): Promise<User> {
     try {
       const { profile_image } = user;
       const { field, value } = updateInput;
@@ -196,16 +205,24 @@ export class UserService {
   }
 
   @Transactional()
-  async deleteUser(user: User) {
-    const teams = await this.teamRepository.find({ select: { id: true } });
-    const { profile_image, id, email } = user;
+  async deleteUser(user: User): Promise<{ affected: number }> {
+    try {
+      const teams = await this.teamRepository.find({ select: { id: true } });
+      const { profile_image, id, email } = user;
 
-    const { affected } = await this.userRepository.delete({ id, email });
-    // s3 이미지 삭제
-    await this.awsS3Service.deleteImage({ fileUrl: profile_image });
+      const { affected } = await this.userRepository.delete({ id, email });
 
-    await this.redisCachingService.userSynchronizationTransaction(id, teams);
+      runOnTransactionCommit(async () => {
+        await this.awsS3Service.deleteImage({ fileUrl: profile_image });
+        await this.redisCachingService.userSynchronizationTransaction(
+          id,
+          teams,
+        );
+      });
 
-    return { affected };
+      return { affected };
+    } catch (error) {
+      throw new InternalServerErrorException('유저 삭제 실패');
+    }
   }
 }
