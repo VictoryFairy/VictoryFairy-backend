@@ -1,18 +1,10 @@
 import { InternalServerErrorException } from '@nestjs/common';
 import Redis from 'ioredis';
 import { CODE_LIMIT_TIME } from 'src/const/auth.const';
+import { RedisKeys } from 'src/const/redis.const';
 import { InjectRedisClient } from 'src/decorator/redis-inject.decorator';
 import { Team } from 'src/entities/team.entity';
 import { User } from 'src/entities/user.entity';
-
-export enum RedisKeys {
-  /** @description [Namespace 없음] */
-  USER_INFO = 'userInfo',
-  /** @description [Namespace 필수] Email */
-  EMAIL_CODE = 'code',
-  /** @description [Namespace 필수] 전체 : total, 팀 : teamId */
-  RANKING = 'rank',
-}
 
 export class RedisCachingService {
   constructor(
