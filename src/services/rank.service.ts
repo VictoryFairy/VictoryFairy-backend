@@ -9,7 +9,6 @@ import { Rank } from 'src/entities/rank.entity';
 import { RegisteredGame } from 'src/entities/registered-game.entity';
 import { User } from 'src/entities/user.entity';
 import { Repository } from 'typeorm';
-import * as moment from 'moment';
 import { CreateRankDto, UserRecordDto } from 'src/dtos/rank.dto';
 import { OnEvent } from '@nestjs/event-emitter';
 import { EventName } from 'src/const/event.const';
@@ -198,9 +197,8 @@ export class RankService {
   private async calculateUserRankings(
     userId: number,
   ): Promise<Record<string, Omit<UserRecordDto, 'total'>> | undefined> {
-    const thisYear = moment().year();
     const foundUserStats = await this.rankRepository.find({
-      where: { user: { id: userId }, active_year: thisYear },
+      where: { user: { id: userId } },
     });
     if (!foundUserStats) return {};
 
@@ -208,7 +206,7 @@ export class RankService {
     const totals = { win: 0, lose: 0, tie: 0, cancel: 0 };
 
     for (const stat of foundUserStats) {
-      const { id, team_id, active_year, ...rest } = stat;
+      const { id, team_id, ...rest } = stat;
 
       const score = this.calculateScore(rest);
       // 서포트 팀 아이디가 key 값
