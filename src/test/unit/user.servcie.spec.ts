@@ -313,9 +313,28 @@ describe('userService Test', () => {
         fileUrl: 'img',
       });
     });
-    it('이미지를 변경 시, 기존 프로필과 같다면 , 레디스에 캐싱만 수행', async () => {
+
+    it('이미지를 변경 시, 기존 프로필 이미지가 DEFAULT 이미지인 경우, 이미지 삭제 스킵 및 레디스 캐싱 수행', async () => {
+      const mockDefaultImgUser = {
+        id: 1,
+        profile_image: DEFAULT_PROFILE_IMAGE,
+      } as User;
+      const updatedUser = { ...mockDefaultImgUser, profile_image: 'img' };
+      jest.spyOn(userRepo, 'save').mockResolvedValue(updatedUser);
+
+      const result = await userService.changeUserProfile(
+        { field: 'image', value: 'img' },
+        mockDefaultImgUser,
+      );
+
+      expect(result).toEqual(updatedUser);
+      expect(redisCachingService.saveUser).toHaveBeenCalledWith(updatedUser);
+      expect(awsS3Service.deleteImage).not.toHaveBeenCalled();
+    });
+
+    it('이미지를 변경 시, 기존 프로필과 같다면, 이미지 삭제 스킵 및 레디스 캐싱 수행', async () => {
       const updatedUser: User = { ...mockUser, profile_image: 'img' };
-      jest.spyOn(userRepo, 'save').mockResolvedValue(mockUser);
+      jest.spyOn(userRepo, 'save').mockResolvedValue(updatedUser);
 
       const result = await userService.changeUserProfile(
         { field: 'image', value: 'img' },
@@ -323,9 +342,10 @@ describe('userService Test', () => {
       );
 
       expect(result).toEqual(updatedUser);
-      expect(redisCachingService.saveUser).toHaveBeenCalled();
+      expect(redisCachingService.saveUser).toHaveBeenCalledWith(updatedUser);
       expect(awsS3Service.deleteImage).not.toHaveBeenCalled();
     });
+
     it('nickname을 변경하면, DB에 닉네임 변경 후, 레디스에 캐싱', async () => {
       const updatedUser: User = { ...mockUser, nickname: 'updated_nick' };
       jest.spyOn(userRepo, 'save').mockResolvedValue(mockUser);

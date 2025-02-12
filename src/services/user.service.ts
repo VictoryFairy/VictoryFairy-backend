@@ -192,7 +192,11 @@ export class UserService {
       if (field === 'image' || field === 'nickname') {
         // redis caching
         await this.redisCachingService.saveUser(updatedUser);
-        if (field === 'image' && profile_image !== value) {
+        if (
+          field === 'image' &&
+          profile_image !== value &&
+          profile_image !== DEFAULT_PROFILE_IMAGE
+        ) {
           // s3 이미지 삭제
           await this.awsS3Service.deleteImage({ fileUrl: profile_image });
         }

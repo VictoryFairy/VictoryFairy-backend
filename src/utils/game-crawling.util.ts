@@ -207,35 +207,42 @@ async function upsertMany(
       game.status = schedule.status;
       game.home_team_score = schedule.homeScore ?? null;
       game.away_team_score = schedule.awayScore ?? null;
-      game.winning_team = schedule.winner
-        ? (teams.find((team) => team.name === schedule.winner) ?? null)
-        : null;
 
-      game.home_team =
-        teams.find((team) => team.name === schedule.homeTeam) ??
-        (await manager.getRepository(Team).save({ name: schedule.homeTeam }));
+      let homeTeam = teams.find((team) => team.name === schedule.homeTeam);
+      if (!homeTeam) {
+        await manager
+          .getRepository(Team)
+          .upsert({ name: schedule.homeTeam }, ['name']);
 
-      if (!game.home_team) {
-        console.log(
-          '홈 팀이 누락되었거나 아직 로드되지 않았습니다:',
-          game,
-          schedule,
-        );
+        homeTeam = await manager
+          .getRepository(Team)
+          .findOne({ where: { name: schedule.homeTeam } });
+      }
+      // DB에 없는 경우
+      if (!homeTeam) {
+        console.log('홈 팀을 찾을 수 없습니다:', schedule.homeTeam);
         continue;
       }
+      game.home_team = homeTeam;
 
-      game.away_team =
-        teams.find((team) => team.name === schedule.awayTeam) ??
-        (await manager.getRepository(Team).save({ name: schedule.awayTeam }));
-
-      if (!game.away_team) {
-        console.log(
-          '원정 팀이 누락되었거나 아직 로드되지 않았습니다:',
-          game,
-          schedule,
-        );
+      let awayTeam = teams.find((team) => team.name === schedule.awayTeam);
+      if (!awayTeam) {
+        await manager
+          .getRepository(Team)
+          .upsert({ name: schedule.awayTeam }, ['name']);
+        awayTeam = await manager
+          .getRepository(Team)
+          .findOne({ where: { name: schedule.awayTeam } });
+      }
+      // DB에 없는 경우
+      if (!awayTeam) {
+        console.log('원정 팀을 찾을 수 없습니다:', schedule.awayTeam);
         continue;
       }
+      game.away_team = awayTeam;
+
+      game.winning_team =
+        schedule.winner === homeTeam.name ? homeTeam : awayTeam;
 
       game.stadium =
         stadiums.find((stadium) => stadium.name === schedule.stadium) ??

@@ -1,6 +1,7 @@
 import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import { Redis } from 'ioredis';
+import { EventName } from 'src/const/event.const';
 import { InjectRedisClient } from 'src/decorator/redis-inject.decorator';
 
 @Injectable()
@@ -31,7 +32,7 @@ export class RedisConnectionService implements OnModuleInit {
       const test = await this.redisClient.ping();
       if (test === 'PONG') {
         this.logger.log('Redis 연결 확인');
-        this.eventEmitter.emit('redis-connected');
+        this.eventEmitter.emit(EventName.REDIS_CONNECT);
       }
     } catch (error) {
       this.logger.error('Redis 연결 실패:', error);
