@@ -10,4 +10,6 @@ export const teamNameToTeamId = {
   키움: 'WO',
   KT: 'KT',
   한화: 'HH',
+  나눔: 'WA',
+  드림: 'AE',
 };
