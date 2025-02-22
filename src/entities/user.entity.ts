@@ -12,6 +12,7 @@ import { Team } from './team.entity';
 import { RegisteredGame } from './registered-game.entity';
 import { Rank } from './rank.entity';
 import { LikeCheeringSong } from './like-cheering-song.entity';
+import { UserTerm } from './user-term.entity';
 
 @Entity()
 export class User {
@@ -30,6 +31,9 @@ export class User {
   @Column()
   password: string;
 
+  @Column({ default: true })
+  is_active: boolean;
+
   @OneToMany(() => Rank, (rank) => rank.id)
   rank: Rank[];
 
@@ -42,6 +46,9 @@ export class User {
 
   @OneToMany(() => LikeCheeringSong, (like) => like.user)
   likeCheeringSongs: LikeCheeringSong[];
+
+  @OneToMany(() => UserTerm, (userTerm) => userTerm.user)
+  user_terms: UserTerm[];
 
   @CreateDateColumn({ type: 'timestamptz' })
   created_at: Date;

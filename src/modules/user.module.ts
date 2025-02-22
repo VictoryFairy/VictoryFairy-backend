@@ -12,7 +12,12 @@ import { Team } from 'src/entities/team.entity';
 @Module({
   imports: [
     AuthModule,
-    TypeOrmModule.forFeature([User, Team]),
+    TypeOrmModule.forFeature([
+      User,
+      Team,
+      UserTerm,
+      Term,
+    ]),
     RedisModule,
     RankModule,
     AwsS3Module,
