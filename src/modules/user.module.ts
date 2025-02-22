@@ -8,6 +8,10 @@ import { RedisModule } from './redis.module';
 import { RankModule } from './rank.module';
 import { AwsS3Module } from './aws-s3.module';
 import { Team } from 'src/entities/team.entity';
+import { UserTerm } from 'src/entities/user-term.entity';
+import { Term } from 'src/entities/term.entity';
+import { LocalAuth } from 'src/entities/local-auth.entity';
+import { SocialAuth } from 'src/entities/social-auth.entity';
 
 @Module({
   imports: [
@@ -17,6 +21,8 @@ import { Team } from 'src/entities/team.entity';
       Team,
       UserTerm,
       Term,
+      LocalAuth,
+      SocialAuth,
     ]),
     RedisModule,
     RankModule,
