@@ -12,7 +12,12 @@ import { createRandomCode } from 'src/utils/random-code.util';
 import { CODE_LENGTH } from 'src/const/auth.const';
 import { InjectRepository } from '@nestjs/typeorm';
 import { User } from 'src/entities/user.entity';
-import { FindOptionsRelations, FindOptionsWhere, Repository } from 'typeorm';
+import {
+  FindOptionsRelations,
+  FindOptionsSelect,
+  FindOptionsWhere,
+  Repository,
+} from 'typeorm';
 import { EmailWithCodeDto, LoginUserDto } from 'src/dtos/user.dto';
 import { RedisCachingService } from '../services/redis-caching.service';
 
@@ -27,15 +32,25 @@ export class AuthService {
     private readonly redisCachingService: RedisCachingService,
   ) {}
 
-  async loginUser(dto: LoginUserDto) {
+  async loginLocalUser(dto: LoginUserDto) {
     const user = await this.getUser(
       { email: dto.email },
-      { support_team: true },
+      { support_team: true, local_auth: true },
+      {
+        id: true,
+        email: true,
+        local_auth: { password: true },
+        support_team: { id: true, name: true },
+      },
     );
-    if (!user) {
+
+    if (!user || !user.local_auth) {
       throw new UnauthorizedException('아이디 또는 비밀번호가 틀림');
     }
-    const isCorrectPw = await bcrypt.compare(dto.password, user.password);
+    const isCorrectPw = await bcrypt.compare(
+      dto.password,
+      user.local_auth.password,
+    );
     if (!isCorrectPw) {
       throw new UnauthorizedException('아이디 또는 비밀번호가 틀림');
     }
@@ -123,10 +138,12 @@ export class AuthService {
   async getUser(
     whereOpt: FindOptionsWhere<User>,
     relations?: FindOptionsRelations<User>,
+    select?: FindOptionsSelect<User>,
   ) {
     const findUser = await this.userRepository.findOne({
       where: whereOpt,
       relations,
+      select,
     });
     if (!findUser) {
       throw new UnauthorizedException('해당 유저를 찾을 수 없음');

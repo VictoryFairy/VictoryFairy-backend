@@ -96,7 +96,9 @@ describe('AuthService Test', () => {
       id: 1,
       email: 'test@test.com',
       nickname: 'tester',
-      password: 'hashed_pw',
+      local_auth: {
+        password: 'hashed_pw',
+      },
     };
     const mockLoginDto: LoginUserDto = {
       email: mockUser.email,
@@ -112,7 +114,7 @@ describe('AuthService Test', () => {
           return isRefresh ? 'rfToken' : 'acToken';
         });
 
-      const result = await authService.loginUser(mockLoginDto);
+      const result = await authService.loginLocalUser(mockLoginDto);
 
       expect(result).toEqual({
         user: mockUser,
@@ -121,11 +123,17 @@ describe('AuthService Test', () => {
       });
       expect(authService.getUser).toHaveBeenCalledWith(
         { email: mockLoginDto.email },
-        { support_team: true },
+        { support_team: true, local_auth: true },
+        {
+          id: true,
+          email: true,
+          local_auth: { password: true },
+          support_team: { id: true, name: true },
+        },
       );
       expect(bcryptCompare).toHaveBeenCalledWith(
         mockLoginDto.password,
-        mockUser.password,
+        mockUser.local_auth.password,
       );
       expect(authService.issueToken).toHaveBeenCalledTimes(2);
     });
@@ -136,7 +144,7 @@ describe('AuthService Test', () => {
       (bcrypt.compare as jest.Mock) = bcryptCompare;
       jest.spyOn(authService, 'issueToken');
 
-      await expect(authService.loginUser(mockLoginDto)).rejects.toThrow(
+      await expect(authService.loginLocalUser(mockLoginDto)).rejects.toThrow(
         UnauthorizedException,
       );
       expect(bcryptCompare).not.toHaveBeenCalled();
@@ -149,12 +157,12 @@ describe('AuthService Test', () => {
       (bcrypt.compare as jest.Mock) = bcryptCompare;
       jest.spyOn(authService, 'issueToken');
 
-      await expect(authService.loginUser(mockLoginDto)).rejects.toThrow(
+      await expect(authService.loginLocalUser(mockLoginDto)).rejects.toThrow(
         UnauthorizedException,
       );
       expect(bcryptCompare).toHaveBeenCalledWith(
         mockLoginDto.password,
-        mockUser.password,
+        mockUser.local_auth.password,
       );
       expect(authService.issueToken).not.toHaveBeenCalled();
     });

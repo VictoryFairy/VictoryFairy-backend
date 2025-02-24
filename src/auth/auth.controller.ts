@@ -53,7 +53,7 @@ export class AuthController {
   async login(@Body() body: LoginUserDto, @Res() res: Response) {
     const domain = this.configService.get('DOMAIN');
     const nodeEnv = this.configService.get('NODE_ENV');
-    const { acToken, rfToken, user } = await this.authService.loginUser(body);
+    const { acToken, rfToken, user } = await this.authService.loginLocalUser(body);
 
     const rfExTime = this.configService.get('REFRESH_EXPIRE_TIME');
     const cookieOptions: CookieOptions = {

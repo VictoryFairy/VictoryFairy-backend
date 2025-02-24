@@ -23,6 +23,7 @@ import * as moment from 'moment';
 import { AwsS3Service } from 'src/services/aws-s3.service';
 import { RedisCachingService } from './redis-caching.service';
 import { runOnTransactionCommit, Transactional } from 'typeorm-transactional';
+import { LocalAuth } from 'src/entities/local-auth.entity';
 
 @Injectable()
 export class UserService {
@@ -30,6 +31,8 @@ export class UserService {
   constructor(
     @InjectRepository(User)
     private readonly userRepository: Repository<User>,
+    @InjectRepository(LocalAuth)
+    private readonly localAuthRepository: Repository<LocalAuth>,
     @InjectRepository(Team)
     private readonly teamRepository: Repository<Team>,
     private readonly eventEmitter: EventEmitter2,
@@ -100,7 +103,7 @@ export class UserService {
   }
 
   @Transactional()
-  async createUser(dto: CreateUserDto): Promise<{ id: number }> {
+  async createLocalUser(dto: CreateUserDto): Promise<{ id: number }> {
     try {
       const { email, password, teamId } = dto;
       let { image, nickname } = dto;
@@ -124,6 +127,9 @@ export class UserService {
         profile_image: image,
         support_team: { id: teamId },
         nickname,
+      });
+      await this.localAuthRepository.insert({
+        user_id: createdUser.id,
         password: hashPw,
       });
 
@@ -151,7 +157,10 @@ export class UserService {
   }
 
   async checkUserPw(user: User, password): Promise<boolean> {
-    const isVerifiedPw = await bcrypt.compare(password, user.password);
+    const localAuthUser = await this.localAuthRepository.findOne({
+      where: { user_id: user.id },
+    });
+    const isVerifiedPw = await bcrypt.compare(password, localAuthUser.password);
     return isVerifiedPw;
   }
 
@@ -162,8 +171,8 @@ export class UserService {
     }
     try {
       const newHashPw = await bcrypt.hash(password, HASH_ROUND);
-      const updatedUser = await this.userRepository.update(
-        { id: user.id },
+      const updatedUser = await this.localAuthRepository.update(
+        { user_id: user.id },
         { password: newHashPw },
       );
       return updatedUser;
