@@ -14,12 +14,8 @@ import { InternalServerErrorException, Logger } from '@nestjs/common';
 import * as bcrypt from 'bcrypt';
 import { CreateUserDto } from 'src/dtos/user.dto';
 import { DEFAULT_PROFILE_IMAGE } from 'src/const/user.const';
+import { LocalAuth } from 'src/entities/local-auth.entity';
 
-const mockTeams = [
-  { id: 1, name: 't1' },
-  { id: 2, name: 't2' },
-  { id: 3, name: 't3' },
-];
 const mockUsers = [
   { id: 1, email: 'test1@test.com', nickname: 'tester1' },
   { id: 2, email: 'test2@test.com', nickname: 'tester2' },
@@ -37,7 +33,6 @@ const mockHashedPw = 'hashed_pw';
 const mockCreatedUser: Partial<User> = {
   email: mockCreateUserDto.email,
   profile_image: mockCreateUserDto.image,
-  password: mockHashedPw,
   id: 100,
   nickname: 'tester',
   support_team: { id: mockCreateUserDto.teamId } as Team,
@@ -52,7 +47,7 @@ jest.mock('typeorm-transactional', () => ({
 
 describe('userService Test', () => {
   let userRepo: Repository<User>;
-  let teamRepo: Repository<Team>;
+  let localAuthRepo: Repository<LocalAuth>;
   let userService: UserService;
   let rankService: RankService;
   let awsS3Service: AwsS3Service;
@@ -87,11 +82,15 @@ describe('userService Test', () => {
           provide: RedisCachingService,
           useValue: MockServiceFactory.createMockService(RedisCachingService),
         },
+        {
+          provide: getRepositoryToken(LocalAuth),
+          useValue: MockRepoFactory.createMockRepo<LocalAuth>(),
+        },
       ],
     }).compile();
     userService = moduleRef.get(UserService);
-    teamRepo = moduleRef.get(getRepositoryToken(Team));
     userRepo = moduleRef.get(getRepositoryToken(User));
+    localAuthRepo = moduleRef.get(getRepositoryToken(LocalAuth));
     rankService = moduleRef.get(RankService);
     awsS3Service = moduleRef.get(AwsS3Service);
     redisCachingService = moduleRef.get(RedisCachingService);
@@ -157,16 +156,17 @@ describe('userService Test', () => {
     beforeEach(async () => {
       const bcryptHash = jest.fn().mockResolvedValue(mockHashedPw);
       (bcrypt.hash as jest.Mock) = bcryptHash;
+      jest.spyOn(localAuthRepo, 'insert');
     });
 
     it('이미지와 닉네임이 빈 값이 아니고 유저가 생성 되었다면, 생성된 유저 아이디를 반환', async () => {
       jest.spyOn(userRepo, 'save').mockResolvedValue(mockCreatedUser as User);
       jest.spyOn(userService, 'isExistNickname');
-
       jest.spyOn(rankService, 'initialSave');
       jest.spyOn(redisCachingService, 'saveUser');
       jest.spyOn(rankService, 'updateRedisRankings');
-      const result = await userService.createUser(mockCreateUserDto);
+
+      const result = await userService.createLocalUser(mockCreateUserDto);
 
       expect(result).toEqual({ id: mockCreatedUser.id });
       expect(userService.isExistNickname).not.toHaveBeenCalled();
@@ -175,9 +175,18 @@ describe('userService Test', () => {
           email: mockCreateUserDto.email,
           profile_image: mockCreateUserDto.image,
           support_team: { id: mockCreateUserDto.teamId },
-          password: mockHashedPw,
         }),
       );
+      expect(userRepo.save).not.toHaveBeenCalledWith(
+        expect.objectContaining({
+          password: expect.any(String),
+        }),
+      );
+      expect(localAuthRepo.insert).toHaveBeenCalledWith({
+        user_id: mockCreatedUser.id,
+        password: mockHashedPw,
+      });
+
       expect(rankService.initialSave).toHaveBeenCalled();
       expect(rankService.updateRedisRankings).toHaveBeenCalledWith(
         mockCreatedUser.id,
@@ -188,7 +197,7 @@ describe('userService Test', () => {
       jest.spyOn(userRepo, 'save').mockResolvedValue(mockCreatedUser as User);
       jest.spyOn(userService, 'isExistNickname');
 
-      const result = await userService.createUser({
+      const result = await userService.createLocalUser({
         ...mockCreateUserDto,
         image: '',
       });
@@ -197,11 +206,24 @@ describe('userService Test', () => {
       expect(userService.isExistNickname).not.toHaveBeenCalled();
       expect(userRepo.save).toHaveBeenCalledWith(
         expect.objectContaining({
-          password: mockHashedPw,
           profile_image: DEFAULT_PROFILE_IMAGE,
           nickname: mockCreateUserDto.nickname,
         }),
       );
+      expect(userRepo.save).not.toHaveBeenCalledWith(
+        expect.objectContaining({
+          password: expect.any(String),
+        }),
+      );
+      expect(userRepo.save).not.toHaveBeenCalledWith(
+        expect.objectContaining({
+          password: expect.any(String),
+        }),
+      );
+      expect(localAuthRepo.insert).toHaveBeenCalledWith({
+        user_id: mockCreatedUser.id,
+        password: mockHashedPw,
+      });
     });
 
     it('닉네임이 빈 값인 경우, 중복 확인 후 자동생성 닉네임으로 유저를 생성', async () => {
@@ -212,7 +234,7 @@ describe('userService Test', () => {
       jest.spyOn(userService, 'isExistNickname').mockResolvedValueOnce(false);
       jest.spyOn(userRepo, 'save').mockResolvedValue(mockCreatedUser as User);
 
-      const result = await userService.createUser({
+      const result = await userService.createLocalUser({
         ...mockCreateUserDto,
         nickname: '',
       });
@@ -226,18 +248,31 @@ describe('userService Test', () => {
         expect.objectContaining({
           profile_image: mockCreateUserDto.image,
           nickname: randomDefaultNick,
-          password: mockHashedPw,
         }),
       );
+      expect(userRepo.save).not.toHaveBeenCalledWith(
+        expect.objectContaining({
+          password: expect.any(String),
+        }),
+      );
+      expect(userRepo.save).not.toHaveBeenCalledWith(
+        expect.objectContaining({
+          password: expect.any(String),
+        }),
+      );
+      expect(localAuthRepo.insert).toHaveBeenCalledWith({
+        user_id: mockCreatedUser.id,
+        password: mockHashedPw,
+      });
     });
 
     it('유저 DB에 저장 실패 시, InternalServerErrorException예외 발생', async () => {
       jest.spyOn(userRepo, 'save').mockRejectedValue(new Error());
       jest.spyOn(redisCachingService, 'saveUser');
 
-      await expect(userService.createUser(mockCreateUserDto)).rejects.toThrow(
-        InternalServerErrorException,
-      );
+      await expect(
+        userService.createLocalUser(mockCreateUserDto),
+      ).rejects.toThrow(InternalServerErrorException);
       expect(redisCachingService.saveUser).not.toHaveBeenCalled();
     });
 
@@ -249,7 +284,7 @@ describe('userService Test', () => {
       jest.spyOn(rankService, 'updateRedisRankings');
       jest.spyOn(userService['logger'], 'warn');
 
-      const result = await userService.createUser(mockCreateUserDto);
+      const result = await userService.createLocalUser(mockCreateUserDto);
 
       expect(result).toEqual({ id: mockCreatedUser.id });
       expect(redisCachingService.saveUser).toHaveBeenCalled();
@@ -268,7 +303,7 @@ describe('userService Test', () => {
       mockUser = {
         email: mockCreateUserDto.email,
         profile_image: mockCreateUserDto.image,
-        password: mockHashedPw,
+        local_auth: { password: mockHashedPw },
         id: 100,
         nickname: 'tester',
         support_team: { id: 1 } as Team,
