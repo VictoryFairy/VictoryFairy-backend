@@ -50,7 +50,7 @@ export class UserController {
   @ApiBody({ type: CreateUserDto, description: '회원가입에 필요한 정보' })
   @ApiCreatedResponse({ description: '성공 시 데이터 없이 상태코드만 응답' })
   @ApiInternalServerErrorResponse({ description: 'DB 유저 저장 실패한 경우' })
-  async signIn(@Body() body: CreateUserDto) {
+  async signUp(@Body() body: CreateUserDto) {
     await this.userService.createLocalUser(body);
   }
 
