@@ -2,9 +2,12 @@ import {
   Body,
   Controller,
   Delete,
+  Get,
   HttpCode,
   HttpStatus,
+  Param,
   Post,
+  Req,
   Res,
 } from '@nestjs/common';
 import { AuthService } from './auth.service';
@@ -19,10 +22,12 @@ import {
   ApiTags,
   ApiUnauthorizedResponse,
 } from '@nestjs/swagger';
-import { CookieOptions, Response } from 'express';
+import { CookieOptions, Request, Response } from 'express';
 import { ConfigService } from '@nestjs/config';
 import { EmailDto, EmailWithCodeDto, LoginUserDto } from 'src/dtos/user.dto';
 import { JwtAuth } from 'src/decorator/jwt-token.decorator';
+import { ProviderParamCheckPipe } from 'src/pipe/provider-param-check.pipe';
+import { SocialProvider } from 'src/const/auth.const';
 
 @ApiTags('Auth')
 @Controller('auth')
@@ -50,10 +55,11 @@ export class AuthController {
     description: '리프레쉬는 쿠키, 엑세스는 json으로 응답',
   })
   @ApiUnauthorizedResponse({ description: '아이디 또는 비밀번호가 틀린 경우' })
-  async login(@Body() body: LoginUserDto, @Res() res: Response) {
+  async localLogin(@Body() body: LoginUserDto, @Res() res: Response) {
     const domain = this.configService.get('DOMAIN');
     const nodeEnv = this.configService.get('NODE_ENV');
-    const { acToken, rfToken, user } = await this.authService.loginLocalUser(body);
+    const { acToken, rfToken, user } =
+      await this.authService.loginLocalUser(body);
 
     const rfExTime = this.configService.get('REFRESH_EXPIRE_TIME');
     const cookieOptions: CookieOptions = {
@@ -68,6 +74,55 @@ export class AuthController {
       teamId: user.support_team.id,
       teamName: user.support_team.name,
     });
+  }
+
+  /** 소셜 로그인 진입점 */
+  @Get('login/:provider')
+  async socialLogin(
+    @Res() res: Response,
+    @Param('provider', ProviderParamCheckPipe) provider: SocialProvider,
+  ) {
+    const redirectUrl = this.authService.getSocialAuthCallbackUrl(provider);
+    res.redirect(redirectUrl);
+  }
+
+  /** 소셜 로그인 리다이렉트 처리 엔드포인트 */
+  @Get(':provider/callback')
+  async handleCallback(
+    @Req() req: Request,
+    @Res() res: Response,
+    @Param('provider', ProviderParamCheckPipe) provider: SocialProvider,
+  ) {
+    const domain = this.configService.get('DOMAIN');
+    const nodeEnv = this.configService.get('NODE_ENV');
+    const frontendUrl = this.configService.get('FRONT_END_URL');
+    const receivedUrl = new URL(
+      req.originalUrl,
+      `${req.protocol}://${req.hostname}`,
+    );
+
+    const code = receivedUrl.searchParams.get('code');
+
+    const userInfoFromSocialProvider = await this.authService.getSocialUserInfo(
+      provider,
+      code,
+    );
+
+    const { rfToken } = await this.authService.loginSocialUser(
+      userInfoFromSocialProvider.sub,
+      userInfoFromSocialProvider.email,
+      provider,
+    );
+
+    const rfExTime = this.configService.get('REFRESH_EXPIRE_TIME');
+    const cookieOptions: CookieOptions = {
+      maxAge: parseInt(rfExTime),
+      domain: domain || 'localhost',
+      httpOnly: true,
+      secure: nodeEnv === 'production',
+    };
+    res.cookie('token', rfToken, cookieOptions);
+    return res.redirect(frontendUrl);
   }
 
   /** 유저 로그아웃 */
@@ -101,7 +156,13 @@ export class AuthController {
   @JwtAuth('refresh')
   @ApiOperation({ summary: '엑세스 토큰 재발급' })
   @ApiOkResponse({
-    schema: { properties: { acToken: { type: 'string' } } },
+    schema: {
+      properties: {
+        acToken: { type: 'string' },
+        teamId: { type: 'number' },
+        teamName: { type: 'string' },
+      },
+    },
     description: '새로운 엑세스 토큰 발급',
   })
   async reissueAcToken(@UserDeco() user: User): Promise<{ acToken: string }> {

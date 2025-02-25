@@ -1,21 +1,40 @@
 import { Module } from '@nestjs/common';
 import { AuthService } from './auth.service';
-import { AuthController } from './auth.controller';
 import { JwtModule } from '@nestjs/jwt';
 import { MailModule } from 'src/modules/mail.module';
+import { RedisModule } from 'src/modules/redis.module';
+import { GoogleOAuthStrategy } from './strategies/google.strategy';
+import { SocialProvider } from 'src/const/auth.const';
+import { AuthController } from './auth.controller';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { User } from 'src/entities/user.entity';
-import { RedisModule } from 'src/modules/redis.module';
+import { SocialAuth } from 'src/entities/social-auth.entity';
+import { KakaoOAuthStrategy } from './strategies/kakao.strategy';
 
 @Module({
   imports: [
     JwtModule.register({}),
+    TypeOrmModule.forFeature([User, SocialAuth]),
     MailModule,
-    TypeOrmModule.forFeature([User]),
     RedisModule,
   ],
-  exports: [AuthService],
   controllers: [AuthController],
-  providers: [AuthService],
+  exports: [AuthService],
+  providers: [
+    AuthService,
+    GoogleOAuthStrategy,
+    KakaoOAuthStrategy,
+    {
+      provide: 'OAUTH_STRATEGIES',
+      useFactory: (
+        googleOauth: GoogleOAuthStrategy,
+        kakakoOauth: KakaoOAuthStrategy,
+      ) => ({
+        [SocialProvider.GOOGLE]: googleOauth,
+        [SocialProvider.KAKAO]: kakakoOauth,
+      }),
+      inject: [GoogleOAuthStrategy, KakaoOAuthStrategy],
+    },
+  ],
 })
 export class AuthModule {}

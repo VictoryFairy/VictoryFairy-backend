@@ -79,14 +79,14 @@ export class UserService {
 
   async findUserById(
     userId: number,
-    withEntity?: FindOptionsRelations<User>,
+    relations?: FindOptionsRelations<User>,
     select?: FindOptionsSelect<User>,
   ): Promise<User> {
     try {
       const findUser = await this.userRepository.findOne({
         where: { id: userId },
+        relations,
         select,
-        relations: withEntity,
       });
       return findUser;
     } catch (error) {
@@ -94,9 +94,18 @@ export class UserService {
     }
   }
 
-  async findUserByEmail(email: string): Promise<User> {
+  async findUserByEmail(
+    email: string,
+    relations?: FindOptionsRelations<User>,
+    select?: FindOptionsSelect<User>,
+  ): Promise<User> {
     try {
-      return this.userRepository.findOne({ where: { email } });
+      const findUser = await this.userRepository.findOne({
+        where: { email },
+        relations,
+        select,
+      });
+      return findUser;
     } catch (error) {
       throw new InternalServerErrorException('DB<user> 조회 실패');
     }
