@@ -1,4 +1,6 @@
 import {
+  BadRequestException,
+  Inject,
   Injectable,
   InternalServerErrorException,
   UnauthorizedException,
@@ -9,7 +11,7 @@ import * as bcrypt from 'bcrypt';
 import { IJwtPayload } from 'src/types/auth.type';
 import { MailService } from 'src/services/mail.service';
 import { createRandomCode } from 'src/utils/random-code.util';
-import { CODE_LENGTH } from 'src/const/auth.const';
+import { CODE_LENGTH, SocialProvider } from 'src/const/auth.const';
 import { InjectRepository } from '@nestjs/typeorm';
 import { User } from 'src/entities/user.entity';
 import {
@@ -20,6 +22,9 @@ import {
 } from 'typeorm';
 import { EmailWithCodeDto, LoginUserDto } from 'src/dtos/user.dto';
 import { RedisCachingService } from '../services/redis-caching.service';
+import { OAuthStrategy } from './strategies/base-oauth.strategy';
+import { SocialAuth } from 'src/entities/social-auth.entity';
+import { DEFAULT_PROFILE_IMAGE } from 'src/const/user.const';
 
 @Injectable()
 export class AuthService {
@@ -29,7 +34,11 @@ export class AuthService {
     private readonly mailService: MailService,
     @InjectRepository(User)
     private readonly userRepository: Repository<User>,
+    @InjectRepository(SocialAuth)
+    private readonly socialAuthRepository: Repository<SocialAuth>,
     private readonly redisCachingService: RedisCachingService,
+    @Inject('OAUTH_STRATEGIES')
+    private readonly oAuthStrategies: Record<SocialProvider, OAuthStrategy>,
   ) {}
 
   async loginLocalUser(dto: LoginUserDto) {
@@ -60,6 +69,79 @@ export class AuthService {
       this.issueToken({ id, email }, false),
     ];
     return { user, rfToken, acToken };
+  }
+  async loginSocialUser(sub: string, email: string, provider: SocialProvider) {
+    let foundUser = null;
+    foundUser = await this.socialAuthRepository.findOne({
+      where: { sub, provider },
+      relations: { user: true },
+      select: { user: { email: true, id: true } },
+    });
+
+    if (!foundUser) {
+      // 회원가입처리
+      const isExistEmail = await this.userRepository.findOne({
+        where: { email },
+        select: { id: true, email: true },
+      });
+      if (isExistEmail) {
+        await this.socialAuthRepository.insert({
+          user_id: isExistEmail.id,
+          provider,
+          sub,
+        });
+        foundUser = await this.socialAuthRepository.findOne({
+          where: { sub, provider },
+          relations: { user: true },
+          select: { user: { email: true, id: true } },
+        });
+      } else {
+        const randomNum = Math.floor(Math.random() * 10000);
+        const nickname = `승리요정#${randomNum.toString().padStart(4, '0')}`;
+        const userObj = {
+          email,
+          nickname,
+          profile_image: DEFAULT_PROFILE_IMAGE,
+        };
+        const createdUser = await this.userRepository.save(userObj);
+        await this.socialAuthRepository.insert({
+          user_id: createdUser.id,
+          provider,
+          sub,
+        });
+        foundUser = await this.socialAuthRepository.findOne({
+          where: { sub, provider },
+          relations: { user: true },
+          select: { user: { email: true, id: true } },
+        });
+      }
+    }
+
+    const { id, email: userEmail } = foundUser.user;
+
+    const [rfToken, acToken] = [
+      this.issueToken({ id, email: userEmail }, true),
+      this.issueToken({ id, email: userEmail }, false),
+    ];
+    return { user: foundUser, rfToken, acToken };
+  }
+
+  getSocialAuthCallbackUrl(provider: SocialProvider) {
+    const strategy = this.oAuthStrategies[provider];
+    if (!strategy) {
+      throw new BadRequestException('해당 프로바이더 소셜 로그인 기능 없음');
+    }
+    return strategy.getAuthUrl();
+  }
+
+  async getSocialUserInfo(provider: SocialProvider, code: string) {
+    const strategy = this.oAuthStrategies[provider];
+    if (!strategy) {
+      throw new BadRequestException('해당 프로바이더 소셜 로그인 기능 없음');
+    }
+    const accessToken = await strategy.getAccessToken(code);
+    const userInfoFromProvider = await strategy.getUserInfo(accessToken);
+    return userInfoFromProvider;
   }
 
   async makeCodeAndSendMail(email: string) {
