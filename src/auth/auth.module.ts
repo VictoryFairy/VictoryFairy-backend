@@ -26,12 +26,9 @@ import { KakaoOAuthStrategy } from './strategies/kakao.strategy';
     KakaoOAuthStrategy,
     {
       provide: 'OAUTH_STRATEGIES',
-      useFactory: (
-        googleOauth: GoogleOAuthStrategy,
-        kakakoOauth: KakaoOAuthStrategy,
-      ) => ({
-        [SocialProvider.GOOGLE]: googleOauth,
-        [SocialProvider.KAKAO]: kakakoOauth,
+      useFactory: (google: GoogleOAuthStrategy, kakao: KakaoOAuthStrategy) => ({
+        [SocialProvider.GOOGLE]: google,
+        [SocialProvider.KAKAO]: kakao,
       }),
       inject: [GoogleOAuthStrategy, KakaoOAuthStrategy],
     },
