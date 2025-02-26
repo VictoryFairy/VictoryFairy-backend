@@ -7,123 +7,90 @@ import {
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
-import * as bcrypt from 'bcrypt';
 import { IJwtPayload } from 'src/types/auth.type';
 import { MailService } from 'src/services/mail.service';
 import { createRandomCode } from 'src/utils/random-code.util';
 import { CODE_LENGTH, SocialProvider } from 'src/const/auth.const';
-import { InjectRepository } from '@nestjs/typeorm';
-import { User } from 'src/entities/user.entity';
-import {
-  FindOptionsRelations,
-  FindOptionsSelect,
-  FindOptionsWhere,
-  Repository,
-} from 'typeorm';
-import { EmailWithCodeDto, LoginUserDto } from 'src/dtos/user.dto';
+import { EmailWithCodeDto, LoginLocalUserDto } from 'src/dtos/user.dto';
 import { RedisCachingService } from '../services/redis-caching.service';
-import { OAuthStrategy } from './strategies/base-oauth.strategy';
-import { SocialAuth } from 'src/entities/social-auth.entity';
-import { DEFAULT_PROFILE_IMAGE } from 'src/const/user.const';
+import { IOAuthStrategy } from './strategies/base-oauth.strategy';
+import { AccountService } from 'src/account/account.service';
+import { User } from 'src/entities/user.entity';
+import { Transactional } from 'typeorm-transactional';
 
 @Injectable()
 export class AuthService {
   constructor(
+    private readonly accountService: AccountService,
     private readonly jwtService: JwtService,
     private readonly configService: ConfigService,
     private readonly mailService: MailService,
-    @InjectRepository(User)
-    private readonly userRepository: Repository<User>,
-    @InjectRepository(SocialAuth)
-    private readonly socialAuthRepository: Repository<SocialAuth>,
     private readonly redisCachingService: RedisCachingService,
     @Inject('OAUTH_STRATEGIES')
-    private readonly oAuthStrategies: Record<SocialProvider, OAuthStrategy>,
+    private readonly oAuthStrategies: Record<SocialProvider, IOAuthStrategy>,
   ) {}
 
-  async loginLocalUser(dto: LoginUserDto) {
-    const user = await this.getUser(
-      { email: dto.email },
-      { support_team: true, local_auth: true },
-      {
-        id: true,
-        email: true,
-        local_auth: { password: true },
-        support_team: { id: true, name: true },
-      },
+  async loginLocalUser(dto: LoginLocalUserDto) {
+    const { email, password } = dto;
+    const user = await this.accountService.getUser(
+      { email },
+      { support_team: true },
     );
 
-    if (!user || !user.local_auth) {
-      throw new UnauthorizedException('아이디 또는 비밀번호가 틀림');
+    if (!user) {
+      throw new UnauthorizedException('이메일 또는 비밀번호가 틀렸습니다.');
     }
-    const isCorrectPw = await bcrypt.compare(
-      dto.password,
-      user.local_auth.password,
+
+    const isVerified = await this.accountService.verifyLocalAuth(
+      user.id,
+      password,
     );
-    if (!isCorrectPw) {
-      throw new UnauthorizedException('아이디 또는 비밀번호가 틀림');
+    if (!isVerified) {
+      throw new UnauthorizedException('이메일 또는 비밀번호가 틀렸습니다.');
     }
-    const { id, email } = user;
-    const [rfToken, acToken] = [
-      this.issueToken({ id, email }, true),
-      this.issueToken({ id, email }, false),
-    ];
-    return { user, rfToken, acToken };
+
+    const acToken = this.issueToken({ email, id: user.id }, false);
+    const rfToken = this.issueToken({ email, id: user.id }, true);
+
+    return { acToken, rfToken, user };
   }
-  async loginSocialUser(sub: string, email: string, provider: SocialProvider) {
-    let foundUser = null;
-    foundUser = await this.socialAuthRepository.findOne({
-      where: { sub, provider },
-      relations: { user: true },
-      select: { user: { email: true, id: true } },
-    });
 
-    if (!foundUser) {
-      // 회원가입처리
-      const isExistEmail = await this.userRepository.findOne({
-        where: { email },
-        select: { id: true, email: true },
-      });
-      if (isExistEmail) {
-        await this.socialAuthRepository.insert({
-          user_id: isExistEmail.id,
-          provider,
+  @Transactional()
+  async loginSocialUser(sub: string, email: string, provider: SocialProvider) {
+    let user: User | null;
+    const socialAuth = await this.accountService.findSocialAuth(
+      { sub, provider },
+      { user: true },
+      { user: { id: true, email: true } },
+    );
+    user = socialAuth?.user ?? null;
+
+    if (!user) {
+      const isExistUser = await this.accountService.getUser(
+        { email },
+        {},
+        { id: true, email: true },
+      );
+      // 동일 이메일이 이미 가입된 경우
+      if (isExistUser) {
+        await this.accountService.createSocialAuth({
           sub,
+          provider,
+          user_id: isExistUser.id,
         });
-        foundUser = await this.socialAuthRepository.findOne({
-          where: { sub, provider },
-          relations: { user: true },
-          select: { user: { email: true, id: true } },
-        });
+        user = isExistUser;
       } else {
-        const randomNum = Math.floor(Math.random() * 10000);
-        const nickname = `승리요정#${randomNum.toString().padStart(4, '0')}`;
-        const userObj = {
-          email,
-          nickname,
-          profile_image: DEFAULT_PROFILE_IMAGE,
-        };
-        const createdUser = await this.userRepository.save(userObj);
-        await this.socialAuthRepository.insert({
-          user_id: createdUser.id,
-          provider,
-          sub,
-        });
-        foundUser = await this.socialAuthRepository.findOne({
-          where: { sub, provider },
-          relations: { user: true },
-          select: { user: { email: true, id: true } },
-        });
+        //없는 경우
+        user = await this.accountService.createSocialUser(
+          { email },
+          { sub, provider },
+        );
       }
     }
 
-    const { id, email: userEmail } = foundUser.user;
-
-    const [rfToken, acToken] = [
-      this.issueToken({ id, email: userEmail }, true),
-      this.issueToken({ id, email: userEmail }, false),
-    ];
-    return { user: foundUser, rfToken, acToken };
+    const rfToken = this.issueToken({ email: user.email, id: user.id }, true);
+    const acToken = this.issueToken({ email, id: user.id }, false);
+    return { acToken, rfToken, user };
   }
 
   getSocialAuthCallbackUrl(provider: SocialProvider) {
@@ -215,21 +182,5 @@ export class AuthService {
     }
     const token = splitToken[1];
     return token;
-  }
-
-  async getUser(
-    whereOpt: FindOptionsWhere<User>,
-    relations?: FindOptionsRelations<User>,
-    select?: FindOptionsSelect<User>,
-  ) {
-    const findUser = await this.userRepository.findOne({
-      where: whereOpt,
-      relations,
-      select,
-    });
-    if (!findUser) {
-      throw new UnauthorizedException('해당 유저를 찾을 수 없음');
-    }
-    return findUser;
   }
 }

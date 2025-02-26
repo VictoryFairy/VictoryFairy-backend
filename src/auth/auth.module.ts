@@ -6,20 +6,12 @@ import { RedisModule } from 'src/modules/redis.module';
 import { GoogleOAuthStrategy } from './strategies/google.strategy';
 import { SocialProvider } from 'src/const/auth.const';
 import { AuthController } from './auth.controller';
-import { TypeOrmModule } from '@nestjs/typeorm';
-import { User } from 'src/entities/user.entity';
-import { SocialAuth } from 'src/entities/social-auth.entity';
 import { KakaoOAuthStrategy } from './strategies/kakao.strategy';
+import { AccountModule } from 'src/account/account.module';
 
 @Module({
-  imports: [
-    JwtModule.register({}),
-    TypeOrmModule.forFeature([User, SocialAuth]),
-    MailModule,
-    RedisModule,
-  ],
+  imports: [AccountModule, JwtModule.register({}), MailModule, RedisModule],
   controllers: [AuthController],
-  exports: [AuthService],
   providers: [
     AuthService,
     GoogleOAuthStrategy,

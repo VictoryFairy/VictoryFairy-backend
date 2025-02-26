@@ -24,6 +24,7 @@ import { CustomExceptionFilter } from './filters/cutstom-execption.filter';
 import { SlackModule } from './modules/slack.module';
 import { addTransactionalDataSource } from 'typeorm-transactional';
 import { DataSource } from 'typeorm';
+import { AccountModule } from './account/account.module';
 
 @Module({
   imports: [
@@ -47,6 +48,7 @@ import { DataSource } from 'typeorm';
     TeamModule,
     RegisteredGameModule,
     GameModule,
+    AccountModule,
     AuthModule,
     UserModule,
     RankModule,

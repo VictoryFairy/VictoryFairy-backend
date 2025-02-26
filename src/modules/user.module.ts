@@ -9,19 +9,15 @@ import { RedisModule } from './redis.module';
 import { RankModule } from './rank.module';
 import { AwsS3Module } from './aws-s3.module';
 import { User } from 'src/entities/user.entity';
-import { AuthModule } from 'src/auth/auth.module';
-import { LocalAuth } from 'src/entities/local-auth.entity';
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([User, Team, UserTerm, Term, LocalAuth]),
+    TypeOrmModule.forFeature([User, Team, UserTerm, Term]),
     RedisModule,
     RankModule,
     AwsS3Module,
-    AuthModule,
   ],
   controllers: [UserController],
   providers: [UserService],
-  exports: [UserService],
 })
 export class UserModule {}

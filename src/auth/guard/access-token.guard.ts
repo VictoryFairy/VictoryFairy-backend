@@ -4,24 +4,24 @@ import {
   Injectable,
   UnauthorizedException,
 } from '@nestjs/common';
-import { AuthService } from '../auth.service';
-import { ConfigService } from '@nestjs/config';
+import { AccountService } from 'src/account/account.service';
 
 @Injectable()
 export class AccessTokenGuard implements CanActivate {
-  constructor(
-    private readonly authService: AuthService,
-    private readonly configService: ConfigService,
-  ) {}
+  constructor(private readonly accountService: AccountService) {}
+
   async canActivate(context: ExecutionContext): Promise<boolean> {
     const req = context.switchToHttp().getRequest();
     const authHeader = req.headers['authorization'];
     if (!authHeader) {
       throw new UnauthorizedException('토큰 없음');
     }
-    const token = this.authService.extractTokenFromHeader(authHeader);
-    const payload = await this.authService.verifyToken(token, false);
-    const user = await this.authService.getUser({ email: payload.email });
+    const token = this.accountService.extractTokenFromHeader(authHeader);
+    const payload = await this.accountService.verifyToken(token, false);
+    const user = await this.accountService.getUser(
+      { email: payload.email },
+      { support_team: true },
+    );
 
     req.user = user;
     req.token = token;
