@@ -24,10 +24,15 @@ import {
 } from '@nestjs/swagger';
 import { CookieOptions, Request, Response } from 'express';
 import { ConfigService } from '@nestjs/config';
-import { EmailDto, EmailWithCodeDto, LoginUserDto } from 'src/dtos/user.dto';
 import { JwtAuth } from 'src/decorator/jwt-token.decorator';
 import { ProviderParamCheckPipe } from 'src/pipe/provider-param-check.pipe';
 import { SocialProvider } from 'src/const/auth.const';
+import { AccessTokenResDto } from 'src/dtos/auth.dto';
+import {
+  EmailDto,
+  EmailWithCodeDto,
+  LoginLocalUserDto,
+} from 'src/dtos/user.dto';
 
 @ApiTags('Auth')
 @Controller('auth')
@@ -36,26 +41,21 @@ export class AuthController {
     private readonly authService: AuthService,
     private readonly configService: ConfigService,
   ) {}
+
   /** 유저 로그인 */
   @Post('login')
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: '로그인' })
   @ApiBody({
-    type: LoginUserDto,
+    type: LoginLocalUserDto,
     description: '로그인에 필요한 이메일, 비밀번호',
   })
   @ApiOkResponse({
-    schema: {
-      properties: {
-        acToken: { type: 'string' },
-        teamId: { type: 'number' },
-        teamName: { type: 'string' },
-      },
-    },
+    type: AccessTokenResDto,
     description: '리프레쉬는 쿠키, 엑세스는 json으로 응답',
   })
   @ApiUnauthorizedResponse({ description: '아이디 또는 비밀번호가 틀린 경우' })
-  async localLogin(@Body() body: LoginUserDto, @Res() res: Response) {
+  async localLogin(@Body() body: LoginLocalUserDto, @Res() res: Response) {
     const domain = this.configService.get('DOMAIN');
     const nodeEnv = this.configService.get('NODE_ENV');
     const { acToken, rfToken, user } =
@@ -83,7 +83,7 @@ export class AuthController {
     @Param('provider', ProviderParamCheckPipe) provider: SocialProvider,
   ) {
     const redirectUrl = this.authService.getSocialAuthCallbackUrl(provider);
-    res.redirect(redirectUrl);
+    return res.redirect(redirectUrl);
   }
 
   /** 소셜 로그인 리다이렉트 처리 엔드포인트 */
@@ -122,7 +122,7 @@ export class AuthController {
       secure: nodeEnv === 'production',
     };
     res.cookie('token', rfToken, cookieOptions);
-    return res.redirect(frontendUrl);
+    return res.redirect(frontendUrl + '/social-login');
   }
 
   /** 유저 로그아웃 */
@@ -156,19 +156,13 @@ export class AuthController {
   @JwtAuth('refresh')
   @ApiOperation({ summary: '엑세스 토큰 재발급' })
   @ApiOkResponse({
-    schema: {
-      properties: {
-        acToken: { type: 'string' },
-        teamId: { type: 'number' },
-        teamName: { type: 'string' },
-      },
-    },
+    type: AccessTokenResDto,
     description: '새로운 엑세스 토큰 발급',
   })
-  async reissueAcToken(@UserDeco() user: User): Promise<{ acToken: string }> {
-    const { email, id } = user;
+  async reissueAcToken(@UserDeco() user: User): Promise<AccessTokenResDto> {
+    const { email, id, support_team } = user;
     const acToken = this.authService.issueToken({ email, id }, false);
-    return { acToken };
+    return { acToken, teamId: support_team.id, teamName: support_team.name };
   }
 
   /** 인증 코드 메일 전송 */

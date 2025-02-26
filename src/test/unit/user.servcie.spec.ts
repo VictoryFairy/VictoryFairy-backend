@@ -12,7 +12,7 @@ import { MockRepoFactory, MockServiceFactory } from './mocks/unit-mock-factory';
 import { EventName } from 'src/const/event.const';
 import { InternalServerErrorException, Logger } from '@nestjs/common';
 import * as bcrypt from 'bcrypt';
-import { CreateUserDto } from 'src/dtos/user.dto';
+import { CreateLocalUserDto } from 'src/dtos/user.dto';
 import { DEFAULT_PROFILE_IMAGE } from 'src/const/user.const';
 import { LocalAuth } from 'src/entities/local-auth.entity';
 
@@ -22,7 +22,7 @@ const mockUsers = [
   { id: 3, email: 'test3@test.com', nickname: 'tester3' },
 ];
 
-const mockCreateUserDto: CreateUserDto = {
+const mockCreateUserDto: CreateLocalUserDto = {
   email: 'test12@test.com',
   image: 'img',
   password: '123123',

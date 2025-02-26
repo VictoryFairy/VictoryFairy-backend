@@ -7,7 +7,7 @@ import { JwtService } from '@nestjs/jwt';
 import { Test, TestingModule } from '@nestjs/testing';
 import { getRepositoryToken } from '@nestjs/typeorm';
 import { AuthService } from 'src/auth/auth.service';
-import { EmailWithCodeDto, LoginUserDto } from 'src/dtos/user.dto';
+import { EmailWithCodeDto, LoginLocalUserDto } from 'src/dtos/user.dto';
 import { User } from 'src/entities/user.entity';
 import { MailService } from 'src/services/mail.service';
 import { RedisCachingService } from 'src/services/redis-caching.service';
@@ -100,7 +100,7 @@ describe('AuthService Test', () => {
         password: 'hashed_pw',
       },
     };
-    const mockLoginDto: LoginUserDto = {
+    const mockLoginDto: LoginLocalUserDto = {
       email: mockUser.email,
       password: '12345',
     };

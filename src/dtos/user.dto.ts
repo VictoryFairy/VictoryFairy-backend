@@ -55,7 +55,7 @@ export class BaseUserDto {
   teamId: number;
 }
 
-export class CreateUserDto extends OmitType(BaseUserDto, ['id']) {
+export class CreateLocalUserDto extends OmitType(BaseUserDto, ['id']) {
   @ApiProperty({
     example: 'should be hidden',
   })
@@ -70,7 +70,7 @@ export class CreateUserDto extends OmitType(BaseUserDto, ['id']) {
   nickname: string;
 }
 
-export class LoginUserDto extends PickType(BaseUserDto, ['email']) {
+export class LoginLocalUserDto extends PickType(BaseUserDto, ['email']) {
   @ApiProperty({
     example: 'should be hidden',
   })
