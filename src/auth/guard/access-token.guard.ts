@@ -21,6 +21,12 @@ export class AccessTokenGuard implements CanActivate {
     const user = await this.accountService.getUser(
       { email: payload.email },
       { support_team: true },
+      {
+        id: true,
+        email: true,
+        nickname: true,
+        support_team: { id: true, name: true },
+      },
     );
 
     req.user = user;

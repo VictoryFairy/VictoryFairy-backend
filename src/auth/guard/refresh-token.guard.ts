@@ -19,8 +19,14 @@ export class RefreshTokenGuard implements CanActivate {
 
     const payload = await this.accountService.verifyToken(token, true);
     const user = await this.accountService.getUser(
-      { email: payload.email },
+      { id: payload.id },
       { support_team: true },
+      {
+        id: true,
+        email: true,
+        nickname: true,
+        support_team: { id: true, name: true },
+      },
     );
 
     req.user = user;
