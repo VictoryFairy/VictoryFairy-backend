@@ -10,10 +10,13 @@ import { JwtService } from '@nestjs/jwt';
 import { IJwtPayload } from 'src/types/auth.type';
 import { MailService } from 'src/services/mail.service';
 import { createRandomCode } from 'src/utils/random-code.util';
-import { CODE_LENGTH, SocialProvider } from 'src/const/auth.const';
+import {
+  CODE_LENGTH,
+  SocialLoginStatus,
+  SocialProvider,
+} from 'src/const/auth.const';
 import { EmailWithCodeDto, LoginLocalUserDto } from 'src/dtos/user.dto';
 import { RedisCachingService } from '../services/redis-caching.service';
-import { IOAuthStrategy } from './strategies/base-oauth.strategy';
 import { AccountService } from 'src/account/account.service';
 import { User } from 'src/entities/user.entity';
 import { Transactional } from 'typeorm-transactional';

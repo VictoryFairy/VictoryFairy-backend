@@ -14,3 +14,4 @@ export const SocialProvider = {
 /** 소셜로그인 제공자 타입*/
 export type SocialProvider =
   (typeof SocialProvider)[keyof typeof SocialProvider];
+export const OAUTH_STRATEGY_MANAGER = Symbol('OAUTH_STRATEGY_MANAGER');
