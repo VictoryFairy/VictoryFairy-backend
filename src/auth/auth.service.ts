@@ -1,6 +1,4 @@
 import {
-  BadRequestException,
-  Inject,
   Injectable,
   InternalServerErrorException,
   UnauthorizedException,
@@ -20,6 +18,7 @@ import { RedisCachingService } from '../services/redis-caching.service';
 import { AccountService } from 'src/account/account.service';
 import { User } from 'src/entities/user.entity';
 import { Transactional } from 'typeorm-transactional';
+import { CreateSocialAuthDto } from 'src/dtos/account.dto';
 
 @Injectable()
 export class AuthService {
@@ -29,8 +28,6 @@ export class AuthService {
     private readonly configService: ConfigService,
     private readonly mailService: MailService,
     private readonly redisCachingService: RedisCachingService,
-    @Inject('OAUTH_STRATEGIES')
-    private readonly oAuthStrategies: Record<SocialProvider, IOAuthStrategy>,
   ) {}
 
   async loginLocalUser(dto: LoginLocalUserDto) {
@@ -52,15 +49,14 @@ export class AuthService {
       throw new UnauthorizedException('이메일 또는 비밀번호가 틀렸습니다.');
     }
 
-    const acToken = this.issueToken({ email, id: user.id }, false);
-    const rfToken = this.issueToken({ email, id: user.id }, true);
-
-    return { acToken, rfToken, user };
+    return { user };
   }
 
   @Transactional()
   async loginSocialUser(sub: string, email: string, provider: SocialProvider) {
     let user: User | null;
+    let status: SocialLoginStatus = SocialLoginStatus.SUCCESS;
+
     const socialAuth = await this.accountService.findSocialAuth(
       { sub, provider },
       { user: true },
@@ -76,42 +72,20 @@ export class AuthService {
       );
       // 동일 이메일이 이미 가입된 경우
       if (isExistUser) {
-        await this.accountService.createSocialAuth({
-          sub,
-          provider,
-          user_id: isExistUser.id,
-        });
-        user = isExistUser;
-      } else {
-        //없는 경우
-        user = await this.accountService.createSocialUser(
-          { email },
-          { sub, provider },
-        );
+        status = SocialLoginStatus.DUPLICATE;
+        return { user: isExistUser, status };
       }
+      //없는 경우
+      user = await this.accountService.createSocialUser(
+        { email },
+        { sub, provider },
+      );
     }
-
-    const rfToken = this.issueToken({ email: user.email, id: user.id }, true);
-    const acToken = this.issueToken({ email, id: user.id }, false);
-    return { acToken, rfToken, user };
+    return { user, status };
   }
 
-  getSocialAuthCallbackUrl(provider: SocialProvider) {
-    const strategy = this.oAuthStrategies[provider];
-    if (!strategy) {
-      throw new BadRequestException('해당 프로바이더 소셜 로그인 기능 없음');
-    }
-    return strategy.getAuthUrl();
-  }
-
-  async getSocialUserInfo(provider: SocialProvider, code: string) {
-    const strategy = this.oAuthStrategies[provider];
-    if (!strategy) {
-      throw new BadRequestException('해당 프로바이더 소셜 로그인 기능 없음');
-    }
-    const accessToken = await strategy.getAccessToken(code);
-    const userInfoFromProvider = await strategy.getUserInfo(accessToken);
-    return userInfoFromProvider;
+  async linkSocial(data: CreateSocialAuthDto): Promise<boolean> {
+    return await this.accountService.createSocialAuth(data);
   }
 
   async makeCodeAndSendMail(email: string) {

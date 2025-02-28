@@ -5,6 +5,7 @@ import { RedisKeys } from 'src/const/redis.const';
 import { InjectRedisClient } from 'src/decorator/redis-inject.decorator';
 import { Team } from 'src/entities/team.entity';
 import { User } from 'src/entities/user.entity';
+import { IOAuthStateCachingData } from 'src/types/auth.type';
 
 export class RedisCachingService {
   constructor(
@@ -127,5 +128,28 @@ export class RedisCachingService {
       'WITHSCORES',
     );
     return rankList;
+  }
+
+  async saveOAuthState(data: IOAuthStateCachingData) {
+    const stringifiedData = JSON.stringify(data);
+    const result = await this.redisClient.set(
+      `${RedisKeys.OAUTH_STATE}:${data.state}`,
+      stringifiedData,
+      'EX',
+      30, // 30초만 캐싱
+    );
+    return result;
+  }
+
+  async getOAuthState(state: string) {
+    const rawData = await this.redisClient.get(
+      `${RedisKeys.OAUTH_STATE}:${state}`,
+    );
+    const data: IOAuthStateCachingData = await JSON.parse(rawData);
+    return data;
+  }
+
+  async deleteOAuthState(state: string) {
+    await this.redisClient.del(`${RedisKeys.OAUTH_STATE}:${state}`);
   }
 }

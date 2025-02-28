@@ -9,6 +9,7 @@ import {
   Post,
   Req,
   Res,
+  UseGuards,
 } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { UserDeco } from 'src/decorator/user.decorator';
@@ -25,7 +26,6 @@ import {
 import { CookieOptions, Request, Response } from 'express';
 import { ConfigService } from '@nestjs/config';
 import { JwtAuth } from 'src/decorator/jwt-token.decorator';
-import { ProviderParamCheckPipe } from 'src/pipe/provider-param-check.pipe';
 import { SocialProvider } from 'src/const/auth.const';
 import { AccessTokenResDto } from 'src/dtos/auth.dto';
 import {
@@ -33,6 +33,9 @@ import {
   EmailWithCodeDto,
   LoginLocalUserDto,
 } from 'src/dtos/user.dto';
+import { SocialAuthGuard } from './guard/social-auth.guard';
+import { ISocialUserInfo } from 'src/types/auth.type';
+import { RefreshTokenGuard } from './guard/refresh-token.guard';
 
 @ApiTags('Auth')
 @Controller('auth')
@@ -56,20 +59,16 @@ export class AuthController {
   })
   @ApiUnauthorizedResponse({ description: '아이디 또는 비밀번호가 틀린 경우' })
   async localLogin(@Body() body: LoginLocalUserDto, @Res() res: Response) {
-    const domain = this.configService.get('DOMAIN');
-    const nodeEnv = this.configService.get('NODE_ENV');
-    const { acToken, rfToken, user } =
-      await this.authService.loginLocalUser(body);
+    const { user } = await this.authService.loginLocalUser(body);
+
+    const [rfToken, acToken] = [
+      this.authService.issueToken({ email: user.email, id: user.id }, true),
+      this.authService.issueToken({ email: user.email, id: user.id }, false),
+    ];
 
     const rfExTime = this.configService.get('REFRESH_EXPIRE_TIME');
-    const cookieOptions: CookieOptions = {
-      maxAge: parseInt(rfExTime),
-      domain: domain || 'localhost',
-      httpOnly: true,
-      secure: nodeEnv === 'production',
-    };
-    res.cookie('token', rfToken, cookieOptions);
-    return res.json({
+    res.cookie('token', rfToken, this.getCookieOptions(parseInt(rfExTime)));
+    res.json({
       acToken,
       teamId: user.support_team.id,
       teamName: user.support_team.name,
@@ -78,51 +77,66 @@ export class AuthController {
 
   /** 소셜 로그인 진입점 */
   @Get('login/:provider')
-  async socialLogin(
-    @Res() res: Response,
-    @Param('provider', ProviderParamCheckPipe) provider: SocialProvider,
-  ) {
-    const redirectUrl = this.authService.getSocialAuthCallbackUrl(provider);
-    return res.redirect(redirectUrl);
-  }
+  @UseGuards(SocialAuthGuard)
+  async socialLogin() {}
 
   /** 소셜 로그인 리다이렉트 처리 엔드포인트 */
-  @Get(':provider/callback')
+  @Get('login/:provider/callback')
+  @UseGuards(SocialAuthGuard)
   async handleCallback(
-    @Req() req: Request,
+    @Req() req: Request & { socialUserInfo: ISocialUserInfo },
     @Res() res: Response,
-    @Param('provider', ProviderParamCheckPipe) provider: SocialProvider,
+    @Param('provider') provider: SocialProvider,
   ) {
-    const domain = this.configService.get('DOMAIN');
-    const nodeEnv = this.configService.get('NODE_ENV');
-    const frontendUrl = this.configService.get('FRONT_END_URL');
-    const receivedUrl = new URL(
-      req.originalUrl,
-      `${req.protocol}://${req.hostname}`,
-    );
+    const { sub, email } = req.socialUserInfo;
 
-    const code = receivedUrl.searchParams.get('code');
-
-    const userInfoFromSocialProvider = await this.authService.getSocialUserInfo(
-      provider,
-      code,
-    );
-
-    const { rfToken } = await this.authService.loginSocialUser(
-      userInfoFromSocialProvider.sub,
-      userInfoFromSocialProvider.email,
+    const loginResult = await this.authService.loginSocialUser(
+      sub,
+      email,
       provider,
     );
 
+    const frontendUrl = new URL(
+      '/social-login',
+      this.configService.get('FRONT_END_URL'),
+    );
+
+    const rfToken = this.authService.issueToken(
+      { email: email, id: loginResult.user.id },
+      true,
+    );
     const rfExTime = this.configService.get('REFRESH_EXPIRE_TIME');
-    const cookieOptions: CookieOptions = {
-      maxAge: parseInt(rfExTime),
-      domain: domain || 'localhost',
-      httpOnly: true,
-      secure: nodeEnv === 'production',
-    };
-    res.cookie('token', rfToken, cookieOptions);
-    return res.redirect(frontendUrl + '/social-login');
+    res.cookie('token', rfToken, this.getCookieOptions(parseInt(rfExTime)));
+
+    frontendUrl.searchParams.set('status', loginResult.status);
+    return res.redirect(frontendUrl.toString());
+  }
+
+  /** 소셜 계정 연동 진입점 */
+  @Get('link/:provider')
+  @UseGuards(RefreshTokenGuard, SocialAuthGuard)
+  async socialLink() {}
+
+  /** 소셜 계정 연동 콜백처리 */
+  @Get('link/:provider/callback')
+  @UseGuards(SocialAuthGuard)
+  async handleSocialLinkCallback(
+    @Req()
+    req: Request & {
+      socialUserInfo: ISocialUserInfo;
+      cachedUser: { id: number; provider: SocialProvider };
+    },
+    @Res() res: Response,
+    @Param('provider') provider: SocialProvider,
+  ) {
+    const { id } = req.cachedUser;
+    const { sub } = req.socialUserInfo;
+    await this.authService.linkSocial({ user_id: id, sub, provider });
+    const frontendUrl = new URL(
+      '/social-login',
+      this.configService.get('FRONT_END_URL'),
+    ).href;
+    res.redirect(frontendUrl);
   }
 
   /** 유저 로그아웃 */
@@ -132,13 +146,7 @@ export class AuthController {
   @ApiOperation({ summary: '로그아웃' })
   @ApiOkResponse({ description: '성공 시 데이터 없이 상태코드만 응답' })
   logout(@Res() res: Response) {
-    const nodeEnv = this.configService.get('NODE_ENV');
-    const domain = this.configService.get('DOMAIN');
-    res.clearCookie('token', {
-      domain: domain || 'localhost',
-      httpOnly: true,
-      secure: nodeEnv === 'production',
-    });
+    res.clearCookie('token', this.getCookieOptions(0));
     return res.sendStatus(HttpStatus.OK);
   }
 
@@ -186,5 +194,17 @@ export class AuthController {
   @ApiInternalServerErrorResponse({ description: '레디스 관련 문제인 경우' })
   async checkEmailCode(@Body() body: EmailWithCodeDto) {
     await this.authService.verifyEmailCode(body);
+  }
+
+  private getCookieOptions(maxAge: number): CookieOptions {
+    const domain = this.configService.get('DOMAIN');
+    const nodeEnv = this.configService.get('NODE_ENV');
+
+    return {
+      maxAge,
+      domain: domain || 'localhost',
+      httpOnly: true,
+      secure: nodeEnv === 'production',
+    };
   }
 }

@@ -18,9 +18,12 @@ import * as bcrypt from 'bcrypt';
 import { DEFAULT_PROFILE_IMAGE, HASH_ROUND } from 'src/const/user.const';
 import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
-import { IJwtPayload } from 'src/types/auth.type';
+import { IJwtPayload, IOAuthStateCachingData } from 'src/types/auth.type';
 import { CreateLocalUserDto } from 'src/dtos/user.dto';
 import { CreateSocialAuthDto, CreateUserDto } from 'src/dtos/account.dto';
+import { RedisCachingService } from 'src/services/redis-caching.service';
+import { v7 as uuidv7 } from 'uuid';
+import { SocialProvider } from 'src/const/auth.const';
 
 @Injectable()
 export class AccountService {
@@ -33,6 +36,7 @@ export class AccountService {
     private readonly socialAuthRepository: Repository<SocialAuth>,
     private readonly jwtService: JwtService,
     private readonly configService: ConfigService,
+    private readonly redisCachingService: RedisCachingService,
   ) {}
 
   async getUser(
@@ -232,5 +236,19 @@ export class AccountService {
         return nickname;
       }
     }
+  }
+
+  async saveOAuthStateWithUser(data: {
+    provider: SocialProvider;
+    userId?: number;
+  }): Promise<{ state: string }> {
+    const state = uuidv7();
+    await this.redisCachingService.saveOAuthState({ ...data, state });
+    return { state };
+  }
+
+  async getOAuthStateData(state: string): Promise<IOAuthStateCachingData> {
+    const data = await this.redisCachingService.getOAuthState(state);
+    return data;
   }
 }

@@ -1,7 +1,15 @@
+import { SocialProvider } from 'src/const/auth.const';
+
 export interface IJwtPayload {
   id: number;
   email: string;
   type: 'ac' | 'rf';
+}
+
+export interface IOAuthStateCachingData {
+  provider: SocialProvider;
+  state: string;
+  userId?: number;
 }
 
 export interface ISocialUserInfo {
