@@ -13,13 +13,8 @@ export class KakaoOAuthStrategy extends BaseOAuthStrategy {
       'https://kauth.kakao.com/oauth/authorize',
       'https://kauth.kakao.com/oauth/token',
       'https://kapi.kakao.com/v2/user/me',
-      'KAKAO_CLIENT_ID',
-      'KAKAO_CLIENT_SECRET',
+      ['account_email', 'profile_nickname'],
     );
-  }
-
-  protected getScope(): string[] {
-    return ['account_email', 'profile_nickname'];
   }
 
   async getUserInfo(accessToken: string): Promise<ISocialUserInfo> {
@@ -29,6 +24,7 @@ export class KakaoOAuthStrategy extends BaseOAuthStrategy {
     });
 
     const data: IKakaoOAuthUserInfo = await response.json();
+
     return {
       sub: data.id.toString(),
       email: data.kakao_account.email,

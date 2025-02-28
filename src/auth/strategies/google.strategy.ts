@@ -13,13 +13,8 @@ export class GoogleOAuthStrategy extends BaseOAuthStrategy {
       'https://accounts.google.com/o/oauth2/v2/auth',
       'https://oauth2.googleapis.com/token',
       'https://www.googleapis.com/oauth2/v2/userinfo',
-      'GOOGLE_CLIENT_ID',
-      'GOOGLE_CLIENT_SECRET',
+      ['email', 'profile'],
     );
-  }
-
-  protected getScope(): string[] {
-    return ['email', 'profile'];
   }
 
   async getUserInfo(accessToken: string): Promise<ISocialUserInfo> {

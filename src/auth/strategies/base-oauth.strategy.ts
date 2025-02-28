@@ -4,16 +4,16 @@ import { ConfigService } from '@nestjs/config';
 
 export interface IOAuthStrategy {
   provider: SocialProvider;
-  getAuthUrl(): string;
-  getAccessToken(code: string): Promise<string>;
-  getUserInfo(accessToken: string): Promise<ISocialUserInfo>;
-  validate(code: string): Promise<ISocialUserInfo>;
+  getCodeAuthUrl(flowType: 'login' | 'link', state: string): string;
+  validateAndGetUserInfo(
+    code: string,
+    flowType: 'login' | 'link',
+  ): Promise<ISocialUserInfo>;
 }
 
 export abstract class BaseOAuthStrategy implements IOAuthStrategy {
   protected clientId: string;
   protected clientSecret: string;
-  protected redirectUri: string;
 
   constructor(
     public readonly provider: SocialProvider,
@@ -21,37 +21,50 @@ export abstract class BaseOAuthStrategy implements IOAuthStrategy {
     protected authUrl: string,
     protected tokenUrl: string,
     protected userInfoUrl: string,
-    protected clientIdKey: string,
-    protected clientSecretKey: string,
+    public readonly scope: string[],
   ) {
-    this.clientId = this.configService.get<string>(clientIdKey, '');
-    this.clientSecret = this.configService.get<string>(clientSecretKey, '');
-    this.redirectUri = new URL(
-      `auth/${this.provider}/callback`,
+    this.clientId = this.configService.get<string>(
+      `${provider.toUpperCase()}_CLIENT_ID`,
+    );
+    this.clientSecret = this.configService.get<string>(
+      `${provider.toUpperCase()}_CLIENT_SECRET`,
+    );
+    this.scope = scope;
+  }
+
+  getCodeAuthUrl(flowType: 'login' | 'link', state: string): string {
+    const url = new URL(this.authUrl);
+    const callbackUri = this.getCallbackUri(flowType);
+
+    const params = new URLSearchParams({
+      client_id: this.clientId,
+      redirect_uri: callbackUri,
+      response_type: 'code',
+      scope: this.scope.join(' '),
+      state,
+    });
+
+    url.search = params.toString();
+    return url.href;
+  }
+
+  getCallbackUri(flowType: 'login' | 'link'): string {
+    return new URL(
+      `auth/${flowType}/${this.provider}/callback`,
       this.configService.get<string>('BACK_END_URL'),
     ).href;
   }
 
-  protected abstract getScope(): string[];
-
-  getAuthUrl(): string {
-    const url = new URL(this.authUrl);
-    const params = new URLSearchParams({
-      client_id: this.clientId,
-      redirect_uri: this.redirectUri,
-      response_type: 'code',
-      scope: this.getScope().join(' '),
-    });
-    url.search = params.toString();
-    return url.toString();
-  }
-
-  async validate(code: string): Promise<ISocialUserInfo> {
-    const accessToken = await this.getAccessToken(code);
+  async validateAndGetUserInfo(
+    code: string,
+    flowType: 'login' | 'link',
+  ): Promise<ISocialUserInfo> {
+    const callbackUri = this.getCallbackUri(flowType);
+    const accessToken = await this.getAccessToken(code, callbackUri);
     return await this.getUserInfo(accessToken);
   }
 
-  async getAccessToken(code: string): Promise<string> {
+  async getAccessToken(code: string, callbackUri: string): Promise<string> {
     const response = await fetch(this.tokenUrl, {
       method: 'POST',
       headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
@@ -60,7 +73,7 @@ export abstract class BaseOAuthStrategy implements IOAuthStrategy {
         client_secret: this.clientSecret,
         code,
         grant_type: 'authorization_code',
-        redirect_uri: this.redirectUri,
+        redirect_uri: callbackUri,
       }),
     });
     const data = await response.json();
