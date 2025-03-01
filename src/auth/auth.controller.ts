@@ -16,11 +16,15 @@ import { UserDeco } from 'src/decorator/user.decorator';
 import { User } from 'src/entities/user.entity';
 import {
   ApiBody,
+  ApiCookieAuth,
   ApiInternalServerErrorResponse,
   ApiNoContentResponse,
   ApiOkResponse,
   ApiOperation,
+  ApiParam,
+  ApiResponse,
   ApiTags,
+  ApiTemporaryRedirectResponse,
   ApiUnauthorizedResponse,
 } from '@nestjs/swagger';
 import { CookieOptions, Request, Response } from 'express';
@@ -78,11 +82,35 @@ export class AuthController {
   /** 소셜 로그인 진입점 */
   @Get('login/:provider')
   @UseGuards(SocialAuthGuard)
+  @ApiOperation({ summary: '소셜 로그인 요청' })
+  @ApiParam({
+    name: 'provider',
+    enum: SocialProvider,
+    description: '소셜 로그인 제공자',
+  })
+  @ApiTemporaryRedirectResponse({
+    description: '소셜 로그인 페이지로 리다이렉트',
+  })
   async socialLogin() {}
 
   /** 소셜 로그인 리다이렉트 처리 엔드포인트 */
   @Get('login/:provider/callback')
   @UseGuards(SocialAuthGuard)
+  @ApiOperation({ summary: '소셜 로그인 콜백 처리' })
+  @ApiParam({
+    name: 'provider',
+    enum: SocialProvider,
+    description: '소셜 로그인 제공자',
+  })
+  @ApiResponse({
+    status: 302,
+    description:
+      '프론트엔드로 리다이렉트. 리다이렉트 URL (status: SUCCESS | DUPLICATE | FAIL)',
+    schema: {
+      type: 'string',
+      example: 'https://frontend.com/social-login?status=SUCCESS',
+    },
+  })
   async handleCallback(
     @Req() req: Request & { socialUserInfo: ISocialUserInfo },
     @Res() res: Response,
@@ -109,17 +137,45 @@ export class AuthController {
     res.cookie('token', rfToken, this.getCookieOptions(parseInt(rfExTime)));
 
     frontendUrl.searchParams.set('status', loginResult.status);
-    return res.redirect(frontendUrl.toString());
+    return res.redirect(frontendUrl.href);
   }
 
   /** 소셜 계정 연동 진입점 */
   @Get('link/:provider')
   @UseGuards(RefreshTokenGuard, SocialAuthGuard)
+  @ApiCookieAuth('token')
+  @ApiOperation({
+    summary: '계정 연동 요청',
+    description: '요청 시 withCredentials: true 설정이 필요합니다.',
+  })
+  @ApiParam({
+    name: 'provider',
+    enum: SocialProvider,
+    description: '소셜 로그인 제공자',
+  })
+  @ApiTemporaryRedirectResponse({
+    description: '소셜 로그인 페이지로 리다이렉트',
+  })
   async socialLink() {}
 
   /** 소셜 계정 연동 콜백처리 */
   @Get('link/:provider/callback')
   @UseGuards(SocialAuthGuard)
+  @ApiOperation({ summary: '계정 연동 콜백 처리' })
+  @ApiParam({
+    name: 'provider',
+    enum: SocialProvider,
+    description: '소셜 로그인 제공자',
+  })
+  @ApiResponse({
+    status: 302,
+    description:
+      '프론트엔드로 리다이렉트. 리다이렉트 URL (status: SUCCESS | DUPLICATE | FAIL)',
+    schema: {
+      type: 'string',
+      example: 'https://frontend.com/social-link?status=SUCCESS',
+    },
+  })
   async handleSocialLinkCallback(
     @Req()
     req: Request & {
@@ -131,12 +187,18 @@ export class AuthController {
   ) {
     const { id } = req.cachedUser;
     const { sub } = req.socialUserInfo;
-    await this.authService.linkSocial({ user_id: id, sub, provider });
+    const { status } = await this.authService.linkSocial({
+      user_id: id,
+      sub,
+      provider,
+    });
     const frontendUrl = new URL(
-      '/social-login',
+      '/social-link',
       this.configService.get('FRONT_END_URL'),
-    ).href;
-    res.redirect(frontendUrl);
+    );
+
+    frontendUrl.searchParams.set('status', status);
+    return res.redirect(frontendUrl.href);
   }
 
   /** 유저 로그아웃 */

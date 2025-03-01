@@ -59,7 +59,7 @@ export class AccountService {
     return bcrypt.compare(password, localAuth.password);
   }
 
-  async findSocialAuth(
+  async getSocialAuth(
     where: FindOptionsWhere<SocialAuth>,
     relations?: FindOptionsRelations<SocialAuth>,
     select?: FindOptionsSelect<SocialAuth>,

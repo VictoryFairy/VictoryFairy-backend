@@ -194,7 +194,7 @@ describe('AccountService', () => {
         .spyOn(socialAuthRepo, 'findOne')
         .mockResolvedValue(mockSocialAuth as SocialAuth);
 
-      const result = await accountService.findSocialAuth(
+      const result = await accountService.getSocialAuth(
         where,
         relations,
         select,
@@ -213,7 +213,7 @@ describe('AccountService', () => {
 
       jest.spyOn(socialAuthRepo, 'findOne').mockResolvedValue(null);
 
-      const result = await accountService.findSocialAuth(where);
+      const result = await accountService.getSocialAuth(where);
 
       expect(result).toBeNull();
       expect(socialAuthRepo.findOne).toHaveBeenCalledWith({

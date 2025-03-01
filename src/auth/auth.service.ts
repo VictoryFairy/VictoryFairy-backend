@@ -57,7 +57,7 @@ export class AuthService {
     let user: User | null;
     let status: SocialLoginStatus = SocialLoginStatus.SUCCESS;
 
-    const socialAuth = await this.accountService.findSocialAuth(
+    const socialAuth = await this.accountService.getSocialAuth(
       { sub, provider },
       { user: true },
       { user: { id: true, email: true } },
@@ -84,8 +84,23 @@ export class AuthService {
     return { user, status };
   }
 
-  async linkSocial(data: CreateSocialAuthDto): Promise<boolean> {
-    return await this.accountService.createSocialAuth(data);
+  async linkSocial(
+    data: CreateSocialAuthDto,
+  ): Promise<{ status: SocialLoginStatus }> {
+    const { user_id, sub, provider } = data;
+    const socialAuth = await this.accountService.getSocialAuth({
+      sub,
+      provider,
+      user_id,
+    });
+    if (socialAuth) {
+      return { status: SocialLoginStatus.DUPLICATE };
+    }
+    const result = await this.accountService.createSocialAuth(data);
+
+    return {
+      status: result ? SocialLoginStatus.SUCCESS : SocialLoginStatus.FAIL,
+    };
   }
 
   async makeCodeAndSendMail(email: string) {

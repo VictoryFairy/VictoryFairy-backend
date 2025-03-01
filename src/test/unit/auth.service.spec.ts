@@ -159,7 +159,7 @@ describe('AuthService Test', () => {
     it('소셜 인증이 있는 경우 해당 유저와 성공 상태를 반환', async () => {
       const socialAuth = { user: mockUser };
       jest
-        .spyOn(accountService, 'findSocialAuth')
+        .spyOn(accountService, 'getSocialAuth')
         .mockResolvedValue(socialAuth as any);
 
       const result = await authService.loginSocialUser(sub, email, provider);
@@ -168,7 +168,7 @@ describe('AuthService Test', () => {
         user: mockUser,
         status: SocialLoginStatus.SUCCESS,
       });
-      expect(accountService.findSocialAuth).toHaveBeenCalledWith(
+      expect(accountService.getSocialAuth).toHaveBeenCalledWith(
         { sub, provider },
         { user: true },
         { user: { id: true, email: true } },
@@ -176,7 +176,7 @@ describe('AuthService Test', () => {
     });
 
     it('소셜 인증이 없고 동일 이메일 유저가 있는 경우 중복 상태를 반환', async () => {
-      jest.spyOn(accountService, 'findSocialAuth').mockResolvedValue(null);
+      jest.spyOn(accountService, 'getSocialAuth').mockResolvedValue(null);
       jest.spyOn(accountService, 'getUser').mockResolvedValue(mockUser as User);
 
       const result = await authService.loginSocialUser(sub, email, provider);
@@ -188,7 +188,7 @@ describe('AuthService Test', () => {
     });
 
     it('소셜 인증이 없고 동일 이메일 유저도 없는 경우 새 유저를 생성', async () => {
-      jest.spyOn(accountService, 'findSocialAuth').mockResolvedValue(null);
+      jest.spyOn(accountService, 'getSocialAuth').mockResolvedValue(null);
       jest.spyOn(accountService, 'getUser').mockResolvedValue(null);
       jest
         .spyOn(accountService, 'createSocialUser')
@@ -218,7 +218,7 @@ describe('AuthService Test', () => {
 
       const result = await authService.linkSocial(data);
 
-      expect(result).toBe(true);
+      expect(result).toEqual({ status: SocialLoginStatus.SUCCESS });
       expect(accountService.createSocialAuth).toHaveBeenCalledWith(data);
     });
   });

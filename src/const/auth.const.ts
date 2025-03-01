@@ -16,9 +16,9 @@ export type SocialProvider =
   (typeof SocialProvider)[keyof typeof SocialProvider];
 
 export const SocialLoginStatus = {
-  SUCCESS: 'success',
-  DUPLICATE: 'duplicate',
-  FAIL: 'fail',
+  SUCCESS: 'SUCCESS',
+  DUPLICATE: 'DUPLICATE',
+  FAIL: 'FAIL',
 } as const;
 
 export type SocialLoginStatus =
