@@ -24,7 +24,6 @@ export class SocialAuthGuard implements CanActivate {
     const req = context.switchToHttp().getRequest();
     const res = context.switchToHttp().getResponse();
 
-    console.log('req', req.user);
     const { provider, strategy, receivedUrl, flowType, code } =
       this.extractRequestInfo(req);
 
@@ -76,7 +75,7 @@ export class SocialAuthGuard implements CanActivate {
     res.redirect(codeAuthUrl);
   }
 
-  /** sns플랫폼에서 받은 콜백 처리 - 소셜 플랫폼 제공 유저 정도 req에 넣기 */
+  /** sns플랫폼에서 받은 콜백 처리 - 소셜 플랫폼 제공 유저 req에 넣기 */
   private async handleCallback(
     req: any,
     code: string,
