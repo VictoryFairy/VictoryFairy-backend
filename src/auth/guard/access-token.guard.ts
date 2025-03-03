@@ -16,6 +16,7 @@ export class AccessTokenGuard implements CanActivate {
     if (!authHeader) {
       throw new UnauthorizedException('토큰 없음');
     }
+
     const token = this.accountService.extractTokenFromHeader(authHeader);
     const payload = await this.accountService.verifyToken(token, false);
     const user = await this.accountService.getUser(
@@ -28,6 +29,10 @@ export class AccessTokenGuard implements CanActivate {
         support_team: { id: true, name: true },
       },
     );
+
+    if (!user) {
+      throw new UnauthorizedException('유저 정보 조회 실패');
+    }
 
     req.user = user;
     req.token = token;
