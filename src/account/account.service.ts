@@ -21,9 +21,10 @@ import { ConfigService } from '@nestjs/config';
 import { IJwtPayload, IOAuthStateCachingData } from 'src/types/auth.type';
 import { CreateLocalUserDto } from 'src/dtos/user.dto';
 import { CreateSocialAuthDto, CreateUserDto } from 'src/dtos/account.dto';
-import { RedisCachingService } from 'src/services/redis-caching.service';
+import { AuthRedisService } from 'src/services/auth-redis.service';
 import { v7 as uuidv7 } from 'uuid';
 import { SocialProvider } from 'src/const/auth.const';
+import { TermRedisService } from '../services/term-redis.service';
 
 @Injectable()
 export class AccountService {
@@ -36,7 +37,8 @@ export class AccountService {
     private readonly socialAuthRepository: Repository<SocialAuth>,
     private readonly jwtService: JwtService,
     private readonly configService: ConfigService,
-    private readonly redisCachingService: RedisCachingService,
+    private readonly authRedisService: AuthRedisService,
+    private readonly termRedisService: TermRedisService,
   ) {}
 
   async getUser(
@@ -243,12 +245,12 @@ export class AccountService {
     userId?: number;
   }): Promise<{ state: string }> {
     const state = uuidv7();
-    await this.redisCachingService.saveOAuthState({ ...data, state });
+    await this.authRedisService.saveOAuthState({ ...data, state });
     return { state };
   }
 
   async getOAuthStateData(state: string): Promise<IOAuthStateCachingData> {
-    const data = await this.redisCachingService.getOAuthState(state);
+    const data = await this.authRedisService.getOAuthState(state);
     return data;
   }
 }

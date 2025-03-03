@@ -10,7 +10,7 @@ import { Team } from 'src/entities/team.entity';
 import { RankService } from './rank.service';
 import * as moment from 'moment';
 import { AwsS3Service } from 'src/services/aws-s3.service';
-import { RedisCachingService } from './redis-caching.service';
+import { UserRedisService } from './user-redis.service';
 import { runOnTransactionCommit, Transactional } from 'typeorm-transactional';
 import { AccountService } from 'src/account/account.service';
 
@@ -22,10 +22,10 @@ export class UserService {
     private readonly userRepository: Repository<User>,
     @InjectRepository(Team)
     private readonly teamRepository: Repository<Team>,
+    private readonly userRedisService: UserRedisService,
     private readonly eventEmitter: EventEmitter2,
     private readonly rankService: RankService,
     private readonly awsS3Service: AwsS3Service,
-    private readonly redisCachingService: RedisCachingService,
     private readonly accountService: AccountService,
   ) {}
 
@@ -38,7 +38,7 @@ export class UserService {
       const userIds = [];
       const cachingPromises = users.map((user) => {
         userIds.push(user.id);
-        return this.redisCachingService.saveUser(user);
+        return this.userRedisService.saveUser(user);
       });
       await Promise.all(cachingPromises);
       this.eventEmitter.emit(EventName.CACHED_USERS, userIds);
@@ -70,7 +70,7 @@ export class UserService {
 
     runOnTransactionCommit(async () => {
       try {
-        await this.redisCachingService.saveUser(createdUser);
+        await this.userRedisService.saveUser(createdUser);
         await this.rankService.updateRedisRankings(createdUser.id);
       } catch (error) {
         this.logger.warn(`유저 ${createdUser.id} 캐싱 실패`, error.stack);
@@ -106,7 +106,7 @@ export class UserService {
     const updatedUser = await this.accountService.updateUser(user);
 
     if (field === 'image' || field === 'nickname') {
-      await this.redisCachingService.saveUser(updatedUser);
+      await this.userRedisService.saveUser(updatedUser);
       if (
         field === 'image' &&
         profile_image !== value &&
@@ -130,7 +130,7 @@ export class UserService {
       if (profile_image !== DEFAULT_PROFILE_IMAGE) {
         await this.awsS3Service.deleteImage({ fileUrl: profile_image });
       }
-      await this.redisCachingService.userSynchronizationTransaction(id, teams);
+      await this.userRedisService.userSynchronizationTransaction(id, teams);
     });
   }
 }

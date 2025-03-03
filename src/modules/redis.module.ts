@@ -2,7 +2,9 @@ import { Module } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { redisConfig } from 'src/config/redis.config';
 import { RedisConnectionService } from 'src/services/redis-connection.service';
-import { RedisCachingService } from 'src/services/redis-caching.service';
+import { AuthRedisService } from 'src/services/auth-redis.service';
+import { UserRedisService } from 'src/services/user-redis.service';
+import { RankingRedisService } from 'src/services/ranking-redis.service';
 
 @Module({
   providers: [
@@ -12,8 +14,15 @@ import { RedisCachingService } from 'src/services/redis-caching.service';
       inject: [ConfigService],
     },
     RedisConnectionService,
-    RedisCachingService,
+    AuthRedisService,
+    UserRedisService,
+    RankingRedisService,
   ],
-  exports: [RedisConnectionService, RedisCachingService],
+  exports: [
+    RedisConnectionService,
+    AuthRedisService,
+    UserRedisService,
+    RankingRedisService,
+  ],
 })
 export class RedisModule {}

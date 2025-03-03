@@ -14,7 +14,7 @@ import {
   SocialProvider,
 } from 'src/const/auth.const';
 import { EmailWithCodeDto, LoginLocalUserDto } from 'src/dtos/user.dto';
-import { RedisCachingService } from '../services/redis-caching.service';
+import { AuthRedisService } from '../services/auth-redis.service';
 import { AccountService } from 'src/account/account.service';
 import { User } from 'src/entities/user.entity';
 import { Transactional } from 'typeorm-transactional';
@@ -27,7 +27,7 @@ export class AuthService {
     private readonly jwtService: JwtService,
     private readonly configService: ConfigService,
     private readonly mailService: MailService,
-    private readonly redisCachingService: RedisCachingService,
+    private readonly authRedisService: AuthRedisService,
   ) {}
 
   async loginLocalUser(dto: LoginLocalUserDto) {
@@ -109,18 +109,18 @@ export class AuthService {
     if (!result) {
       throw new InternalServerErrorException('이메일 전송 실패');
     }
-    await this.redisCachingService.cachingVerificationCode(email, code);
+    await this.authRedisService.cachingVerificationCode(email, code);
     return result;
   }
 
   async verifyEmailCode(dto: EmailWithCodeDto) {
     const { code, email } = dto;
     const getCachedCode =
-      await this.redisCachingService.getCachedVerificationCode(email);
+      await this.authRedisService.getCachedVerificationCode(email);
     if (!getCachedCode || getCachedCode !== code) {
       throw new UnauthorizedException('인증 코드 틀림');
     }
-    await this.redisCachingService.deleteVerificationCode(email);
+    await this.authRedisService.deleteVerificationCode(email);
 
     return true;
   }
