@@ -217,8 +217,21 @@ export class AuthController {
   @HttpCode(HttpStatus.OK)
   @JwtAuth('refresh')
   @ApiOperation({ summary: '리프레쉬 토큰 확인' })
-  @ApiOkResponse({ description: '리프레쉬 토큰이 맞는 경우 상태코드만 응답' })
-  async checkRefreshToken() {}
+  @ApiOkResponse({
+    description:
+      '리프레쉬 토큰이 맞는 경우 200상태코드와 유저가 동의하지 않은 필수 약관 목록 반환, 빈 배열인 경우 필수 약관 동의한 상태',
+    schema: {
+      properties: {
+        notAgreedRequiredTerm: {
+          type: 'array',
+          items: { type: 'string' },
+        },
+      },
+    },
+  })
+  async checkRefreshToken(@UserDeco() user: User) {
+    return await this.authService.checkUserAgreedRequiredTerm(user.id);
+  }
 
   /** 엑세스 토큰 재발급 */
   @Post('token/issue')

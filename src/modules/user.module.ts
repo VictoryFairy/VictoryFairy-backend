@@ -9,6 +9,7 @@ import { RedisModule } from './redis.module';
 import { RankModule } from './rank.module';
 import { AwsS3Module } from './aws-s3.module';
 import { User } from 'src/entities/user.entity';
+import { TermModule } from './term.module';
 
 @Module({
   imports: [
@@ -16,6 +17,7 @@ import { User } from 'src/entities/user.entity';
     RedisModule,
     RankModule,
     AwsS3Module,
+    TermModule,
   ],
   controllers: [UserController],
   providers: [UserService],

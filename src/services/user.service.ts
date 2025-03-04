@@ -13,7 +13,7 @@ import { AwsS3Service } from 'src/services/aws-s3.service';
 import { UserRedisService } from './user-redis.service';
 import { runOnTransactionCommit, Transactional } from 'typeorm-transactional';
 import { AccountService } from 'src/account/account.service';
-
+import { TermService } from './term.service';
 @Injectable()
 export class UserService {
   private readonly logger = new Logger(UserService.name);
@@ -27,6 +27,7 @@ export class UserService {
     private readonly rankService: RankService,
     private readonly awsS3Service: AwsS3Service,
     private readonly accountService: AccountService,
+    private readonly termService: TermService,
   ) {}
 
   /** 레디스 연결 시 미리 저장 */
@@ -132,5 +133,9 @@ export class UserService {
       }
       await this.userRedisService.userSynchronizationTransaction(id, teams);
     });
+  }
+
+  async agreeTerm(user: User, termIds: string[]): Promise<void> {
+    await this.termService.saveUserAgreedTerm(user.id, termIds);
   }
 }

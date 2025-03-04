@@ -25,6 +25,7 @@ import { SlackModule } from './modules/slack.module';
 import { addTransactionalDataSource } from 'typeorm-transactional';
 import { DataSource } from 'typeorm';
 import { AccountModule } from './account/account.module';
+import { TermModule } from './modules/term.module';
 
 @Module({
   imports: [
@@ -57,6 +58,7 @@ import { AccountModule } from './account/account.module';
     SchedulingModule,
     CheeringSongModule,
     SlackModule,
+    TermModule,
   ],
   controllers: [AppController],
   providers: [

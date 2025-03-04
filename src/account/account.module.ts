@@ -13,13 +13,16 @@ import { GoogleOAuthStrategy } from 'src/auth/strategies/google.strategy';
 import { KakaoOAuthStrategy } from 'src/auth/strategies/kakao.strategy';
 import { OAuthStrategyManager } from 'src/auth/strategies/OAuthStrategyManager';
 import { OAUTH_STRATEGY_MANAGER } from 'src/const/auth.const';
+import { UserTerm } from 'src/entities/user-term.entity';
+import { TermModule } from 'src/modules/term.module';
 
 @Global()
 @Module({
   imports: [
-    TypeOrmModule.forFeature([User, LocalAuth, SocialAuth]),
+    TypeOrmModule.forFeature([User, LocalAuth, SocialAuth, UserTerm]),
     JwtModule.register({}),
     RedisModule,
+    TermModule,
   ],
   providers: [
     AccountService,

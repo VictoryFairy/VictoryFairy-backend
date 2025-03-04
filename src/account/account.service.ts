@@ -24,7 +24,7 @@ import { CreateSocialAuthDto, CreateUserDto } from 'src/dtos/account.dto';
 import { AuthRedisService } from 'src/services/auth-redis.service';
 import { v7 as uuidv7 } from 'uuid';
 import { SocialProvider } from 'src/const/auth.const';
-import { TermRedisService } from '../services/term-redis.service';
+import { TermService } from 'src/services/term.service';
 
 @Injectable()
 export class AccountService {
@@ -38,7 +38,7 @@ export class AccountService {
     private readonly jwtService: JwtService,
     private readonly configService: ConfigService,
     private readonly authRedisService: AuthRedisService,
-    private readonly termRedisService: TermRedisService,
+    private readonly termService: TermService,
   ) {}
 
   async getUser(
@@ -138,6 +138,11 @@ export class AccountService {
         support_team: { id: true, name: true },
       },
     );
+
+    const requireTerm = await this.termService.getTermList();
+    const requireTermIds = requireTerm.required.map((term) => term.id);
+    await this.termService.saveUserAgreedTerm(createdUser.id, requireTermIds);
+
     return createdUser;
   }
 

@@ -19,7 +19,9 @@ import { AccountService } from 'src/account/account.service';
 import { User } from 'src/entities/user.entity';
 import { Transactional } from 'typeorm-transactional';
 import { CreateSocialAuthDto } from 'src/dtos/account.dto';
-
+import { CachedTermList } from 'src/types/term.type';
+import { TermRedisService } from 'src/services/term-redis.service';
+import { TermService } from 'src/services/term.service';
 @Injectable()
 export class AuthService {
   constructor(
@@ -28,6 +30,8 @@ export class AuthService {
     private readonly configService: ConfigService,
     private readonly mailService: MailService,
     private readonly authRedisService: AuthRedisService,
+    private readonly termRedisService: TermRedisService,
+    private readonly termService: TermService,
   ) {}
 
   async loginLocalUser(dto: LoginLocalUserDto) {
@@ -174,5 +178,22 @@ export class AuthService {
     }
     const token = splitToken[1];
     return token;
+  }
+
+  async checkUserAgreedRequiredTerm(
+    userId: number,
+  ): Promise<{ notAgreedRequiredTerm: string[] }> {
+    const termList: CachedTermList = await this.termRedisService.getTermList();
+    const userAgreedTermList =
+      await this.termService.getUserAgreedTerms(userId);
+
+    const agreedTermIds = new Set(
+      userAgreedTermList.map((term) => term.term_id),
+    );
+    const notAgreedRequiredTerm = termList.required
+      .filter((requiredTerm) => !agreedTermIds.has(requiredTerm.id))
+      .map((term) => term.id);
+
+    return { notAgreedRequiredTerm };
   }
 }

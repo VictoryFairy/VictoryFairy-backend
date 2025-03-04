@@ -29,6 +29,7 @@ import {
   NicknameDto,
   PatchUserProfileDto,
   ResCheckPwDto,
+  TermAgreeDto,
   UserMyPageDto,
   UserResDto,
 } from 'src/dtos/user.dto';
@@ -168,5 +169,17 @@ export class UserController {
   @ApiInternalServerErrorResponse({ description: 'DB 삭제 실패한 경우' })
   async deleteUser(@UserDeco() user: User) {
     await this.userService.deleteUser(user);
+  }
+
+  @Post('term/agree')
+  @JwtAuth('access')
+  @HttpCode(HttpStatus.NO_CONTENT)
+  @ApiOperation({ summary: '약관 동의' })
+  @ApiBody({ type: TermAgreeDto })
+  @ApiNoContentResponse({ description: '성공 시 데이터 없이 상태코드만 응답' })
+  @ApiInternalServerErrorResponse({ description: 'DB 업데이트 실패한 경우' })
+  async agreeTerm(@UserDeco() user: User, @Body() body: TermAgreeDto) {
+    const { termIds } = body;
+    await this.userService.agreeTerm(user, termIds);
   }
 }
