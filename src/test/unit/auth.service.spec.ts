@@ -17,8 +17,11 @@ import { AuthService } from 'src/auth/auth.service';
 import { EmailWithCodeDto, LoginLocalUserDto } from 'src/dtos/user.dto';
 import { User } from 'src/entities/user.entity';
 import { MailService } from 'src/services/mail.service';
-import { RedisCachingService } from 'src/services/redis-caching.service';
+import { AuthRedisService } from 'src/services/auth-redis.service';
+import { TermRedisService } from 'src/services/term-redis.service';
+import { TermService } from 'src/services/term.service';
 import { IJwtPayload } from 'src/types/auth.type';
+import { UserTerm } from 'src/entities/user-term.entity';
 import * as randomCodeUtil from 'src/utils/random-code.util';
 import { MockServiceFactory } from './mocks/unit-mock-factory';
 import { AccountService } from 'src/account/account.service';
@@ -40,7 +43,9 @@ const mockConfigData = {
 describe('AuthService Test', () => {
   let authService: AuthService;
   let jwtService: JwtService;
-  let redisCachingService: RedisCachingService;
+  let authRedisService: AuthRedisService;
+  let termRedisService: TermRedisService;
+  let termService: TermService;
   let mailService: MailService;
   let accountService: AccountService;
 
@@ -70,8 +75,16 @@ describe('AuthService Test', () => {
           useValue: MockServiceFactory.createMockService(JwtService),
         },
         {
-          provide: RedisCachingService,
-          useValue: MockServiceFactory.createMockService(RedisCachingService),
+          provide: AuthRedisService,
+          useValue: MockServiceFactory.createMockService(AuthRedisService),
+        },
+        {
+          provide: TermRedisService,
+          useValue: MockServiceFactory.createMockService(TermRedisService),
+        },
+        {
+          provide: TermService,
+          useValue: MockServiceFactory.createMockService(TermService),
         },
         {
           provide: MailService,
@@ -86,7 +99,9 @@ describe('AuthService Test', () => {
 
     authService = moduleRef.get(AuthService);
     jwtService = moduleRef.get(JwtService);
-    redisCachingService = moduleRef.get(RedisCachingService);
+    authRedisService = moduleRef.get(AuthRedisService);
+    termRedisService = moduleRef.get(TermRedisService);
+    termService = moduleRef.get(TermService);
     mailService = moduleRef.get(MailService);
     accountService = moduleRef.get(AccountService);
   });
@@ -229,14 +244,14 @@ describe('AuthService Test', () => {
       jest.spyOn(randomCodeUtil, 'createRandomCode').mockReturnValue('12345');
       jest.spyOn(mailService, 'sendAuthCodeMail').mockResolvedValue(true);
       jest
-        .spyOn(redisCachingService, 'cachingVerificationCode')
+        .spyOn(authRedisService, 'cachingVerificationCode')
         .mockResolvedValue(undefined);
 
       const result = await authService.makeCodeAndSendMail(email);
 
       expect(result).toBe(true);
       expect(mailService.sendAuthCodeMail).toHaveBeenCalledWith(email, '12345');
-      expect(redisCachingService.cachingVerificationCode).toHaveBeenCalledWith(
+      expect(authRedisService.cachingVerificationCode).toHaveBeenCalledWith(
         email,
         '12345',
       );
@@ -251,9 +266,7 @@ describe('AuthService Test', () => {
         InternalServerErrorException,
       );
       expect(mailService.sendAuthCodeMail).toHaveBeenCalledWith(email, '12345');
-      expect(
-        redisCachingService.cachingVerificationCode,
-      ).not.toHaveBeenCalled();
+      expect(authRedisService.cachingVerificationCode).not.toHaveBeenCalled();
     });
   });
 
@@ -265,19 +278,19 @@ describe('AuthService Test', () => {
       };
 
       jest
-        .spyOn(redisCachingService, 'getCachedVerificationCode')
+        .spyOn(authRedisService, 'getCachedVerificationCode')
         .mockResolvedValue('12345');
       jest
-        .spyOn(redisCachingService, 'deleteVerificationCode')
+        .spyOn(authRedisService, 'deleteVerificationCode')
         .mockResolvedValueOnce();
 
       const result = await authService.verifyEmailCode(mockDto);
 
       expect(result).toEqual(true);
-      expect(
-        redisCachingService.getCachedVerificationCode,
-      ).toHaveBeenCalledWith(mockDto.email);
-      expect(redisCachingService.deleteVerificationCode).toHaveBeenCalledWith(
+      expect(authRedisService.getCachedVerificationCode).toHaveBeenCalledWith(
+        mockDto.email,
+      );
+      expect(authRedisService.deleteVerificationCode).toHaveBeenCalledWith(
         mockDto.email,
       );
     });
@@ -288,19 +301,19 @@ describe('AuthService Test', () => {
         email: 'mock@test.com',
       };
       jest
-        .spyOn(redisCachingService, 'getCachedVerificationCode')
+        .spyOn(authRedisService, 'getCachedVerificationCode')
         .mockResolvedValue(null);
       jest
-        .spyOn(redisCachingService, 'deleteVerificationCode')
+        .spyOn(authRedisService, 'deleteVerificationCode')
         .mockResolvedValueOnce();
 
       await expect(authService.verifyEmailCode(mockDto)).rejects.toThrow(
         UnauthorizedException,
       );
-      expect(
-        redisCachingService.getCachedVerificationCode,
-      ).toHaveBeenCalledWith(mockDto.email);
-      expect(redisCachingService.deleteVerificationCode).not.toHaveBeenCalled();
+      expect(authRedisService.getCachedVerificationCode).toHaveBeenCalledWith(
+        mockDto.email,
+      );
+      expect(authRedisService.deleteVerificationCode).not.toHaveBeenCalled();
     });
 
     it('사용자가 입력한 코드가 캐싱되어 있는 코드와 다른 경우, UnauthorizedException예외를 발생', async () => {
@@ -309,19 +322,19 @@ describe('AuthService Test', () => {
         email: 'mock@test.com',
       };
       jest
-        .spyOn(redisCachingService, 'getCachedVerificationCode')
+        .spyOn(authRedisService, 'getCachedVerificationCode')
         .mockResolvedValue('12345');
       jest
-        .spyOn(redisCachingService, 'deleteVerificationCode')
+        .spyOn(authRedisService, 'deleteVerificationCode')
         .mockResolvedValueOnce();
 
       await expect(authService.verifyEmailCode(mockDto)).rejects.toThrow(
         UnauthorizedException,
       );
-      expect(
-        redisCachingService.getCachedVerificationCode,
-      ).toHaveBeenCalledWith(mockDto.email);
-      expect(redisCachingService.deleteVerificationCode).not.toHaveBeenCalled();
+      expect(authRedisService.getCachedVerificationCode).toHaveBeenCalledWith(
+        mockDto.email,
+      );
+      expect(authRedisService.deleteVerificationCode).not.toHaveBeenCalled();
     });
   });
 
@@ -417,6 +430,56 @@ describe('AuthService Test', () => {
       const mockToken = mockHeader.split(' ')[1];
       const result = authService.extractTokenFromHeader(mockHeader);
       expect(result).toBe(mockToken);
+    });
+  });
+
+  describe('checkUserAgreedRequiredTerm', () => {
+    it('사용자가 동의하지 않은 필수 약관 목록을 반환', async () => {
+      const userId = 1;
+      const termList = {
+        required: [
+          { id: 'term1', title: '필수 약관 1' },
+          { id: 'term2', title: '필수 약관 2' },
+        ],
+        optional: [{ id: 'term3', title: '선택 약관' }],
+      };
+      const userAgreedTerms = [{ term_id: 'term1' }] as UserTerm[];
+
+      jest.spyOn(termRedisService, 'getTermList').mockResolvedValue(termList);
+      jest
+        .spyOn(termService, 'getUserAgreedTerms')
+        .mockResolvedValue(userAgreedTerms);
+
+      const result = await authService.checkUserAgreedRequiredTerm(userId);
+
+      expect(result).toEqual({ notAgreedRequiredTerm: ['term2'] });
+      expect(termRedisService.getTermList).toHaveBeenCalled();
+      expect(termService.getUserAgreedTerms).toHaveBeenCalledWith(userId);
+    });
+
+    it('사용자가 모든 필수 약관에 동의한 경우 빈 배열 반환', async () => {
+      const userId = 1;
+      const termList = {
+        required: [
+          { id: 'term1', title: '필수 약관 1' },
+          { id: 'term2', title: '필수 약관 2' },
+        ],
+        optional: [{ id: 'term3', title: '선택 약관' }],
+      };
+      const userAgreedTerms = [
+        { term_id: 'term1' },
+        { term_id: 'term2' },
+        { term_id: 'term3' },
+      ] as UserTerm[];
+
+      jest.spyOn(termRedisService, 'getTermList').mockResolvedValue(termList);
+      jest
+        .spyOn(termService, 'getUserAgreedTerms')
+        .mockResolvedValue(userAgreedTerms);
+
+      const result = await authService.checkUserAgreedRequiredTerm(userId);
+
+      expect(result).toEqual({ notAgreedRequiredTerm: [] });
     });
   });
 });

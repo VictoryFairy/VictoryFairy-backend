@@ -4,7 +4,7 @@ import { Team } from 'src/entities/team.entity';
 import { User } from 'src/entities/user.entity';
 import { RankService } from 'src/services/rank.service';
 import { AwsS3Service } from 'src/services/aws-s3.service';
-import { RedisCachingService } from 'src/services/redis-caching.service';
+import { UserRedisService } from 'src/services/user-redis.service';
 import { UserService } from 'src/services/user.service';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import { Repository } from 'typeorm';
@@ -14,6 +14,7 @@ import { Logger } from '@nestjs/common';
 import { CreateLocalUserDto } from 'src/dtos/user.dto';
 import { DEFAULT_PROFILE_IMAGE } from 'src/const/user.const';
 import { AccountService } from 'src/account/account.service';
+import { TermService } from 'src/services/term.service';
 
 const mockUsers = [
   { id: 1, email: 'test1@test.com', nickname: 'tester1' },
@@ -51,9 +52,10 @@ describe('userService Test', () => {
   let userService: UserService;
   let rankService: RankService;
   let awsS3Service: AwsS3Service;
-  let redisCachingService: RedisCachingService;
+  let userRedisService: UserRedisService;
   let eventEmitter: EventEmitter2;
   let accountService: AccountService;
+  let termService: TermService;
 
   beforeEach(async () => {
     const moduleRef: TestingModule = await Test.createTestingModule({
@@ -80,8 +82,12 @@ describe('userService Test', () => {
           useValue: MockServiceFactory.createMockService(AwsS3Service),
         },
         {
-          provide: RedisCachingService,
-          useValue: MockServiceFactory.createMockService(RedisCachingService),
+          provide: UserRedisService,
+          useValue: MockServiceFactory.createMockService(UserRedisService),
+        },
+        {
+          provide: TermService,
+          useValue: MockServiceFactory.createMockService(TermService),
         },
         {
           provide: AccountService,
@@ -94,9 +100,10 @@ describe('userService Test', () => {
     teamRepo = moduleRef.get(getRepositoryToken(Team));
     rankService = moduleRef.get(RankService);
     awsS3Service = moduleRef.get(AwsS3Service);
-    redisCachingService = moduleRef.get(RedisCachingService);
+    userRedisService = moduleRef.get(UserRedisService);
     eventEmitter = moduleRef.get(EventEmitter2);
     accountService = moduleRef.get(AccountService);
+    termService = moduleRef.get(TermService);
   });
 
   afterEach(() => {
@@ -134,7 +141,7 @@ describe('userService Test', () => {
   describe('initCacheUser', () => {
     it('유저 캐싱이 완료된 후 이벤트 이미터로 이벤트가 발생', async () => {
       jest.spyOn(userRepo, 'find').mockResolvedValue(mockUsers as User[]);
-      jest.spyOn(redisCachingService, 'saveUser').mockResolvedValue(undefined);
+      jest.spyOn(userRedisService, 'saveUser').mockResolvedValue(undefined);
       jest.spyOn(eventEmitter, 'emit').mockReturnValue(true);
 
       await userService.initCacheUsers();
@@ -145,21 +152,18 @@ describe('userService Test', () => {
       );
       expect(userRepo.find).toHaveBeenCalled();
       mockUsers.forEach((user, i) => {
-        expect(redisCachingService.saveUser).toHaveBeenNthCalledWith(
-          i + 1,
-          user,
-        );
+        expect(userRedisService.saveUser).toHaveBeenNthCalledWith(i + 1, user);
       });
     });
 
     it('유저가 없다면 해당 메소드는 이벤트 발생 없이 종료', async () => {
       jest.spyOn(userRepo, 'find').mockResolvedValue([]);
-      jest.spyOn(redisCachingService, 'saveUser').mockResolvedValue(undefined);
+      jest.spyOn(userRedisService, 'saveUser').mockResolvedValue(undefined);
       jest.spyOn(eventEmitter, 'emit').mockReturnValue(true);
 
       await userService.initCacheUsers();
       expect(userRepo.find).toHaveBeenCalled();
-      expect(redisCachingService.saveUser).not.toHaveBeenCalled();
+      expect(userRedisService.saveUser).not.toHaveBeenCalled();
       expect(eventEmitter.emit).not.toHaveBeenCalled();
     });
 
@@ -167,7 +171,7 @@ describe('userService Test', () => {
       Logger.overrideLogger(false); // 로그 출력 안 하도록 설정
       jest.spyOn(userRepo, 'find').mockResolvedValue(mockUsers as User[]);
       jest
-        .spyOn(redisCachingService, 'saveUser')
+        .spyOn(userRedisService, 'saveUser')
         .mockRejectedValue(new Error('Redis 캐싱 실패'));
       jest.spyOn(eventEmitter, 'emit').mockReturnValue(true);
 
@@ -182,7 +186,7 @@ describe('userService Test', () => {
         .spyOn(accountService, 'createLocalUser')
         .mockResolvedValue(mockCreatedUser as User);
       jest.spyOn(rankService, 'initialSave').mockResolvedValue(undefined);
-      jest.spyOn(redisCachingService, 'saveUser').mockResolvedValue(undefined);
+      jest.spyOn(userRedisService, 'saveUser').mockResolvedValue(undefined);
       jest
         .spyOn(rankService, 'updateRedisRankings')
         .mockResolvedValue(undefined);
@@ -194,9 +198,7 @@ describe('userService Test', () => {
         mockCreateUserDto,
       );
       expect(rankService.initialSave).toHaveBeenCalled();
-      expect(redisCachingService.saveUser).toHaveBeenCalledWith(
-        mockCreatedUser,
-      );
+      expect(userRedisService.saveUser).toHaveBeenCalledWith(mockCreatedUser);
       expect(rankService.updateRedisRankings).toHaveBeenCalledWith(
         mockCreatedUser.id,
       );
@@ -208,7 +210,7 @@ describe('userService Test', () => {
         .mockResolvedValue(mockCreatedUser as User);
       jest.spyOn(rankService, 'initialSave').mockResolvedValue(undefined);
       jest
-        .spyOn(redisCachingService, 'saveUser')
+        .spyOn(userRedisService, 'saveUser')
         .mockRejectedValue(new Error('Redis 캐싱 실패'));
       jest
         .spyOn(rankService, 'updateRedisRankings')
@@ -221,7 +223,7 @@ describe('userService Test', () => {
       expect(accountService.createLocalUser).toHaveBeenCalledWith(
         mockCreateUserDto,
       );
-      expect(redisCachingService.saveUser).toHaveBeenCalled();
+      expect(userRedisService.saveUser).toHaveBeenCalled();
       expect(rankService.updateRedisRankings).not.toHaveBeenCalled();
       expect(userService['logger'].warn).toHaveBeenCalledWith(
         `유저 ${mockCreatedUser.id} 캐싱 실패`,
@@ -273,7 +275,7 @@ describe('userService Test', () => {
         nickname: 'tester',
         support_team: { id: 1 } as Team,
       } as User;
-      jest.spyOn(redisCachingService, 'saveUser').mockResolvedValue(undefined);
+      jest.spyOn(userRedisService, 'saveUser').mockResolvedValue(undefined);
       jest.spyOn(awsS3Service, 'deleteImage').mockResolvedValue(undefined);
     });
 
@@ -295,7 +297,7 @@ describe('userService Test', () => {
           support_team: { id: 2 },
         }),
       );
-      expect(redisCachingService.saveUser).not.toHaveBeenCalled();
+      expect(userRedisService.saveUser).not.toHaveBeenCalled();
       expect(awsS3Service.deleteImage).not.toHaveBeenCalled();
     });
 
@@ -320,7 +322,7 @@ describe('userService Test', () => {
           profile_image: 'updated_img',
         }),
       );
-      expect(redisCachingService.saveUser).toHaveBeenCalledWith(updatedUser);
+      expect(userRedisService.saveUser).toHaveBeenCalledWith(updatedUser);
       expect(awsS3Service.deleteImage).toHaveBeenCalledWith({
         fileUrl: 'img',
       });
@@ -343,7 +345,7 @@ describe('userService Test', () => {
       );
 
       expect(result).toEqual(updatedUser);
-      expect(redisCachingService.saveUser).toHaveBeenCalledWith(updatedUser);
+      expect(userRedisService.saveUser).toHaveBeenCalledWith(updatedUser);
       expect(awsS3Service.deleteImage).not.toHaveBeenCalled();
     });
 
@@ -357,7 +359,7 @@ describe('userService Test', () => {
       );
 
       expect(result).toEqual(updatedUser);
-      expect(redisCachingService.saveUser).toHaveBeenCalledWith(updatedUser);
+      expect(userRedisService.saveUser).toHaveBeenCalledWith(updatedUser);
       expect(awsS3Service.deleteImage).not.toHaveBeenCalled();
     });
 
@@ -382,7 +384,7 @@ describe('userService Test', () => {
           nickname: 'updated_nick',
         }),
       );
-      expect(redisCachingService.saveUser).toHaveBeenCalledWith(updatedUser);
+      expect(userRedisService.saveUser).toHaveBeenCalledWith(updatedUser);
       expect(awsS3Service.deleteImage).not.toHaveBeenCalled();
     });
 
@@ -394,7 +396,7 @@ describe('userService Test', () => {
       await expect(
         userService.changeUserProfile({ field: 'teamId', value: 2 }, mockUser),
       ).rejects.toThrow(Error);
-      expect(redisCachingService.saveUser).not.toHaveBeenCalled();
+      expect(userRedisService.saveUser).not.toHaveBeenCalled();
       expect(awsS3Service.deleteImage).not.toHaveBeenCalled();
     });
   });
@@ -411,7 +413,7 @@ describe('userService Test', () => {
       jest.spyOn(accountService, 'deleteUser').mockResolvedValue(undefined);
       jest.spyOn(awsS3Service, 'deleteImage').mockResolvedValue(undefined);
       jest
-        .spyOn(redisCachingService, 'userSynchronizationTransaction')
+        .spyOn(userRedisService, 'userSynchronizationTransaction')
         .mockResolvedValue(undefined);
 
       await userService.deleteUser(mockUser);
@@ -422,7 +424,7 @@ describe('userService Test', () => {
         fileUrl: mockUser.profile_image,
       });
       expect(
-        redisCachingService.userSynchronizationTransaction,
+        userRedisService.userSynchronizationTransaction,
       ).toHaveBeenCalledWith(mockUser.id, mockTeams);
     });
 
@@ -437,7 +439,7 @@ describe('userService Test', () => {
       jest.spyOn(accountService, 'deleteUser').mockResolvedValue(undefined);
       jest.spyOn(awsS3Service, 'deleteImage').mockResolvedValue(undefined);
       jest
-        .spyOn(redisCachingService, 'userSynchronizationTransaction')
+        .spyOn(userRedisService, 'userSynchronizationTransaction')
         .mockResolvedValue(undefined);
 
       await userService.deleteUser(mockUser);
@@ -445,8 +447,26 @@ describe('userService Test', () => {
       expect(accountService.deleteUser).toHaveBeenCalledWith(mockUser.id);
       expect(awsS3Service.deleteImage).not.toHaveBeenCalled();
       expect(
-        redisCachingService.userSynchronizationTransaction,
+        userRedisService.userSynchronizationTransaction,
       ).toHaveBeenCalledWith(mockUser.id, mockTeams);
+    });
+  });
+
+  describe('agreeTerm', () => {
+    it('termService.saveUserAgreedTerm을 호출', async () => {
+      const user = { id: 1 } as User;
+      const termIds = ['term1', 'term2'];
+
+      jest
+        .spyOn(termService, 'saveUserAgreedTerm')
+        .mockResolvedValue(undefined);
+
+      await userService.agreeTerm(user, termIds);
+
+      expect(termService.saveUserAgreedTerm).toHaveBeenCalledWith(
+        user.id,
+        termIds,
+      );
     });
   });
 });

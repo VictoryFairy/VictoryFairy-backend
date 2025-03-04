@@ -6,7 +6,8 @@ import { LocalAuth } from 'src/entities/local-auth.entity';
 import { SocialAuth } from 'src/entities/social-auth.entity';
 import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
-import { RedisCachingService } from 'src/services/redis-caching.service';
+import { AuthRedisService } from 'src/services/auth-redis.service';
+import { TermService } from 'src/services/term.service';
 import { Repository } from 'typeorm';
 import { MockRepoFactory, MockServiceFactory } from './mocks/unit-mock-factory';
 import {
@@ -35,7 +36,8 @@ describe('AccountService', () => {
   let localAuthRepo: Repository<LocalAuth>;
   let socialAuthRepo: Repository<SocialAuth>;
   let jwtService: JwtService;
-  let redisCachingService: RedisCachingService;
+  let authRedisService: AuthRedisService;
+  let termService: TermService;
 
   const mockConfigData = {
     JWT_REFRESH_SECRET: 'refreshsecret',
@@ -78,8 +80,19 @@ describe('AccountService', () => {
           },
         },
         {
-          provide: RedisCachingService,
-          useValue: MockServiceFactory.createMockService(RedisCachingService),
+          provide: AuthRedisService,
+          useValue: MockServiceFactory.createMockService(AuthRedisService),
+        },
+        {
+          provide: TermService,
+          useValue: {
+            ...MockServiceFactory.createMockService(TermService),
+            getTermList: jest.fn().mockResolvedValue({
+              required: [{ id: 'term1' }, { id: 'term2' }],
+              optional: [],
+            }),
+            saveUserAgreedTerm: jest.fn().mockResolvedValue(undefined),
+          },
         },
       ],
     }).compile();
@@ -93,7 +106,8 @@ describe('AccountService', () => {
       getRepositoryToken(SocialAuth),
     );
     jwtService = module.get<JwtService>(JwtService);
-    redisCachingService = module.get<RedisCachingService>(RedisCachingService);
+    authRedisService = module.get<AuthRedisService>(AuthRedisService);
+    termService = module.get<TermService>(TermService);
   });
 
   afterEach(() => {
@@ -692,14 +706,14 @@ describe('AccountService', () => {
       const expectedState = 'mock-uuid-v7';
 
       jest
-        .spyOn(redisCachingService, 'saveOAuthState')
+        .spyOn(authRedisService, 'saveOAuthState')
         .mockResolvedValue(undefined);
 
       const result = await accountService.saveOAuthStateWithUser(data);
 
       expect(result).toEqual({ state: expectedState });
       expect(uuidv7).toHaveBeenCalled();
-      expect(redisCachingService.saveOAuthState).toHaveBeenCalledWith({
+      expect(authRedisService.saveOAuthState).toHaveBeenCalledWith({
         ...data,
         state: expectedState,
       });
@@ -716,13 +730,53 @@ describe('AccountService', () => {
       };
 
       jest
-        .spyOn(redisCachingService, 'getOAuthState')
+        .spyOn(authRedisService, 'getOAuthState')
         .mockResolvedValue(stateData);
 
       const result = await accountService.getOAuthStateData(state);
 
       expect(result).toEqual(stateData);
-      expect(redisCachingService.getOAuthState).toHaveBeenCalledWith(state);
+      expect(authRedisService.getOAuthState).toHaveBeenCalledWith(state);
+    });
+  });
+
+  describe('createUser', () => {
+    it('유저 생성 시 필수 약관 동의 처리', async () => {
+      const dto = {
+        email: 'test@test.com',
+        nickname: 'testuser',
+        image: 'profile.jpg',
+        teamId: 2,
+      };
+      const createdUser = {
+        id: 1,
+        email: dto.email,
+        nickname: dto.nickname,
+        profile_image: dto.image,
+        support_team: { id: dto.teamId, name: 'Team' },
+      };
+      const requiredTerms = [{ id: 'term1' }, { id: 'term2' }];
+
+      jest.spyOn(userRepo, 'insert').mockResolvedValue(undefined);
+      jest
+        .spyOn(accountService, 'getUser')
+        .mockResolvedValue(createdUser as User);
+      jest.spyOn(termService, 'getTermList').mockResolvedValue({
+        required: requiredTerms,
+        optional: [],
+      });
+      jest
+        .spyOn(termService, 'saveUserAgreedTerm')
+        .mockResolvedValue(undefined);
+
+      const result = await accountService.createUser(dto);
+
+      expect(result).toEqual(createdUser);
+      expect(termService.getTermList).toHaveBeenCalled();
+      expect(termService.saveUserAgreedTerm).toHaveBeenCalledWith(
+        createdUser.id,
+        requiredTerms.map((term) => term.id),
+      );
     });
   });
 });
