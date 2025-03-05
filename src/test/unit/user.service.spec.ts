@@ -2,7 +2,6 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { getRepositoryToken } from '@nestjs/typeorm';
 import { Team } from 'src/entities/team.entity';
 import { User } from 'src/entities/user.entity';
-import { RankService } from 'src/services/rank.service';
 import { AwsS3Service } from 'src/services/aws-s3.service';
 import { UserRedisService } from 'src/services/user-redis.service';
 import { UserService } from 'src/services/user.service';
@@ -11,9 +10,8 @@ import { Repository } from 'typeorm';
 import { MockRepoFactory, MockServiceFactory } from './mocks/unit-mock-factory';
 import { EventName } from 'src/const/event.const';
 import { Logger } from '@nestjs/common';
-import { CreateLocalUserDto } from 'src/dtos/user.dto';
+import { CreateUserDto } from 'src/dtos/account.dto';
 import { DEFAULT_PROFILE_IMAGE } from 'src/const/user.const';
-import { AccountService } from 'src/account/account.service';
 import { TermService } from 'src/services/term.service';
 
 const mockUsers = [
@@ -22,10 +20,9 @@ const mockUsers = [
   { id: 3, email: 'test3@test.com', nickname: 'tester3' },
 ];
 
-const mockCreateUserDto: CreateLocalUserDto = {
+const mockCreateUserDto: CreateUserDto = {
   email: 'test12@test.com',
   image: 'img',
-  password: '123123',
   teamId: 1,
   nickname: 'tester',
 };
@@ -50,11 +47,9 @@ describe('userService Test', () => {
   let userRepo: Repository<User>;
   let teamRepo: Repository<Team>;
   let userService: UserService;
-  let rankService: RankService;
   let awsS3Service: AwsS3Service;
   let userRedisService: UserRedisService;
   let eventEmitter: EventEmitter2;
-  let accountService: AccountService;
   let termService: TermService;
 
   beforeEach(async () => {
@@ -74,10 +69,6 @@ describe('userService Test', () => {
           useValue: MockRepoFactory.createMockRepo<Team>(),
         },
         {
-          provide: RankService,
-          useValue: MockServiceFactory.createMockService(RankService),
-        },
-        {
           provide: AwsS3Service,
           useValue: MockServiceFactory.createMockService(AwsS3Service),
         },
@@ -89,20 +80,14 @@ describe('userService Test', () => {
           provide: TermService,
           useValue: MockServiceFactory.createMockService(TermService),
         },
-        {
-          provide: AccountService,
-          useValue: MockServiceFactory.createMockService(AccountService),
-        },
       ],
     }).compile();
     userService = moduleRef.get(UserService);
     userRepo = moduleRef.get(getRepositoryToken(User));
     teamRepo = moduleRef.get(getRepositoryToken(Team));
-    rankService = moduleRef.get(RankService);
     awsS3Service = moduleRef.get(AwsS3Service);
     userRedisService = moduleRef.get(UserRedisService);
     eventEmitter = moduleRef.get(EventEmitter2);
-    accountService = moduleRef.get(AccountService);
     termService = moduleRef.get(TermService);
   });
 
@@ -115,26 +100,48 @@ describe('userService Test', () => {
   });
 
   describe('isExistEmail', () => {
-    it('accountService.isExistEmail을 호출하고 결과를 반환', async () => {
+    it('이메일 존재 여부를 확인하고 결과를 반환', async () => {
       const email = 'test@example.com';
-      jest.spyOn(accountService, 'isExistEmail').mockResolvedValue(true);
+      jest.spyOn(userRepo, 'exists').mockResolvedValue(true);
 
       const result = await userService.isExistEmail(email);
 
       expect(result).toBe(true);
-      expect(accountService.isExistEmail).toHaveBeenCalledWith(email);
+      expect(userRepo.exists).toHaveBeenCalledWith({ where: { email } });
+    });
+
+    it('DB 조회 실패 시 예외 발생', async () => {
+      const email = 'test@example.com';
+      jest
+        .spyOn(userRepo, 'exists')
+        .mockRejectedValue(new Error('DB 조회 실패'));
+
+      await expect(userService.isExistEmail(email)).rejects.toThrow(
+        'DB 조회 실패',
+      );
     });
   });
 
   describe('isExistNickname', () => {
-    it('accountService.isExistNickname을 호출하고 결과를 반환', async () => {
+    it('닉네임 존재 여부를 확인하고 결과를 반환', async () => {
       const nickname = 'testuser';
-      jest.spyOn(accountService, 'isExistNickname').mockResolvedValue(false);
+      jest.spyOn(userRepo, 'exists').mockResolvedValue(false);
 
       const result = await userService.isExistNickname(nickname);
 
       expect(result).toBe(false);
-      expect(accountService.isExistNickname).toHaveBeenCalledWith(nickname);
+      expect(userRepo.exists).toHaveBeenCalledWith({ where: { nickname } });
+    });
+
+    it('DB 조회 실패 시 예외 발생', async () => {
+      const nickname = 'testuser';
+      jest
+        .spyOn(userRepo, 'exists')
+        .mockRejectedValue(new Error('DB 조회 실패'));
+
+      await expect(userService.isExistNickname(nickname)).rejects.toThrow(
+        'DB 조회 실패',
+      );
     });
   });
 
@@ -180,87 +187,96 @@ describe('userService Test', () => {
     });
   });
 
-  describe('createLocalUser', () => {
-    it('accountService.createLocalUser를 호출하고 결과를 처리', async () => {
+  describe('saveUser', () => {
+    it('유저 생성 및 저장 성공', async () => {
+      jest.spyOn(userRepo, 'save').mockResolvedValue(mockCreatedUser as User);
       jest
-        .spyOn(accountService, 'createLocalUser')
-        .mockResolvedValue(mockCreatedUser as User);
-      jest.spyOn(rankService, 'initialSave').mockResolvedValue(undefined);
-      jest.spyOn(userRedisService, 'saveUser').mockResolvedValue(undefined);
-      jest
-        .spyOn(rankService, 'updateRedisRankings')
-        .mockResolvedValue(undefined);
+        .spyOn(userService, 'generateRandomNickname')
+        .mockResolvedValue('랜덤닉네임#1234');
 
-      const result = await userService.createLocalUser(mockCreateUserDto);
+      const result = await userService.saveUser(mockCreateUserDto);
 
-      expect(result).toEqual({ id: mockCreatedUser.id });
-      expect(accountService.createLocalUser).toHaveBeenCalledWith(
-        mockCreateUserDto,
-      );
-      expect(rankService.initialSave).toHaveBeenCalled();
-      expect(userRedisService.saveUser).toHaveBeenCalledWith(mockCreatedUser);
-      expect(rankService.updateRedisRankings).toHaveBeenCalledWith(
-        mockCreatedUser.id,
+      expect(result).toEqual(mockCreatedUser);
+      expect(userRepo.save).toHaveBeenCalledWith(
+        expect.objectContaining({
+          email: mockCreateUserDto.email,
+          nickname: mockCreateUserDto.nickname,
+          profile_image: mockCreateUserDto.image,
+          support_team: { id: mockCreateUserDto.teamId },
+        }),
       );
     });
 
-    it('Redis 캐싱이 실패 시 로그만 출력 후, 유저 생성은 성공', async () => {
+    it('닉네임이 비어있는 경우 랜덤 닉네임 생성', async () => {
+      const dtoWithoutNickname = { ...mockCreateUserDto, nickname: '' };
+      const randomNickname = '승리요정#1234';
       jest
-        .spyOn(accountService, 'createLocalUser')
-        .mockResolvedValue(mockCreatedUser as User);
-      jest.spyOn(rankService, 'initialSave').mockResolvedValue(undefined);
-      jest
-        .spyOn(userRedisService, 'saveUser')
-        .mockRejectedValue(new Error('Redis 캐싱 실패'));
-      jest
-        .spyOn(rankService, 'updateRedisRankings')
-        .mockResolvedValue(undefined);
-      jest.spyOn(userService['logger'], 'warn').mockImplementation(() => {});
+        .spyOn(userService, 'generateRandomNickname')
+        .mockResolvedValue(randomNickname);
+      jest.spyOn(userRepo, 'save').mockResolvedValue({
+        ...mockCreatedUser,
+        nickname: randomNickname,
+      } as User);
 
-      const result = await userService.createLocalUser(mockCreateUserDto);
+      const result = await userService.saveUser(dtoWithoutNickname);
 
-      expect(result).toEqual({ id: mockCreatedUser.id });
-      expect(accountService.createLocalUser).toHaveBeenCalledWith(
-        mockCreateUserDto,
-      );
-      expect(userRedisService.saveUser).toHaveBeenCalled();
-      expect(rankService.updateRedisRankings).not.toHaveBeenCalled();
-      expect(userService['logger'].warn).toHaveBeenCalledWith(
-        `유저 ${mockCreatedUser.id} 캐싱 실패`,
-        expect.any(String),
-      );
+      expect(result.nickname).toBe(randomNickname);
+      expect(userService.generateRandomNickname).toHaveBeenCalled();
     });
-  });
 
-  describe('checkUserPw', () => {
-    it('accountService.verifyLocalAuth를 호출하고 결과를 반환', async () => {
-      const user = { id: 1 } as User;
-      const password = 'password123';
+    it('이미지가 없는 경우 기본 이미지 사용', async () => {
+      const dtoWithoutImage = { ...mockCreateUserDto, image: undefined };
 
-      jest.spyOn(accountService, 'verifyLocalAuth').mockResolvedValue(true);
+      jest.spyOn(userRepo, 'save').mockImplementation((userData: any) => {
+        expect(userData.profile_image).toBeUndefined();
 
-      const result = await userService.checkUserPw(user, password);
+        return Promise.resolve({
+          ...mockCreatedUser,
+          profile_image: DEFAULT_PROFILE_IMAGE,
+        } as User);
+      });
 
-      expect(result).toBe(true);
-      expect(accountService.verifyLocalAuth).toHaveBeenCalledWith(
-        user.id,
-        password,
+      const result = await userService.saveUser(dtoWithoutImage);
+
+      expect(result.profile_image).toBe(DEFAULT_PROFILE_IMAGE);
+    });
+
+    it('DB 저장 실패 시 예외 발생', async () => {
+      jest.spyOn(userRepo, 'save').mockRejectedValue(new Error('DB 에러'));
+
+      await expect(userService.saveUser(mockCreateUserDto)).rejects.toThrow(
+        'DB 저장 실패',
       );
     });
   });
 
-  describe('changeUserPw', () => {
-    it('accountService.changePassword를 호출', async () => {
-      const dto = { email: 'test@example.com', password: 'newpassword' };
+  describe('getUser', () => {
+    it('조건에 맞는 유저 정보를 반환', async () => {
+      const mockUser = { id: 1, email: 'test@example.com' } as User;
+      const where = { id: 1 };
+      const relations = { support_team: true };
+      const select = { id: true, email: true };
 
-      jest.spyOn(accountService, 'changePassword').mockResolvedValue(undefined);
+      jest.spyOn(userRepo, 'findOne').mockResolvedValue(mockUser);
 
-      await userService.changeUserPw(dto);
+      const result = await userService.getUser(where, relations, select);
 
-      expect(accountService.changePassword).toHaveBeenCalledWith(
-        dto.email,
-        dto.password,
-      );
+      expect(result).toEqual(mockUser);
+      expect(userRepo.findOne).toHaveBeenCalledWith({
+        where,
+        relations,
+        select,
+      });
+    });
+
+    it('유저가 없는 경우 null 반환', async () => {
+      const where = { id: 999 };
+
+      jest.spyOn(userRepo, 'findOne').mockResolvedValue(null);
+
+      const result = await userService.getUser(where);
+
+      expect(result).toBeNull();
     });
   });
 
@@ -284,7 +300,7 @@ describe('userService Test', () => {
         ...mockUser,
         support_team: { id: 2 } as Team,
       } as User;
-      jest.spyOn(accountService, 'updateUser').mockResolvedValue(updatedUser);
+      jest.spyOn(userRepo, 'save').mockResolvedValue(updatedUser);
 
       const result = await userService.changeUserProfile(
         { field: 'teamId', value: 2 },
@@ -292,7 +308,7 @@ describe('userService Test', () => {
       );
 
       expect(result).toEqual(updatedUser);
-      expect(accountService.updateUser).toHaveBeenCalledWith(
+      expect(userRepo.save).toHaveBeenCalledWith(
         expect.objectContaining({
           support_team: { id: 2 },
         }),
@@ -306,7 +322,7 @@ describe('userService Test', () => {
         ...mockUser,
         profile_image: 'updated_img',
       } as User;
-      jest.spyOn(accountService, 'updateUser').mockResolvedValue(updatedUser);
+      jest.spyOn(userRepo, 'save').mockResolvedValue(updatedUser);
 
       const result = await userService.changeUserProfile(
         {
@@ -317,7 +333,7 @@ describe('userService Test', () => {
       );
 
       expect(result).toEqual(updatedUser);
-      expect(accountService.updateUser).toHaveBeenCalledWith(
+      expect(userRepo.save).toHaveBeenCalledWith(
         expect.objectContaining({
           profile_image: 'updated_img',
         }),
@@ -337,7 +353,7 @@ describe('userService Test', () => {
         ...mockDefaultImgUser,
         profile_image: 'img',
       } as User;
-      jest.spyOn(accountService, 'updateUser').mockResolvedValue(updatedUser);
+      jest.spyOn(userRepo, 'save').mockResolvedValue(updatedUser);
 
       const result = await userService.changeUserProfile(
         { field: 'image', value: 'img' },
@@ -351,7 +367,7 @@ describe('userService Test', () => {
 
     it('이미지를 변경 시, 기존 프로필과 같다면, 이미지 삭제 스킵 및 레디스 캐싱 수행', async () => {
       const updatedUser: User = { ...mockUser, profile_image: 'img' } as User;
-      jest.spyOn(accountService, 'updateUser').mockResolvedValue(updatedUser);
+      jest.spyOn(userRepo, 'save').mockResolvedValue(updatedUser);
 
       const result = await userService.changeUserProfile(
         { field: 'image', value: 'img' },
@@ -368,7 +384,7 @@ describe('userService Test', () => {
         ...mockUser,
         nickname: 'updated_nick',
       } as User;
-      jest.spyOn(accountService, 'updateUser').mockResolvedValue(updatedUser);
+      jest.spyOn(userRepo, 'save').mockResolvedValue(updatedUser);
 
       const result = await userService.changeUserProfile(
         {
@@ -379,24 +395,12 @@ describe('userService Test', () => {
       );
 
       expect(result).toEqual(updatedUser);
-      expect(accountService.updateUser).toHaveBeenCalledWith(
+      expect(userRepo.save).toHaveBeenCalledWith(
         expect.objectContaining({
           nickname: 'updated_nick',
         }),
       );
       expect(userRedisService.saveUser).toHaveBeenCalledWith(updatedUser);
-      expect(awsS3Service.deleteImage).not.toHaveBeenCalled();
-    });
-
-    it('유저 정보 업데이트 실패 시, InternalServerErrorException 예외 발생', async () => {
-      jest
-        .spyOn(accountService, 'updateUser')
-        .mockRejectedValue(new Error('업데이트 실패'));
-
-      await expect(
-        userService.changeUserProfile({ field: 'teamId', value: 2 }, mockUser),
-      ).rejects.toThrow(Error);
-      expect(userRedisService.saveUser).not.toHaveBeenCalled();
       expect(awsS3Service.deleteImage).not.toHaveBeenCalled();
     });
   });
@@ -410,7 +414,7 @@ describe('userService Test', () => {
       const mockTeams = [{ id: 1 }, { id: 2 }];
 
       jest.spyOn(teamRepo, 'find').mockResolvedValue(mockTeams as Team[]);
-      jest.spyOn(accountService, 'deleteUser').mockResolvedValue(undefined);
+      jest.spyOn(userRepo, 'delete').mockResolvedValue(null);
       jest.spyOn(awsS3Service, 'deleteImage').mockResolvedValue(undefined);
       jest
         .spyOn(userRedisService, 'userSynchronizationTransaction')
@@ -419,7 +423,7 @@ describe('userService Test', () => {
       await userService.deleteUser(mockUser);
 
       expect(teamRepo.find).toHaveBeenCalledWith({ select: { id: true } });
-      expect(accountService.deleteUser).toHaveBeenCalledWith(mockUser.id);
+      expect(userRepo.delete).toHaveBeenCalledWith(mockUser.id);
       expect(awsS3Service.deleteImage).toHaveBeenCalledWith({
         fileUrl: mockUser.profile_image,
       });
@@ -436,7 +440,7 @@ describe('userService Test', () => {
       const mockTeams = [{ id: 1 }];
 
       jest.spyOn(teamRepo, 'find').mockResolvedValue(mockTeams as Team[]);
-      jest.spyOn(accountService, 'deleteUser').mockResolvedValue(undefined);
+      jest.spyOn(userRepo, 'delete').mockResolvedValue(null);
       jest.spyOn(awsS3Service, 'deleteImage').mockResolvedValue(undefined);
       jest
         .spyOn(userRedisService, 'userSynchronizationTransaction')
@@ -444,7 +448,7 @@ describe('userService Test', () => {
 
       await userService.deleteUser(mockUser);
 
-      expect(accountService.deleteUser).toHaveBeenCalledWith(mockUser.id);
+      expect(userRepo.delete).toHaveBeenCalledWith(mockUser.id);
       expect(awsS3Service.deleteImage).not.toHaveBeenCalled();
       expect(
         userRedisService.userSynchronizationTransaction,
@@ -467,6 +471,21 @@ describe('userService Test', () => {
         user.id,
         termIds,
       );
+    });
+  });
+
+  describe('generateRandomNickname', () => {
+    it('중복되지 않는 랜덤 닉네임 생성', async () => {
+      // 처음에는 중복된 닉네임이라고 가정
+      jest
+        .spyOn(userService, 'isExistNickname')
+        .mockResolvedValueOnce(true)
+        .mockResolvedValueOnce(false);
+
+      const result = await userService.generateRandomNickname();
+
+      expect(result).toMatch(/승리요정#\d{4}/);
+      expect(userService.isExistNickname).toHaveBeenCalledTimes(2);
     });
   });
 });

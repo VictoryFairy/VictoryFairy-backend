@@ -5,6 +5,8 @@ import {
 import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
 import { Test, TestingModule } from '@nestjs/testing';
+import { getRepositoryToken } from '@nestjs/typeorm';
+import * as bcrypt from 'bcrypt';
 
 // Transactional 라이브러리 관련 모킹
 jest.mock('typeorm-transactional', () => ({
@@ -14,18 +16,26 @@ jest.mock('typeorm-transactional', () => ({
   ),
 }));
 import { AuthService } from 'src/auth/auth.service';
-import { EmailWithCodeDto, LoginLocalUserDto } from 'src/dtos/user.dto';
+import { EmailWithCodeDto } from 'src/dtos/user.dto';
+import { LocalAuth } from 'src/entities/local-auth.entity';
+import { SocialAuth } from 'src/entities/social-auth.entity';
 import { User } from 'src/entities/user.entity';
 import { MailService } from 'src/services/mail.service';
 import { AuthRedisService } from 'src/services/auth-redis.service';
-import { TermRedisService } from 'src/services/term-redis.service';
-import { TermService } from 'src/services/term.service';
-import { IJwtPayload } from 'src/types/auth.type';
-import { UserTerm } from 'src/entities/user-term.entity';
+import { IJwtPayload, IOAuthStateCachingData } from 'src/types/auth.type';
 import * as randomCodeUtil from 'src/utils/random-code.util';
 import { MockServiceFactory } from './mocks/unit-mock-factory';
-import { AccountService } from 'src/account/account.service';
-import { SocialLoginStatus, SocialProvider } from 'src/const/auth.const';
+import { SocialProvider } from 'src/const/auth.const';
+import { Repository } from 'typeorm';
+
+jest.mock('uuid', () => ({
+  v7: jest.fn().mockReturnValue('test-uuid-v7'),
+}));
+
+jest.mock('bcrypt', () => ({
+  hash: jest.fn().mockImplementation(() => Promise.resolve('hashed-password')),
+  compare: jest.fn().mockImplementation(() => Promise.resolve(true)),
+}));
 
 const mockUser = {
   id: 1,
@@ -33,6 +43,7 @@ const mockUser = {
   nickname: 'tester',
   support_team: { id: 1, name: 'team' },
 };
+
 const mockConfigData = {
   JWT_REFRESH_SECRET: 'refreshsecret',
   JWT_ACCESS_SECRET: 'accesssecret',
@@ -44,10 +55,10 @@ describe('AuthService Test', () => {
   let authService: AuthService;
   let jwtService: JwtService;
   let authRedisService: AuthRedisService;
-  let termRedisService: TermRedisService;
-  let termService: TermService;
   let mailService: MailService;
-  let accountService: AccountService;
+  let userRepository: Repository<User>;
+  let localAuthRepository: Repository<LocalAuth>;
+  let socialAuthRepository: Repository<SocialAuth>;
 
   beforeEach(async () => {
     const moduleRef: TestingModule = await Test.createTestingModule({
@@ -79,20 +90,30 @@ describe('AuthService Test', () => {
           useValue: MockServiceFactory.createMockService(AuthRedisService),
         },
         {
-          provide: TermRedisService,
-          useValue: MockServiceFactory.createMockService(TermRedisService),
-        },
-        {
-          provide: TermService,
-          useValue: MockServiceFactory.createMockService(TermService),
-        },
-        {
           provide: MailService,
           useValue: MockServiceFactory.createMockService(MailService),
         },
         {
-          provide: AccountService,
-          useValue: MockServiceFactory.createMockService(AccountService),
+          provide: getRepositoryToken(User),
+          useValue: {
+            findOne: jest.fn(),
+          },
+        },
+        {
+          provide: getRepositoryToken(LocalAuth),
+          useValue: {
+            findOne: jest.fn(),
+            update: jest.fn(),
+            insert: jest.fn(),
+          },
+        },
+        {
+          provide: getRepositoryToken(SocialAuth),
+          useValue: {
+            find: jest.fn(),
+            findOne: jest.fn(),
+            insert: jest.fn(),
+          },
         },
       ],
     }).compile();
@@ -100,10 +121,10 @@ describe('AuthService Test', () => {
     authService = moduleRef.get(AuthService);
     jwtService = moduleRef.get(JwtService);
     authRedisService = moduleRef.get(AuthRedisService);
-    termRedisService = moduleRef.get(TermRedisService);
-    termService = moduleRef.get(TermService);
     mailService = moduleRef.get(MailService);
-    accountService = moduleRef.get(AccountService);
+    userRepository = moduleRef.get(getRepositoryToken(User));
+    localAuthRepository = moduleRef.get(getRepositoryToken(LocalAuth));
+    socialAuthRepository = moduleRef.get(getRepositoryToken(SocialAuth));
   });
 
   afterEach(() => {
@@ -114,127 +135,31 @@ describe('AuthService Test', () => {
     expect(authService).toBeDefined();
   });
 
-  describe('loginLocalUser', () => {
-    const mockUser = {
-      id: 1,
-      email: 'test@test.com',
-      nickname: 'tester',
-    };
-    const mockLoginDto: LoginLocalUserDto = {
-      email: mockUser.email,
-      password: '12345',
-    };
+  describe('getUserForAuth', () => {
+    it('유저 ID로 유저 정보를 가져옴', async () => {
+      jest.spyOn(userRepository, 'findOne').mockResolvedValue(mockUser as User);
 
-    it('로그인이 되면 user 객체를 반환', async () => {
-      jest.spyOn(accountService, 'getUser').mockResolvedValue(mockUser as User);
-      jest.spyOn(accountService, 'verifyLocalAuth').mockResolvedValue(true);
+      const result = await authService.getUserForAuth(1);
 
-      const result = await authService.loginLocalUser(mockLoginDto);
-
-      expect(result).toEqual({ user: mockUser });
-      expect(accountService.getUser).toHaveBeenCalledWith(
-        { email: mockLoginDto.email },
-        { support_team: true },
-      );
-      expect(accountService.verifyLocalAuth).toHaveBeenCalledWith(
-        mockUser.id,
-        mockLoginDto.password,
-      );
-    });
-
-    it('해당 유저가 없는 경우, UnauthorizedException 예외 발생', async () => {
-      jest.spyOn(accountService, 'getUser').mockResolvedValue(null);
-      jest.spyOn(accountService, 'verifyLocalAuth');
-
-      await expect(authService.loginLocalUser(mockLoginDto)).rejects.toThrow(
-        UnauthorizedException,
-      );
-      expect(accountService.verifyLocalAuth).not.toHaveBeenCalled();
-    });
-
-    it('비밀번호가 틀린 경우, UnauthorizedException 예외 발생', async () => {
-      jest.spyOn(accountService, 'getUser').mockResolvedValue(mockUser as User);
-      jest.spyOn(accountService, 'verifyLocalAuth').mockResolvedValue(false);
-
-      await expect(authService.loginLocalUser(mockLoginDto)).rejects.toThrow(
-        UnauthorizedException,
-      );
-      expect(accountService.verifyLocalAuth).toHaveBeenCalledWith(
-        mockUser.id,
-        mockLoginDto.password,
-      );
-    });
-  });
-
-  describe('loginSocialUser', () => {
-    const sub = 'social123';
-    const email = 'test@test.com';
-    const provider = SocialProvider.GOOGLE;
-
-    it('소셜 인증이 있는 경우 해당 유저와 성공 상태를 반환', async () => {
-      const socialAuth = { user: mockUser };
-      jest
-        .spyOn(accountService, 'getSocialAuth')
-        .mockResolvedValue(socialAuth as any);
-
-      const result = await authService.loginSocialUser(sub, email, provider);
-
-      expect(result).toEqual({
-        user: mockUser,
-        status: SocialLoginStatus.SUCCESS,
-      });
-      expect(accountService.getSocialAuth).toHaveBeenCalledWith(
-        { sub, provider },
-        { user: true },
-        { user: { id: true, email: true } },
-      );
-    });
-
-    it('소셜 인증이 없고 동일 이메일 유저가 있는 경우 중복 상태를 반환', async () => {
-      jest.spyOn(accountService, 'getSocialAuth').mockResolvedValue(null);
-      jest.spyOn(accountService, 'getUser').mockResolvedValue(mockUser as User);
-
-      const result = await authService.loginSocialUser(sub, email, provider);
-
-      expect(result).toEqual({
-        user: mockUser,
-        status: SocialLoginStatus.DUPLICATE,
+      expect(result).toEqual(mockUser);
+      expect(userRepository.findOne).toHaveBeenCalledWith({
+        where: { id: 1 },
+        relations: { support_team: true },
+        select: {
+          id: true,
+          email: true,
+          nickname: true,
+          support_team: { id: true, name: true },
+        },
       });
     });
 
-    it('소셜 인증이 없고 동일 이메일 유저도 없는 경우 새 유저를 생성', async () => {
-      jest.spyOn(accountService, 'getSocialAuth').mockResolvedValue(null);
-      jest.spyOn(accountService, 'getUser').mockResolvedValue(null);
-      jest
-        .spyOn(accountService, 'createSocialUser')
-        .mockResolvedValue(mockUser as User);
+    it('유저가 없는 경우 null 반환', async () => {
+      jest.spyOn(userRepository, 'findOne').mockResolvedValue(null);
 
-      const result = await authService.loginSocialUser(sub, email, provider);
+      const result = await authService.getUserForAuth(999);
 
-      expect(result).toEqual({
-        user: mockUser,
-        status: SocialLoginStatus.SUCCESS,
-      });
-      expect(accountService.createSocialUser).toHaveBeenCalledWith(
-        { email },
-        { sub, provider },
-      );
-    });
-  });
-
-  describe('linkSocial', () => {
-    it('accountService.createSocialAuth를 호출하고 결과를 반환', async () => {
-      const data = {
-        sub: 'social123',
-        provider: SocialProvider.GOOGLE,
-        user_id: 1,
-      };
-      jest.spyOn(accountService, 'createSocialAuth').mockResolvedValue(true);
-
-      const result = await authService.linkSocial(data);
-
-      expect(result).toEqual({ status: SocialLoginStatus.SUCCESS });
-      expect(accountService.createSocialAuth).toHaveBeenCalledWith(data);
+      expect(result).toBeNull();
     });
   });
 
@@ -343,7 +268,7 @@ describe('AuthService Test', () => {
       const payload = { id: 1, email: 'test@test.com' };
       jest.spyOn(jwtService, 'sign').mockReturnValue('token');
 
-      const result = authService.issueToken(payload, true);
+      const result = authService.issueToken(payload, 'refresh');
 
       expect(result).toBe('token');
       expect(jwtService.sign).toHaveBeenCalledWith(
@@ -359,7 +284,7 @@ describe('AuthService Test', () => {
       const payload = { id: 1, email: 'test@test.com' };
       jest.spyOn(jwtService, 'sign').mockReturnValue('token');
 
-      const result = authService.issueToken(payload, false);
+      const result = authService.issueToken(payload, 'access');
 
       expect(result).toBe('token');
       expect(jwtService.sign).toHaveBeenCalledWith(
@@ -433,53 +358,238 @@ describe('AuthService Test', () => {
     });
   });
 
-  describe('checkUserAgreedRequiredTerm', () => {
-    it('사용자가 동의하지 않은 필수 약관 목록을 반환', async () => {
+  describe('changePassword', () => {
+    it('비밀번호를 변경하고 true를 반환', async () => {
       const userId = 1;
-      const termList = {
-        required: [
-          { id: 'term1', title: '필수 약관 1' },
-          { id: 'term2', title: '필수 약관 2' },
-        ],
-        optional: [{ id: 'term3', title: '선택 약관' }],
-      };
-      const userAgreedTerms = [{ term_id: 'term1' }] as UserTerm[];
+      const newPassword = 'newPassword123';
 
-      jest.spyOn(termRedisService, 'getTermList').mockResolvedValue(termList);
-      jest
-        .spyOn(termService, 'getUserAgreedTerms')
-        .mockResolvedValue(userAgreedTerms);
+      jest.spyOn(localAuthRepository, 'update').mockResolvedValue(undefined);
 
-      const result = await authService.checkUserAgreedRequiredTerm(userId);
+      const result = await authService.changePassword(userId, newPassword);
 
-      expect(result).toEqual({ notAgreedRequiredTerm: ['term2'] });
-      expect(termRedisService.getTermList).toHaveBeenCalled();
-      expect(termService.getUserAgreedTerms).toHaveBeenCalledWith(userId);
+      expect(result).toBe(true);
+      expect(bcrypt.hash).toHaveBeenCalledWith(newPassword, expect.any(Number));
+      expect(localAuthRepository.update).toHaveBeenCalledWith(
+        { user_id: userId },
+        { password: 'hashed-password' },
+      );
     });
 
-    it('사용자가 모든 필수 약관에 동의한 경우 빈 배열 반환', async () => {
+    it('업데이트 실패 시 InternalServerErrorException 예외 발생', async () => {
       const userId = 1;
-      const termList = {
-        required: [
-          { id: 'term1', title: '필수 약관 1' },
-          { id: 'term2', title: '필수 약관 2' },
-        ],
-        optional: [{ id: 'term3', title: '선택 약관' }],
-      };
-      const userAgreedTerms = [
-        { term_id: 'term1' },
-        { term_id: 'term2' },
-        { term_id: 'term3' },
-      ] as UserTerm[];
+      const newPassword = 'newPassword123';
 
-      jest.spyOn(termRedisService, 'getTermList').mockResolvedValue(termList);
       jest
-        .spyOn(termService, 'getUserAgreedTerms')
-        .mockResolvedValue(userAgreedTerms);
+        .spyOn(localAuthRepository, 'update')
+        .mockRejectedValue(new Error('DB Error'));
 
-      const result = await authService.checkUserAgreedRequiredTerm(userId);
+      await expect(
+        authService.changePassword(userId, newPassword),
+      ).rejects.toThrow(InternalServerErrorException);
+      expect(bcrypt.hash).toHaveBeenCalledWith(newPassword, expect.any(Number));
+    });
+  });
 
-      expect(result).toEqual({ notAgreedRequiredTerm: [] });
+  describe('verifyLocalAuth', () => {
+    it('비밀번호 검증 성공 시 true 반환', async () => {
+      const userId = 1;
+      const password = 'password123';
+      const localAuth = { password: 'hashed-password' };
+
+      jest
+        .spyOn(localAuthRepository, 'findOne')
+        .mockResolvedValue(localAuth as LocalAuth);
+
+      const result = await authService.verifyLocalAuth(userId, password);
+
+      expect(result).toBe(true);
+      expect(localAuthRepository.findOne).toHaveBeenCalledWith({
+        where: { user_id: userId },
+      });
+      expect(bcrypt.compare).toHaveBeenCalledWith(password, localAuth.password);
+    });
+
+    it('비밀번호 검증 실패 시 false 반환', async () => {
+      const userId = 1;
+      const password = 'wrongPassword';
+      const localAuth = { password: 'hashed-password' };
+
+      jest
+        .spyOn(localAuthRepository, 'findOne')
+        .mockResolvedValue(localAuth as LocalAuth);
+      jest
+        .spyOn(bcrypt, 'compare')
+        .mockImplementation(() => Promise.resolve(false));
+
+      const result = await authService.verifyLocalAuth(userId, password);
+
+      expect(result).toBe(false);
+    });
+  });
+
+  describe('createLocalAuth', () => {
+    it('LocalAuth 생성 성공 시 true 반환', async () => {
+      const userId = 1;
+      const password = 'password123';
+
+      jest.spyOn(localAuthRepository, 'insert').mockResolvedValue(undefined);
+
+      const result = await authService.createLocalAuth(userId, password);
+
+      expect(result).toBe(true);
+      expect(bcrypt.hash).toHaveBeenCalledWith(password, expect.any(Number));
+      expect(localAuthRepository.insert).toHaveBeenCalledWith({
+        user_id: userId,
+        password: 'hashed-password',
+      });
+    });
+
+    it('LocalAuth 생성 실패 시 InternalServerErrorException 예외 발생', async () => {
+      const userId = 1;
+      const password = 'password123';
+
+      jest
+        .spyOn(localAuthRepository, 'insert')
+        .mockRejectedValue(new Error('DB Error'));
+
+      await expect(
+        authService.createLocalAuth(userId, password),
+      ).rejects.toThrow(InternalServerErrorException);
+    });
+  });
+
+  describe('getUserWithSocialAuthList', () => {
+    it('유저의 소셜 인증 목록을 반환', async () => {
+      const userId = 1;
+      const socialAuths = [
+        { provider: SocialProvider.GOOGLE, sub: 'google123' },
+        { provider: SocialProvider.KAKAO, sub: 'kakao123' },
+      ];
+
+      jest
+        .spyOn(socialAuthRepository, 'find')
+        .mockResolvedValue(socialAuths as SocialAuth[]);
+
+      const result = await authService.getUserWithSocialAuthList(userId);
+
+      expect(result).toEqual(socialAuths);
+      expect(socialAuthRepository.find).toHaveBeenCalledWith({
+        where: { user_id: userId },
+      });
+    });
+  });
+
+  describe('getSocialAuth', () => {
+    it('조건에 맞는 소셜 인증 정보를 반환', async () => {
+      const where = { sub: 'google123', provider: SocialProvider.GOOGLE };
+      const relations = { user: true };
+      const select = { id: true, sub: true };
+      const socialAuth = {
+        id: 1,
+        sub: 'google123',
+        provider: SocialProvider.GOOGLE,
+        user: mockUser,
+      };
+
+      jest
+        .spyOn(socialAuthRepository, 'findOne')
+        .mockResolvedValue(socialAuth as SocialAuth);
+
+      const result = await authService.getSocialAuth(where, relations, select);
+
+      expect(result).toEqual(socialAuth);
+      expect(socialAuthRepository.findOne).toHaveBeenCalledWith({
+        where,
+        relations,
+        select,
+      });
+    });
+
+    it('조건에 맞는 소셜 인증이 없을 경우 null 반환', async () => {
+      const where = { sub: 'nonexistent', provider: SocialProvider.GOOGLE };
+
+      jest.spyOn(socialAuthRepository, 'findOne').mockResolvedValue(null);
+
+      const result = await authService.getSocialAuth(where);
+
+      expect(result).toBeNull();
+    });
+  });
+
+  describe('saveOAuthStateWithUser', () => {
+    it('OAuth 상태를 저장하고 state를 반환', async () => {
+      const data = {
+        provider: SocialProvider.GOOGLE,
+        userId: 1,
+      };
+
+      jest
+        .spyOn(authRedisService, 'saveOAuthState')
+        .mockResolvedValue(undefined);
+
+      const result = await authService.saveOAuthStateWithUser(data);
+
+      expect(result).toEqual({ state: 'test-uuid-v7' });
+      expect(authRedisService.saveOAuthState).toHaveBeenCalledWith({
+        ...data,
+        state: 'test-uuid-v7',
+      });
+    });
+  });
+
+  describe('createSocialAuth', () => {
+    it('소셜 인증 생성 성공 시 true 반환', async () => {
+      const socialAuthData = {
+        sub: 'google123',
+        provider: SocialProvider.GOOGLE,
+      };
+      const userId = 1;
+
+      jest.spyOn(socialAuthRepository, 'insert').mockResolvedValue(undefined);
+
+      const result = await authService.createSocialAuth(socialAuthData, userId);
+
+      expect(result).toBe(true);
+      expect(socialAuthRepository.insert).toHaveBeenCalledWith({
+        ...socialAuthData,
+        user_id: userId,
+      });
+    });
+
+    it('소셜 인증 생성 실패 시 InternalServerErrorException 예외 발생', async () => {
+      const socialAuthData = {
+        sub: 'google123',
+        provider: SocialProvider.GOOGLE,
+      };
+      const userId = 1;
+
+      jest
+        .spyOn(socialAuthRepository, 'insert')
+        .mockRejectedValue(new Error('DB Error'));
+
+      await expect(
+        authService.createSocialAuth(socialAuthData, userId),
+      ).rejects.toThrow(InternalServerErrorException);
+    });
+  });
+
+  describe('getOAuthStateData', () => {
+    it('OAuth 상태 데이터를 반환', async () => {
+      const state = 'test-state';
+      const oauthData: IOAuthStateCachingData = {
+        provider: SocialProvider.GOOGLE,
+        state,
+        userId: 1,
+      };
+
+      jest
+        .spyOn(authRedisService, 'getOAuthState')
+        .mockResolvedValue(oauthData);
+
+      const result = await authService.getOAuthStateData(state);
+
+      expect(result).toEqual(oauthData);
+      expect(authRedisService.getOAuthState).toHaveBeenCalledWith(state);
     });
   });
 });
