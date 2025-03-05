@@ -1,47 +1,22 @@
-import { Global, Module } from '@nestjs/common';
-import { TypeOrmModule } from '@nestjs/typeorm';
+import { Module } from '@nestjs/common';
 import { JwtModule } from '@nestjs/jwt';
-import { User } from 'src/entities/user.entity';
-import { LocalAuth } from 'src/entities/local-auth.entity';
-import { SocialAuth } from 'src/entities/social-auth.entity';
 import { AccountService } from './account.service';
-import { AccessTokenGuard } from 'src/auth/guard/access-token.guard';
-import { RefreshTokenGuard } from 'src/auth/guard/refresh-token.guard';
 import { RedisModule } from 'src/modules/redis.module';
-import { SocialAuthGuard } from 'src/auth/guard/social-auth.guard';
-import { GoogleOAuthStrategy } from 'src/auth/strategies/google.strategy';
-import { KakaoOAuthStrategy } from 'src/auth/strategies/kakao.strategy';
-import { OAuthStrategyManager } from 'src/auth/strategies/OAuthStrategyManager';
-import { OAUTH_STRATEGY_MANAGER } from 'src/const/auth.const';
-import { UserTerm } from 'src/entities/user-term.entity';
 import { TermModule } from 'src/modules/term.module';
-
-@Global()
+import { AuthController } from 'src/auth/auth.controller';
+import { UserController } from 'src/controllers/user.controller';
+import { RankModule } from 'src/modules/rank.module';
+import { UserModule } from 'src/modules/user.module';
 @Module({
   imports: [
-    TypeOrmModule.forFeature([User, LocalAuth, SocialAuth, UserTerm]),
     JwtModule.register({}),
     RedisModule,
     TermModule,
+    RankModule,
+    UserModule,
   ],
-  providers: [
-    AccountService,
-    AccessTokenGuard,
-    RefreshTokenGuard,
-    SocialAuthGuard,
-    GoogleOAuthStrategy,
-    KakaoOAuthStrategy,
-    {
-      provide: OAUTH_STRATEGY_MANAGER,
-      useClass: OAuthStrategyManager,
-    },
-  ],
-  exports: [
-    AccountService,
-    AccessTokenGuard,
-    RefreshTokenGuard,
-    SocialAuthGuard,
-    OAUTH_STRATEGY_MANAGER,
-  ],
+  controllers: [AuthController, UserController],
+  providers: [AccountService],
+  exports: [AccountService],
 })
 export class AccountModule {}

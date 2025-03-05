@@ -1,19 +1,25 @@
-import { Injectable, Logger } from '@nestjs/common';
+import {
+  Injectable,
+  InternalServerErrorException,
+  Logger,
+} from '@nestjs/common';
 import { DEFAULT_PROFILE_IMAGE } from 'src/const/user.const';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import {
+  FindOptionsRelations,
+  FindOptionsSelect,
+  FindOptionsWhere,
+  Repository,
+} from 'typeorm';
 import { User } from 'src/entities/user.entity';
-import { CreateLocalUserDto, LoginLocalUserDto } from 'src/dtos/user.dto';
 import { EventEmitter2, OnEvent } from '@nestjs/event-emitter';
 import { EventName } from 'src/const/event.const';
 import { Team } from 'src/entities/team.entity';
-import { RankService } from './rank.service';
-import * as moment from 'moment';
 import { AwsS3Service } from 'src/services/aws-s3.service';
 import { UserRedisService } from './user-redis.service';
 import { runOnTransactionCommit, Transactional } from 'typeorm-transactional';
-import { AccountService } from 'src/account/account.service';
 import { TermService } from './term.service';
+import { CreateUserDto } from 'src/dtos/account.dto';
 @Injectable()
 export class UserService {
   private readonly logger = new Logger(UserService.name);
@@ -24,9 +30,7 @@ export class UserService {
     private readonly teamRepository: Repository<Team>,
     private readonly userRedisService: UserRedisService,
     private readonly eventEmitter: EventEmitter2,
-    private readonly rankService: RankService,
     private readonly awsS3Service: AwsS3Service,
-    private readonly accountService: AccountService,
     private readonly termService: TermService,
   ) {}
 
@@ -45,48 +49,59 @@ export class UserService {
       this.eventEmitter.emit(EventName.CACHED_USERS, userIds);
       this.logger.log('유저 정보 레디스 초기 캐싱 완료');
     } catch (error) {
-      this.logger.error(`유저 정보 레디스 초기 캐싱 실패 : ${error.message}`);
+      this.logger.error(`유F저 정보 레디스 초기 캐싱 실패 : ${error.message}`);
       throw error;
     }
   }
 
   async isExistEmail(email: string): Promise<boolean> {
-    return this.accountService.isExistEmail(email);
+    try {
+      return this.userRepository.exists({ where: { email } });
+    } catch (error) {
+      throw new InternalServerErrorException('DB 조회 실패');
+    }
   }
 
   async isExistNickname(nickname: string): Promise<boolean> {
-    return this.accountService.isExistNickname(nickname);
+    try {
+      return this.userRepository.exists({ where: { nickname } });
+    } catch (error) {
+      throw new InternalServerErrorException('DB 조회 실패');
+    }
   }
 
-  @Transactional()
-  async createLocalUser(dto: CreateLocalUserDto): Promise<{ id: number }> {
-    const createdUser = await this.accountService.createLocalUser(dto);
+  async saveUser(dto: CreateUserDto): Promise<User> {
+    try {
+      const { email } = dto;
+      dto.image = dto.nickname?.trim() ? dto.image : DEFAULT_PROFILE_IMAGE;
+      dto.nickname = dto.nickname?.trim()
+        ? dto.nickname
+        : await this.generateRandomNickname();
+      dto.teamId = dto.teamId || 1;
 
-    // Rank table 업데이트
-    await this.rankService.initialSave({
-      team_id: dto.teamId,
-      year: moment().utc().year(),
-      user_id: createdUser.id,
+      const createdUser = await this.userRepository.save({
+        email,
+        nickname: dto.nickname,
+        profile_image: dto.image,
+        support_team: { id: dto.teamId } as Team,
+      });
+      return createdUser;
+    } catch (error) {
+      throw new InternalServerErrorException('DB 저장 실패');
+    }
+  }
+
+  async getUser(
+    where: FindOptionsWhere<User>,
+    relations?: FindOptionsRelations<User>,
+    select?: FindOptionsSelect<User>,
+  ): Promise<User | null> {
+    const user = await this.userRepository.findOne({
+      where,
+      relations,
+      select,
     });
-
-    runOnTransactionCommit(async () => {
-      try {
-        await this.userRedisService.saveUser(createdUser);
-        await this.rankService.updateRedisRankings(createdUser.id);
-      } catch (error) {
-        this.logger.warn(`유저 ${createdUser.id} 캐싱 실패`, error.stack);
-      }
-    });
-
-    return { id: createdUser.id };
-  }
-
-  async checkUserPw(user: User, password: string): Promise<boolean> {
-    return this.accountService.verifyLocalAuth(user.id, password);
-  }
-
-  async changeUserPw({ email, password }: LoginLocalUserDto): Promise<void> {
-    await this.accountService.changePassword(email, password);
+    return user;
   }
 
   async changeUserProfile(
@@ -104,7 +119,7 @@ export class UserService {
       user[field] = value;
     }
 
-    const updatedUser = await this.accountService.updateUser(user);
+    const updatedUser = await this.userRepository.save(user);
 
     if (field === 'image' || field === 'nickname') {
       await this.userRedisService.saveUser(updatedUser);
@@ -125,7 +140,7 @@ export class UserService {
     const teams = await this.teamRepository.find({ select: { id: true } });
     const { profile_image, id } = user;
 
-    await this.accountService.deleteUser(id);
+    await this.userRepository.delete(id);
 
     runOnTransactionCommit(async () => {
       if (profile_image !== DEFAULT_PROFILE_IMAGE) {
@@ -137,5 +152,16 @@ export class UserService {
 
   async agreeTerm(user: User, termIds: string[]): Promise<void> {
     await this.termService.saveUserAgreedTerm(user.id, termIds);
+  }
+
+  async generateRandomNickname(): Promise<string> {
+    while (true) {
+      const randomNum = Math.floor(Math.random() * 10000);
+      const nickname = `승리요정#${randomNum.toString().padStart(4, '0')}`;
+      const exists = await this.isExistNickname(nickname);
+      if (!exists) {
+        return nickname;
+      }
+    }
   }
 }

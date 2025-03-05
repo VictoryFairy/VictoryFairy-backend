@@ -2,260 +2,183 @@ import {
   BadRequestException,
   Injectable,
   InternalServerErrorException,
+  Logger,
   UnauthorizedException,
 } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
-import {
-  Repository,
-  FindOptionsRelations,
-  FindOptionsSelect,
-  FindOptionsWhere,
-} from 'typeorm';
 import { User } from 'src/entities/user.entity';
-import { LocalAuth } from 'src/entities/local-auth.entity';
-import { SocialAuth } from 'src/entities/social-auth.entity';
-import * as bcrypt from 'bcrypt';
-import { DEFAULT_PROFILE_IMAGE, HASH_ROUND } from 'src/const/user.const';
-import { JwtService } from '@nestjs/jwt';
-import { ConfigService } from '@nestjs/config';
-import { IJwtPayload, IOAuthStateCachingData } from 'src/types/auth.type';
-import { CreateLocalUserDto } from 'src/dtos/user.dto';
+import { CreateLocalUserDto, LoginLocalUserDto } from 'src/dtos/user.dto';
 import { CreateSocialAuthDto, CreateUserDto } from 'src/dtos/account.dto';
-import { AuthRedisService } from 'src/services/auth-redis.service';
-import { v7 as uuidv7 } from 'uuid';
-import { SocialProvider } from 'src/const/auth.const';
 import { TermService } from 'src/services/term.service';
-
+import { UserRedisService } from 'src/services/user-redis.service';
+import { RankService } from 'src/services/rank.service';
+import { UserService } from 'src/services/user.service';
+import { Transactional, runOnTransactionCommit } from 'typeorm-transactional';
+import * as moment from 'moment';
+import { AuthService } from 'src/auth/auth.service';
+import { SocialLoginStatus, SocialProvider } from 'src/const/auth.const';
+import { CachedTermList } from 'src/types/term.type';
+import { TermRedisService } from 'src/services/term-redis.service';
 @Injectable()
 export class AccountService {
+  private readonly logger = new Logger(AccountService.name);
   constructor(
-    @InjectRepository(User)
-    private readonly userRepository: Repository<User>,
-    @InjectRepository(LocalAuth)
-    private readonly localAuthRepository: Repository<LocalAuth>,
-    @InjectRepository(SocialAuth)
-    private readonly socialAuthRepository: Repository<SocialAuth>,
-    private readonly jwtService: JwtService,
-    private readonly configService: ConfigService,
-    private readonly authRedisService: AuthRedisService,
     private readonly termService: TermService,
+    private readonly rankService: RankService,
+    private readonly userRedisService: UserRedisService,
+    private readonly userService: UserService,
+    private readonly authService: AuthService,
+    private readonly termRedisService: TermRedisService,
   ) {}
 
-  async getUser(
-    where: FindOptionsWhere<User>,
-    relations?: FindOptionsRelations<User>,
-    select?: FindOptionsSelect<User>,
-  ): Promise<User | null> {
-    const user = await this.userRepository.findOne({
-      where,
-      relations,
-      select,
-    });
-    return user;
-  }
-
-  async verifyLocalAuth(userId: number, password: string): Promise<boolean> {
-    const localAuth = await this.localAuthRepository.findOne({
-      where: { user_id: userId },
-    });
-    return bcrypt.compare(password, localAuth.password);
-  }
-
-  async getSocialAuth(
-    where: FindOptionsWhere<SocialAuth>,
-    relations?: FindOptionsRelations<SocialAuth>,
-    select?: FindOptionsSelect<SocialAuth>,
-  ): Promise<SocialAuth | null> {
-    const found = await this.socialAuthRepository.findOne({
-      where,
-      relations,
-      select,
-    });
-
-    return found;
-  }
-
-  async isExistEmail(email: string): Promise<boolean> {
-    try {
-      return this.userRepository.exists({ where: { email } });
-    } catch (error) {
-      throw new InternalServerErrorException('DB 조회 실패');
-    }
-  }
-
-  async isExistNickname(nickname: string): Promise<boolean> {
-    try {
-      return this.userRepository.exists({ where: { nickname } });
-    } catch (error) {
-      throw new InternalServerErrorException('DB 조회 실패');
-    }
-  }
-
-  async createLocalUser(dto: CreateLocalUserDto): Promise<User> {
-    const { email, image, nickname, password, teamId } = dto;
-    const createdUser = await this.createUser({
-      email,
-      image,
-      nickname,
-      teamId,
-    });
-    await this.createLocalAuth(createdUser.id, password);
-
-    return createdUser;
-  }
-
-  async createSocialUser(
-    userData: CreateUserDto,
-    socialAuthData: Omit<CreateSocialAuthDto, 'user_id'>,
-  ) {
-    const user = await this.createUser(userData);
-    await this.createSocialAuth({ ...socialAuthData, user_id: user.id });
-    return user;
-  }
-
-  async createUser(dto: CreateUserDto): Promise<User> {
-    const image = dto.image?.trim() ? dto.image : DEFAULT_PROFILE_IMAGE;
-    const teamId = dto.teamId ?? 1;
-    const nickname = dto.nickname?.trim()
-      ? dto.nickname
-      : await this.generateRandomNickname();
-
-    await this.userRepository.insert({
-      email: dto.email,
-      profile_image: image,
-      support_team: { id: teamId },
-      nickname,
-    });
-
-    const createdUser = await this.getUser(
-      { email: dto.email },
+  async loginLocalUser(dto: LoginLocalUserDto) {
+    const { email, password } = dto;
+    const user = await this.userService.getUser(
+      { email },
       { support_team: true },
-      {
-        id: true,
-        email: true,
-        nickname: true,
-        profile_image: true,
-        support_team: { id: true, name: true },
-      },
     );
 
-    const requireTerm = await this.termService.getTermList();
-    const requireTermIds = requireTerm.required.map((term) => term.id);
-    await this.termService.saveUserAgreedTerm(createdUser.id, requireTermIds);
+    if (!user) {
+      throw new UnauthorizedException('이메일 또는 비밀번호가 틀렸습니다.');
+    }
 
+    const isVerified = await this.authService.verifyLocalAuth(
+      user.id,
+      password,
+    );
+    if (!isVerified) {
+      throw new UnauthorizedException('이메일 또는 비밀번호가 틀렸습니다.');
+    }
+
+    return { user };
+  }
+
+  @Transactional()
+  async loginSocialUser(sub: string, email: string, provider: SocialProvider) {
+    let user: User | null;
+    let status: SocialLoginStatus = SocialLoginStatus.SUCCESS;
+
+    const socialAuth = await this.authService.getSocialAuth(
+      { sub, provider },
+      { user: true },
+      { user: { id: true, email: true } },
+    );
+    user = socialAuth?.user ?? null;
+
+    if (!user) {
+      const isExistUser = await this.userService.getUser(
+        { email },
+        {},
+        { id: true, email: true },
+      );
+      // 동일 이메일이 이미 가입된 경우
+      if (isExistUser) {
+        status = SocialLoginStatus.DUPLICATE;
+        return { user: isExistUser, status };
+      }
+      //없는 경우
+      user = await this.createSocialUser({ email }, { sub, provider });
+    }
+    return { user, status };
+  }
+
+  @Transactional()
+  async createLocalUser(dto: CreateLocalUserDto): Promise<{ id: number }> {
+    const { password, ...userData } = dto;
+    const createdUser = await this.userService.saveUser(userData);
+
+    await this.authService.createLocalAuth(createdUser.id, password);
+
+    // Rank table 업데이트
+    await this.rankService.initialSave({
+      team_id: dto.teamId,
+      year: moment().utc().year(),
+      user_id: createdUser.id,
+    });
+
+    await this.agreeUserRequireTerm(createdUser.id);
+
+    runOnTransactionCommit(async () => {
+      try {
+        await this.userRedisService.saveUser(createdUser);
+        await this.rankService.updateRedisRankings(createdUser.id);
+      } catch (error) {
+        this.logger.warn(`유저 ${createdUser.id} 캐싱 실패`, error.stack);
+      }
+    });
+
+    return { id: createdUser.id };
+  }
+
+  /**
+   * @description 소셜 로그인 함수 내부에서 처리
+   * User생성 및 SocialAuth 생성 */
+  async createSocialUser(
+    userData: Pick<CreateUserDto, 'email'>,
+    socialAuthData: Omit<CreateSocialAuthDto, 'user_id'>,
+  ) {
+    const createdUser = await this.userService.saveUser(userData);
+    await this.agreeUserRequireTerm(createdUser.id);
+    await this.authService.createSocialAuth(socialAuthData, createdUser.id);
     return createdUser;
   }
 
-  async createLocalAuth(userId: number, password: string): Promise<boolean> {
-    try {
-      const hashPw = await bcrypt.hash(password, HASH_ROUND);
+  /** SocialAuth 연결 */
+  async linkSocial(
+    data: CreateSocialAuthDto,
+  ): Promise<{ status: SocialLoginStatus }> {
+    const { user_id, sub, provider } = data;
+    const socialAuth = await this.authService.getSocialAuth({
+      sub,
+      provider,
+      user_id,
+    });
+    if (socialAuth) {
+      return { status: SocialLoginStatus.DUPLICATE };
+    }
+    const result = await this.authService.createSocialAuth(data, user_id);
 
-      await this.localAuthRepository.insert({
-        user_id: userId,
-        password: hashPw,
-      });
+    return {
+      status: result ? SocialLoginStatus.SUCCESS : SocialLoginStatus.FAIL,
+    };
+  }
+
+  /** User생성 및 약관 동의까지 같이 저장*/
+  async agreeUserRequireTerm(userId: number): Promise<boolean> {
+    try {
+      const requireTerm = await this.termService.getTermList();
+      const requireTermIds = requireTerm.required.map((term) => term.id);
+      await this.termService.saveUserAgreedTerm(userId, requireTermIds);
+
       return true;
     } catch (error) {
-      throw new InternalServerErrorException('LocalAuth 생성 실패');
+      throw new InternalServerErrorException('유저 약관 동의 실패');
     }
   }
 
-  /** @returns 정상가입 - true | 소셜로그인 없으나 기존 이메일 있는 경우 - false | 그 외 DB저장 실패 - Throw Error */
-  async createSocialAuth(data: CreateSocialAuthDto): Promise<boolean> {
-    const { sub, provider, user_id } = data;
-    try {
-      await this.socialAuthRepository.insert({
-        sub,
-        provider,
-        user_id: user_id,
-      });
+  async checkUserAgreedRequiredTerm(
+    userId: number,
+  ): Promise<{ notAgreedRequiredTerms: string[] }> {
+    const termList: CachedTermList = await this.termRedisService.getTermList();
+    const userAgreedTermList =
+      await this.termService.getUserAgreedTerms(userId);
 
-      return true;
-    } catch (error) {
-      throw new InternalServerErrorException('소셜 유저 생성 실패');
-    }
+    const agreedTermIds = new Set(userAgreedTermList);
+    const notAgreedRequiredTerms = termList.required
+      .filter((requiredTerm) => !agreedTermIds.has(requiredTerm.id))
+      .map((term) => term.id);
+
+    return { notAgreedRequiredTerms };
   }
 
   async changePassword(email: string, password: string): Promise<void> {
-    const user = await this.getUser({ email });
+    const user = await this.userService.getUser({ email });
     if (!user) {
       throw new BadRequestException('해당 이메일로 가입된 계정 없음');
     }
     try {
-      const newHashPw = await bcrypt.hash(password, HASH_ROUND);
-      await this.localAuthRepository.update(
-        { user_id: user.id },
-        { password: newHashPw },
-      );
+      await this.authService.changePassword(user.id, password);
     } catch (error) {
       throw new InternalServerErrorException('비밀번호 업데이트 실패');
     }
-  }
-
-  async deleteUser(userId: number): Promise<void> {
-    try {
-      await this.userRepository.delete(userId);
-    } catch (error) {
-      throw new InternalServerErrorException('유저 삭제 실패');
-    }
-  }
-
-  async updateUser(user: User): Promise<User> {
-    try {
-      return await this.userRepository.save(user);
-    } catch (error) {
-      throw new InternalServerErrorException('유저 정보 업데이트 실패');
-    }
-  }
-
-  extractTokenFromHeader(authHeader: string): string {
-    const splitToken = authHeader.split(' ');
-    if (splitToken.length !== 2 || splitToken[0].toLowerCase() !== 'bearer') {
-      throw new UnauthorizedException('잘못된 토큰');
-    }
-    return splitToken[1];
-  }
-
-  async verifyToken(token: string, isRefresh: boolean): Promise<IJwtPayload> {
-    const rfKey = this.configService.get<string>('JWT_REFRESH_SECRET');
-    const acKey = this.configService.get<string>('JWT_ACCESS_SECRET');
-    const secretKey = isRefresh ? rfKey : acKey;
-    try {
-      const result: IJwtPayload = await this.jwtService.verifyAsync(token, {
-        secret: secretKey,
-      });
-      return result;
-    } catch (error) {
-      if (isRefresh) {
-        throw new UnauthorizedException('다시 로그인 해주세요');
-      } else {
-        throw new UnauthorizedException('유효하지 않은 토큰');
-      }
-    }
-  }
-
-  private async generateRandomNickname(): Promise<string> {
-    while (true) {
-      const randomNum = Math.floor(Math.random() * 10000);
-      const nickname = `승리요정#${randomNum.toString().padStart(4, '0')}`;
-      const exists = await this.isExistNickname(nickname);
-      if (!exists) {
-        return nickname;
-      }
-    }
-  }
-
-  async saveOAuthStateWithUser(data: {
-    provider: SocialProvider;
-    userId?: number;
-  }): Promise<{ state: string }> {
-    const state = uuidv7();
-    await this.authRedisService.saveOAuthState({ ...data, state });
-    return { state };
-  }
-
-  async getOAuthStateData(state: string): Promise<IOAuthStateCachingData> {
-    const data = await this.authRedisService.getOAuthState(state);
-    return data;
   }
 }

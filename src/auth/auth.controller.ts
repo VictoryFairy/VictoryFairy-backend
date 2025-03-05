@@ -39,12 +39,12 @@ import {
 } from 'src/dtos/user.dto';
 import { SocialAuthGuard } from './guard/social-auth.guard';
 import { ISocialUserInfo } from 'src/types/auth.type';
-import { RefreshTokenGuard } from './guard/refresh-token.guard';
-
+import { AccountService } from 'src/account/account.service';
 @ApiTags('Auth')
 @Controller('auth')
 export class AuthController {
   constructor(
+    private readonly accountService: AccountService,
     private readonly authService: AuthService,
     private readonly configService: ConfigService,
   ) {}
@@ -63,11 +63,14 @@ export class AuthController {
   })
   @ApiUnauthorizedResponse({ description: '아이디 또는 비밀번호가 틀린 경우' })
   async localLogin(@Body() body: LoginLocalUserDto, @Res() res: Response) {
-    const { user } = await this.authService.loginLocalUser(body);
+    const { user } = await this.accountService.loginLocalUser(body);
 
     const [rfToken, acToken] = [
-      this.authService.issueToken({ email: user.email, id: user.id }, true),
-      this.authService.issueToken({ email: user.email, id: user.id }, false),
+      this.authService.issueToken(
+        { email: user.email, id: user.id },
+        'refresh',
+      ),
+      this.authService.issueToken({ email: user.email, id: user.id }, 'access'),
     ];
 
     const rfExTime = this.configService.get('REFRESH_EXPIRE_TIME');
@@ -118,7 +121,7 @@ export class AuthController {
   ) {
     const { sub, email } = req.socialUserInfo;
 
-    const loginResult = await this.authService.loginSocialUser(
+    const loginResult = await this.accountService.loginSocialUser(
       sub,
       email,
       provider,
@@ -131,7 +134,7 @@ export class AuthController {
 
     const rfToken = this.authService.issueToken(
       { email: email, id: loginResult.user.id },
-      true,
+      'refresh',
     );
     const rfExTime = this.configService.get('REFRESH_EXPIRE_TIME');
     res.cookie('token', rfToken, this.getCookieOptions(parseInt(rfExTime)));
@@ -142,12 +145,9 @@ export class AuthController {
 
   /** 소셜 계정 연동 진입점 */
   @Get('link/:provider')
-  @UseGuards(RefreshTokenGuard, SocialAuthGuard)
+  @JwtAuth('refresh', SocialAuthGuard)
   @ApiCookieAuth('token')
-  @ApiOperation({
-    summary: '계정 연동 요청',
-    description: '요청 시 withCredentials: true 설정이 필요합니다.',
-  })
+  @ApiOperation({ summary: '계정 연동 요청' })
   @ApiParam({
     name: 'provider',
     enum: SocialProvider,
@@ -187,7 +187,7 @@ export class AuthController {
   ) {
     const { id } = req.cachedUser;
     const { sub } = req.socialUserInfo;
-    const { status } = await this.authService.linkSocial({
+    const { status } = await this.accountService.linkSocial({
       user_id: id,
       sub,
       provider,
@@ -230,7 +230,7 @@ export class AuthController {
     },
   })
   async checkRefreshToken(@UserDeco() user: User) {
-    return await this.authService.checkUserAgreedRequiredTerm(user.id);
+    return await this.accountService.checkUserAgreedRequiredTerm(user.id);
   }
 
   /** 엑세스 토큰 재발급 */
@@ -244,7 +244,7 @@ export class AuthController {
   })
   async reissueAcToken(@UserDeco() user: User): Promise<AccessTokenResDto> {
     const { email, id, support_team } = user;
-    const acToken = this.authService.issueToken({ email, id }, false);
+    const acToken = this.authService.issueToken({ email, id }, 'access');
     return { acToken, teamId: support_team.id, teamName: support_team.name };
   }
 

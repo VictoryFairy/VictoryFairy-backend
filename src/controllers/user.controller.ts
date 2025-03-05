@@ -19,6 +19,7 @@ import {
   ApiTags,
 } from '@nestjs/swagger';
 import { plainToInstance } from 'class-transformer';
+import { AccountService } from 'src/account/account.service';
 import { JwtAuth } from 'src/decorator/jwt-token.decorator';
 import { UserDeco } from 'src/decorator/user.decorator';
 import { OverallOppTeamDto } from 'src/dtos/rank.dto';
@@ -31,16 +32,19 @@ import {
   ResCheckPwDto,
   TermAgreeDto,
   UserMyPageDto,
-  UserResDto,
+  UserMeResDto,
 } from 'src/dtos/user.dto';
 import { User } from 'src/entities/user.entity';
 import { RankService } from 'src/services/rank.service';
 import { UserService } from 'src/services/user.service';
+import { AuthService } from 'src/auth/auth.service';
 
 @ApiTags('User')
 @Controller('users')
 export class UserController {
   constructor(
+    private readonly accountService: AccountService,
+    private readonly authService: AuthService,
     private readonly userService: UserService,
     private readonly rankService: RankService,
   ) {}
@@ -52,7 +56,7 @@ export class UserController {
   @ApiCreatedResponse({ description: '성공 시 데이터 없이 상태코드만 응답' })
   @ApiInternalServerErrorResponse({ description: 'DB 유저 저장 실패한 경우' })
   async signUp(@Body() body: CreateLocalUserDto) {
-    await this.userService.createLocalUser(body);
+    await this.accountService.createLocalUser(body);
   }
 
   /** 이메일 중복 확인 */
@@ -97,7 +101,7 @@ export class UserController {
     @Body() body: Pick<LoginLocalUserDto, 'password'>,
   ) {
     const { password } = body;
-    const isCorrect = await this.userService.checkUserPw(user, password);
+    const isCorrect = await this.authService.verifyLocalAuth(user.id, password);
     return plainToInstance(ResCheckPwDto, { isCorrect });
   }
 
@@ -111,7 +115,7 @@ export class UserController {
   })
   @ApiInternalServerErrorResponse({ description: 'DB 업데이트 실패' })
   async resetPw(@Body() body: LoginLocalUserDto) {
-    await this.userService.changeUserPw(body);
+    await this.accountService.changePassword(body.email, body.password);
   }
 
   /** 유저 프로필 변경 */
@@ -153,11 +157,15 @@ export class UserController {
   @ApiOkResponse({ type: UserMyPageDto })
   @ApiInternalServerErrorResponse({ description: 'DB 문제인 경우' })
   async getUserInfo(@UserDeco() user: User) {
-    const record = await this.rankService.userOverallGameStats(user.id);
+    const { id: userId } = user;
+    const record = await this.rankService.userOverallGameStats(userId);
+    const socialAuths =
+      await this.authService.getUserWithSocialAuthList(userId);
+    const foundUser = await this.userService.getUser({ id: userId });
 
-    const userDto = plainToInstance(UserResDto, user);
+    const userDto = new UserMeResDto(foundUser, socialAuths);
 
-    return plainToInstance(UserMyPageDto, { user: userDto, record });
+    return new UserMyPageDto(userDto, record);
   }
 
   /** 회원 탈퇴 */
@@ -171,7 +179,7 @@ export class UserController {
     await this.userService.deleteUser(user);
   }
 
-  @Post('term/agree')
+  @Post('term/agreement')
   @JwtAuth('access')
   @HttpCode(HttpStatus.NO_CONTENT)
   @ApiOperation({ summary: '약관 동의' })
@@ -180,6 +188,7 @@ export class UserController {
   @ApiInternalServerErrorResponse({ description: 'DB 업데이트 실패한 경우' })
   async agreeTerm(@UserDeco() user: User, @Body() body: TermAgreeDto) {
     const { termIds } = body;
+
     await this.userService.agreeTerm(user, termIds);
   }
 }

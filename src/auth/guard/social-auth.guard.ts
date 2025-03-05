@@ -8,16 +8,16 @@ import {
 } from '@nestjs/common';
 import { OAUTH_STRATEGY_MANAGER, SocialProvider } from 'src/const/auth.const';
 import { OAuthStrategyManager } from '../strategies/OAuthStrategyManager';
-import { AccountService } from 'src/account/account.service';
 import { IOAuthStrategy } from '../strategies/base-oauth.strategy';
 import { URL } from 'url';
+import { AuthService } from '../auth.service';
 
 @Injectable()
 export class SocialAuthGuard implements CanActivate {
   constructor(
     @Inject(OAUTH_STRATEGY_MANAGER)
     private readonly oAuthStrategyManager: OAuthStrategyManager,
-    private readonly accountService: AccountService,
+    private readonly authService: AuthService,
   ) {}
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
@@ -66,7 +66,7 @@ export class SocialAuthGuard implements CanActivate {
     strategy: IOAuthStrategy,
     flowType: 'link' | 'login',
   ) {
-    const { state } = await this.accountService.saveOAuthStateWithUser({
+    const { state } = await this.authService.saveOAuthStateWithUser({
       provider,
       userId: req.user?.id,
     });
@@ -89,7 +89,7 @@ export class SocialAuthGuard implements CanActivate {
     }
 
     const { state, userId, provider } =
-      await this.accountService.getOAuthStateData(receivedState);
+      await this.authService.getOAuthStateData(receivedState);
 
     if (!state) {
       throw new BadRequestException('OAuth state 일치하지 않음');

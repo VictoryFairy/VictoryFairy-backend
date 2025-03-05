@@ -62,7 +62,7 @@ export class TermService {
     }
   }
 
-  async getUserAgreedTerms(userId: number) {
+  async getUserAgreedTerms(userId: number): Promise<string[]> {
     /** 레디스 캐싱 조회 */
     const cachedUserTerm = await this.termRedisService.getUserTermInfo(userId);
     if (cachedUserTerm.length > 0) {
@@ -75,7 +75,7 @@ export class TermService {
       });
       /** 약관 정보 디비에서 확인후 레디스 캐싱 */
       await this.termRedisService.saveUserTermInfo(userId, terms);
-      return terms;
+      return terms.map((term) => term.term_id);
     } catch (error) {
       throw new InternalServerErrorException('유저 약관 조회 실패');
     }
