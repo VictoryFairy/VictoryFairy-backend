@@ -77,6 +77,14 @@ export class AccountService {
       }
       //없는 경우
       user = await this.createSocialUser({ email }, { sub, provider });
+      runOnTransactionCommit(async () => {
+        try {
+          await this.userRedisService.saveUser(user);
+          await this.rankService.updateRedisRankings(user.id);
+        } catch (error) {
+          this.logger.warn(`유저 ${user.id} 캐싱 실패`, error.stack);
+        }
+      });
     }
     return { user, status };
   }
