@@ -101,33 +101,6 @@ export class AuthService {
     );
   }
 
-  async verifyToken(token: string, isRefresh: boolean): Promise<IJwtPayload> {
-    const rfKey = this.configService.get<string>('JWT_REFRESH_SECRET');
-    const acKey = this.configService.get<string>('JWT_ACCESS_SECRET');
-    const secretKey = isRefresh ? rfKey : acKey;
-    try {
-      const result: IJwtPayload = await this.jwtService.verifyAsync(token, {
-        secret: secretKey,
-      });
-      return result;
-    } catch (error) {
-      if (isRefresh) {
-        throw new UnauthorizedException('다시 로그인 해주세요');
-      } else {
-        throw new UnauthorizedException('유효하지 않은 토큰');
-      }
-    }
-  }
-
-  extractTokenFromHeader(authHeader: string): string {
-    const splitToken = authHeader.split(' ');
-    if (splitToken.length !== 2 || splitToken[0].toLowerCase() !== 'bearer') {
-      throw new UnauthorizedException('잘못된 토큰');
-    }
-    const token = splitToken[1];
-    return token;
-  }
-
   async changePassword(userId: number, newPassword: string): Promise<boolean> {
     try {
       const hashPw = await bcrypt.hash(newPassword, HASH_ROUND);

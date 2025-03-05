@@ -22,7 +22,7 @@ import { SocialAuth } from 'src/entities/social-auth.entity';
 import { User } from 'src/entities/user.entity';
 import { MailService } from 'src/services/mail.service';
 import { AuthRedisService } from 'src/services/auth-redis.service';
-import { IJwtPayload, IOAuthStateCachingData } from 'src/types/auth.type';
+import { IOAuthStateCachingData } from 'src/types/auth.type';
 import * as randomCodeUtil from 'src/utils/random-code.util';
 import { MockServiceFactory } from './mocks/unit-mock-factory';
 import { SocialProvider } from 'src/const/auth.const';
@@ -294,67 +294,6 @@ describe('AuthService Test', () => {
           expiresIn: parseInt(mockConfigData.ACCESS_EXPIRE_TIME),
         },
       );
-    });
-  });
-
-  describe('verifyToken', () => {
-    it('유효한 Refresh Token인 경우, 적절한 페이로드를 반환', async () => {
-      const mockToken = 'mockToken';
-      const mockPayload: IJwtPayload = {
-        id: 1,
-        email: 'test@test.com',
-        type: 'rf',
-      };
-      jest.spyOn(jwtService, 'verifyAsync').mockResolvedValue(mockPayload);
-      const result = await authService.verifyToken(mockToken, true);
-
-      expect(result).toEqual(mockPayload);
-      expect(jwtService.verifyAsync).toHaveBeenCalledWith(mockToken, {
-        secret: mockConfigData.JWT_REFRESH_SECRET,
-      });
-    });
-
-    it.each([
-      ['리프레쉬', '다시 로그인 해주세요', true],
-      ['액세스', '유효하지 않은 토큰', false],
-    ])(
-      `올바르지 않은 %s 토큰인 경우 UnauthorizedException 예외와 메세지 - %s 반환`,
-      async (type, msg, isRefresh) => {
-        const mockToken = 'mockToken';
-        jest.spyOn(jwtService, 'verifyAsync').mockRejectedValue(new Error());
-
-        await expect(
-          authService.verifyToken(mockToken, isRefresh),
-        ).rejects.toThrow(new UnauthorizedException(msg));
-
-        expect(jwtService.verifyAsync).toHaveBeenCalledWith(mockToken, {
-          secret: isRefresh
-            ? mockConfigData.JWT_REFRESH_SECRET
-            : mockConfigData.JWT_ACCESS_SECRET,
-        });
-      },
-    );
-  });
-
-  describe('extractTokenFromHeader', () => {
-    it('헤더의 형식이 잘못되었을 때 UnauthorizedException 예외 발생', () => {
-      const mockHeader = 'bearer testheader isnot';
-      expect(() => authService.extractTokenFromHeader(mockHeader)).toThrow(
-        UnauthorizedException,
-      );
-    });
-    it('헤더가 bearer로 시작하지 않으면 UnauthorizedException 예외 발생', () => {
-      const mockHeader = 'Basic testheader';
-
-      expect(() => authService.extractTokenFromHeader(mockHeader)).toThrow(
-        UnauthorizedException,
-      );
-    });
-    it('올바른 헤더인 경우 헤더의 접두사를 제외한 토큰만 반환', () => {
-      const mockHeader = 'Bearer testHeader';
-      const mockToken = mockHeader.split(' ')[1];
-      const result = authService.extractTokenFromHeader(mockHeader);
-      expect(result).toBe(mockToken);
     });
   });
 

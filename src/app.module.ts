@@ -9,10 +9,8 @@ import { StadiumModule } from './modules/stadium.module';
 import { TeamModule } from './modules/team.module';
 import { RegisteredGameModule } from './modules/registered-game.module';
 import { GameModule } from './modules/game.module';
-import { UserModule } from './modules/user.module';
 import { RedisModule } from './modules/redis.module';
 import { RankModule } from './modules/rank.module';
-import { AuthModule } from './auth/auth.module';
 import { MailModule } from './modules/mail.module';
 import { AwsS3Module } from './modules/aws-s3.module';
 import { SeederService } from './services/seeder.service';
@@ -25,7 +23,6 @@ import { SlackModule } from './modules/slack.module';
 import { addTransactionalDataSource } from 'typeorm-transactional';
 import { DataSource } from 'typeorm';
 import { AccountModule } from './account/account.module';
-import { TermModule } from './modules/term.module';
 
 @Module({
   imports: [
@@ -50,15 +47,12 @@ import { TermModule } from './modules/term.module';
     RegisteredGameModule,
     GameModule,
     AccountModule,
-    AuthModule,
-    UserModule,
     RankModule,
     MailModule,
     AwsS3Module,
     SchedulingModule,
     CheeringSongModule,
     SlackModule,
-    TermModule,
   ],
   controllers: [AppController],
   providers: [
