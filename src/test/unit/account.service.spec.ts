@@ -238,6 +238,10 @@ describe('AccountService', () => {
       jest
         .spyOn(accountService, 'createSocialUser')
         .mockResolvedValue(mockUser as User);
+      jest.spyOn(userRedisService, 'saveUser').mockResolvedValue(undefined);
+      jest
+        .spyOn(rankService, 'updateRedisRankings')
+        .mockResolvedValue(undefined);
 
       const result = await accountService.loginSocialUser(sub, email, provider);
 
@@ -248,6 +252,10 @@ describe('AccountService', () => {
       expect(accountService.createSocialUser).toHaveBeenCalledWith(
         { email },
         { sub, provider },
+      );
+      expect(userRedisService.saveUser).toHaveBeenCalledWith(mockUser);
+      expect(rankService.updateRedisRankings).toHaveBeenCalledWith(
+        result.user.id,
       );
     });
   });
