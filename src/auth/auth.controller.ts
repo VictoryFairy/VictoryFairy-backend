@@ -275,7 +275,8 @@ export class AuthController {
       maxAge,
       domain: domain || 'localhost',
       httpOnly: true,
-      secure: nodeEnv === 'production',
+      secure: nodeEnv === 'production' || nodeEnv === 'staging',
+      sameSite: nodeEnv === 'staging' ? 'none' : 'lax',
     };
   }
 }
