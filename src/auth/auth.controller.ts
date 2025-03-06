@@ -30,7 +30,7 @@ import {
 import { CookieOptions, Request, Response } from 'express';
 import { ConfigService } from '@nestjs/config';
 import { JwtAuth } from 'src/decorator/jwt-token.decorator';
-import { SocialLinkStatus, SocialProvider } from 'src/const/auth.const';
+import { SocialProvider } from 'src/const/auth.const';
 import { AccessTokenResDto } from 'src/dtos/auth.dto';
 import {
   EmailDto,
