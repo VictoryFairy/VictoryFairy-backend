@@ -15,7 +15,11 @@ import { UserService } from 'src/services/user.service';
 import { Transactional, runOnTransactionCommit } from 'typeorm-transactional';
 import * as moment from 'moment';
 import { AuthService } from 'src/auth/auth.service';
-import { SocialLoginStatus, SocialProvider } from 'src/const/auth.const';
+import {
+  SocialLinkStatus,
+  SocialLoginStatus,
+  SocialProvider,
+} from 'src/const/auth.const';
 import { CachedTermList } from 'src/types/term.type';
 import { TermRedisService } from 'src/services/term-redis.service';
 @Injectable()
@@ -55,38 +59,44 @@ export class AccountService {
   @Transactional()
   async loginSocialUser(sub: string, email: string, provider: SocialProvider) {
     let user: User | null;
-    let status: SocialLoginStatus = SocialLoginStatus.SUCCESS;
+    let status: SocialLoginStatus = SocialLoginStatus.LOGIN;
 
-    const socialAuth = await this.authService.getSocialAuth(
-      { sub, provider },
-      { user: true },
-      { user: { id: true, email: true } },
-    );
-    user = socialAuth?.user ?? null;
-
-    if (!user) {
-      const isExistUser = await this.userService.getUser(
-        { email },
-        {},
-        { id: true, email: true },
+    try {
+      const socialAuth = await this.authService.getSocialAuth(
+        { sub, provider },
+        { user: true },
+        { user: { id: true, email: true } },
       );
-      // 동일 이메일이 이미 가입된 경우
-      if (isExistUser) {
-        status = SocialLoginStatus.DUPLICATE;
-        return { user: isExistUser, status };
-      }
-      //없는 경우
-      user = await this.createSocialUser({ email }, { sub, provider });
-      runOnTransactionCommit(async () => {
-        try {
-          await this.userRedisService.saveUser(user);
-          await this.rankService.updateRedisRankings(user.id);
-        } catch (error) {
-          this.logger.warn(`유저 ${user.id} 캐싱 실패`, error.stack);
+      user = socialAuth?.user ?? null;
+
+      if (!user) {
+        const isExistUser = await this.userService.getUser(
+          { email },
+          {},
+          { id: true, email: true },
+        );
+        // 동일 이메일이 이미 가입된 경우
+        if (isExistUser) {
+          status = SocialLoginStatus.DUPLICATE;
+          return { user: isExistUser, status };
         }
-      });
+        //없는 경우
+        user = await this.createSocialUser({ email }, { sub, provider });
+        status = SocialLoginStatus.SIGNUP;
+        runOnTransactionCommit(async () => {
+          try {
+            await this.userRedisService.saveUser(user);
+            await this.rankService.updateRedisRankings(user.id);
+          } catch (error) {
+            this.logger.warn(`유저 ${user.id} 캐싱 실패`, error.stack);
+          }
+        });
+      }
+      return { user, status };
+    } catch (error) {
+      this.logger.error('Social login or signup failed');
+      return { user, status: SocialLoginStatus.FAIL };
     }
-    return { user, status };
   }
 
   @Transactional()
@@ -133,7 +143,7 @@ export class AccountService {
   /** SocialAuth 연결 */
   async linkSocial(
     data: CreateSocialAuthDto,
-  ): Promise<{ status: SocialLoginStatus }> {
+  ): Promise<{ status: SocialLinkStatus }> {
     const { user_id, sub, provider } = data;
     const socialAuth = await this.authService.getSocialAuth({
       sub,
@@ -141,12 +151,12 @@ export class AccountService {
       user_id,
     });
     if (socialAuth) {
-      return { status: SocialLoginStatus.DUPLICATE };
+      return { status: SocialLinkStatus.DUPLICATE };
     }
     const result = await this.authService.createSocialAuth(data, user_id);
 
     return {
-      status: result ? SocialLoginStatus.SUCCESS : SocialLoginStatus.FAIL,
+      status: result ? SocialLinkStatus.SUCCESS : SocialLinkStatus.FAIL,
     };
   }
 

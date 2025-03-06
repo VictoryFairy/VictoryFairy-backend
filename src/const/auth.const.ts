@@ -16,12 +16,22 @@ export type SocialProvider =
   (typeof SocialProvider)[keyof typeof SocialProvider];
 
 export const SocialLoginStatus = {
-  SUCCESS: 'SUCCESS',
+  SIGNUP: 'SIGNUP',
+  LOGIN: 'LOGIN',
   DUPLICATE: 'DUPLICATE',
   FAIL: 'FAIL',
 } as const;
 
 export type SocialLoginStatus =
   (typeof SocialLoginStatus)[keyof typeof SocialLoginStatus];
+
+export const SocialLinkStatus = {
+  SUCCESS: 'SUCCESS',
+  FAIL: 'FAIL',
+  DUPLICATE: 'DUPLICATE',
+} as const;
+
+export type SocialLinkStatus =
+  (typeof SocialLinkStatus)[keyof typeof SocialLinkStatus];
 
 export const OAUTH_STRATEGY_MANAGER = Symbol('OAUTH_STRATEGY_MANAGER');

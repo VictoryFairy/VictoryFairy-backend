@@ -30,7 +30,7 @@ import {
 import { CookieOptions, Request, Response } from 'express';
 import { ConfigService } from '@nestjs/config';
 import { JwtAuth } from 'src/decorator/jwt-token.decorator';
-import { SocialProvider } from 'src/const/auth.const';
+import { SocialLinkStatus, SocialProvider } from 'src/const/auth.const';
 import { AccessTokenResDto } from 'src/dtos/auth.dto';
 import {
   EmailDto,
@@ -108,7 +108,7 @@ export class AuthController {
   @ApiResponse({
     status: 302,
     description:
-      '프론트엔드로 리다이렉트. 리다이렉트 URL (status: SUCCESS | DUPLICATE | FAIL)',
+      '프론트엔드로 리다이렉트. 리다이렉트 URL (status: LOGIN | SIGNUP | DUPLICATE | FAIL)',
     schema: {
       type: 'string',
       example: 'https://frontend.com/social-login?status=SUCCESS',
@@ -127,11 +127,6 @@ export class AuthController {
       provider,
     );
 
-    const frontendUrl = new URL(
-      '/social-login',
-      this.configService.get('FRONT_END_URL'),
-    );
-
     const rfToken = this.authService.issueToken(
       { email: email, id: loginResult.user.id },
       'refresh',
@@ -139,6 +134,7 @@ export class AuthController {
     const rfExTime = this.configService.get('REFRESH_EXPIRE_TIME');
     res.cookie('token', rfToken, this.getCookieOptions(parseInt(rfExTime)));
 
+    const frontendUrl = new URL(this.configService.get('FRONT_END_URL'));
     frontendUrl.searchParams.set('status', loginResult.status);
     return res.redirect(frontendUrl.href);
   }
@@ -187,18 +183,18 @@ export class AuthController {
   ) {
     const { id } = req.cachedUser;
     const { sub } = req.socialUserInfo;
-    const { status } = await this.accountService.linkSocial({
+    const linkResult = await this.accountService.linkSocial({
       user_id: id,
       sub,
       provider,
     });
     const frontendUrl = new URL(
-      '/social-link',
+      '/mypage',
       this.configService.get('FRONT_END_URL'),
     );
 
-    frontendUrl.searchParams.set('status', status);
-    return res.redirect(frontendUrl.href);
+    frontendUrl.searchParams.set('status', linkResult.status);
+    return res.redirect(frontendUrl.href); // mypage로 리다이렉트
   }
 
   /** 유저 로그아웃 */
