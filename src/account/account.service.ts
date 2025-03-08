@@ -141,9 +141,7 @@ export class AccountService {
   }
 
   /** SocialAuth 연결 */
-  async linkSocial(
-    data: CreateSocialAuthDto,
-  ): Promise<{ status: SocialLinkStatus }> {
+  async linkSocial(data: CreateSocialAuthDto) {
     const { user_id, sub, provider } = data;
     const socialAuth = await this.authService.getSocialAuth({
       sub,

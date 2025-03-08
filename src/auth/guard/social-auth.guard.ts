@@ -6,9 +6,13 @@ import {
   Injectable,
   InternalServerErrorException,
 } from '@nestjs/common';
-import { OAUTH_STRATEGY_MANAGER, SocialProvider } from 'src/const/auth.const';
+import {
+  OAUTH_STRATEGY_MANAGER,
+  SocialProvider,
+  TFlowType,
+} from 'src/const/auth.const';
 import { OAuthStrategyManager } from '../strategies/OAuthStrategyManager';
-import { IOAuthStrategy } from '../strategies/base-oauth.strategy';
+import { IOAuthStrategy } from 'src/types/auth.type';
 import { URL } from 'url';
 import { AuthService } from '../auth.service';
 
@@ -29,9 +33,21 @@ export class SocialAuthGuard implements CanActivate {
 
     if (!this.isCallbackRequest(receivedUrl, code)) {
       await this.handleEntryPoint(req, res, provider, strategy, flowType);
+      // 엔트리포인트는 바로 로그인 창으로 리다이렉트 하니까 가드 false로 컨트롤러 진입 안하도록
       return false;
     }
 
+    // 소셜 로그인 콜백 처리
+    if (
+      (provider === SocialProvider.APPLE && req.method !== 'POST') ||
+      (provider !== SocialProvider.APPLE && req.method !== 'GET')
+    ) {
+      const msg =
+        provider === SocialProvider.APPLE
+          ? '애플 로그인은 POST 요청만 가능'
+          : '그외의 소셜 로그인은 GET 요청만 가능';
+      throw new BadRequestException(msg);
+    }
     await this.handleCallback(req, code, flowType, strategy, receivedUrl);
     return true;
   }
@@ -44,11 +60,17 @@ export class SocialAuthGuard implements CanActivate {
       req.originalUrl,
       `${req.protocol}://${req.hostname}`,
     );
-    const flowType: 'link' | 'login' = receivedUrl.pathname.includes('/link/')
-      ? 'link'
-      : 'login';
+    const flowType: TFlowType = receivedUrl.pathname.includes(
+      `/${TFlowType.LINK}`,
+    )
+      ? TFlowType.LINK
+      : TFlowType.LOGIN;
 
-    const code = receivedUrl.searchParams.get('code');
+    const code =
+      provider === SocialProvider.APPLE && req.method === 'POST'
+        ? // 애플은 코드를 body에 담아서 보냄
+          req.body?.code || null
+        : receivedUrl.searchParams.get('code') || null;
 
     return { provider, strategy, receivedUrl, flowType, code };
   }

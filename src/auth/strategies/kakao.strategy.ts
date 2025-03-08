@@ -1,8 +1,8 @@
 import { Injectable } from '@nestjs/common';
-import { BaseOAuthStrategy } from './base-oauth.strategy';
-import { SocialProvider } from 'src/const/auth.const';
+import { SocialProvider, TFlowType } from 'src/const/auth.const';
 import { IKakaoOAuthUserInfo, ISocialUserInfo } from 'src/types/auth.type';
 import { ConfigService } from '@nestjs/config';
+import { BaseOAuthStrategy } from './base-oauth.strategy';
 
 @Injectable()
 export class KakaoOAuthStrategy extends BaseOAuthStrategy {
@@ -15,6 +15,44 @@ export class KakaoOAuthStrategy extends BaseOAuthStrategy {
       'https://kapi.kakao.com/v2/user/me',
       ['account_email', 'profile_nickname'],
     );
+  }
+  getCodeAuthUrl(flowType: TFlowType, state: string): string {
+    const url = new URL(this.authUrl);
+    const callbackUri = this.getCallbackUri(flowType);
+
+    const params = new URLSearchParams({
+      client_id: this.clientId,
+      redirect_uri: callbackUri,
+      response_type: 'code',
+      scope: this.scope.join(' '),
+      state,
+    });
+
+    url.search = params.toString();
+    return url.href;
+  }
+
+  getCallbackUri(flowType: TFlowType): string {
+    return new URL(
+      `auth/${flowType}/${this.provider}/callback`,
+      this.configService.get<string>('BACK_END_URL'),
+    ).href;
+  }
+
+  async getAccessToken(code: string, callbackUri: string): Promise<string> {
+    const response = await fetch(this.tokenUrl, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: new URLSearchParams({
+        client_id: this.clientId,
+        client_secret: this.clientSecret,
+        code,
+        grant_type: 'authorization_code',
+        redirect_uri: callbackUri,
+      }),
+    });
+    const data = await response.json();
+    return data.access_token;
   }
 
   async getUserInfo(accessToken: string): Promise<ISocialUserInfo> {
@@ -29,5 +67,14 @@ export class KakaoOAuthStrategy extends BaseOAuthStrategy {
       sub: data.id.toString(),
       email: data.kakao_account.email,
     };
+  }
+
+  async validateAndGetUserInfo(
+    code: string,
+    flowType: TFlowType,
+  ): Promise<ISocialUserInfo> {
+    const callbackUri = this.getCallbackUri(flowType);
+    const accessToken = await this.getAccessToken(code, callbackUri);
+    return await this.getUserInfo(accessToken);
   }
 }

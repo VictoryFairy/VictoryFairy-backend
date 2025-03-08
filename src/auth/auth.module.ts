@@ -15,6 +15,7 @@ import { SocialAuth } from 'src/entities/social-auth.entity';
 import { LocalAuth } from 'src/entities/local-auth.entity';
 import { User } from 'src/entities/user.entity';
 import { TypeOrmModule } from '@nestjs/typeorm';
+import { AppleOAuthStrategy } from './strategies/apple.strategy';
 
 @Global()
 @Module({
@@ -32,6 +33,7 @@ import { TypeOrmModule } from '@nestjs/typeorm';
     SocialAuthGuard,
     GoogleOAuthStrategy,
     KakaoOAuthStrategy,
+    AppleOAuthStrategy,
     {
       provide: OAUTH_STRATEGY_MANAGER,
       useClass: OAuthStrategyManager,

@@ -1,9 +1,18 @@
-import { SocialProvider } from 'src/const/auth.const';
+import { SocialProvider, TFlowType } from 'src/const/auth.const';
 
 export interface IJwtPayload {
   id: number;
   email: string;
   type: 'ac' | 'rf';
+}
+
+export interface IOAuthStrategy {
+  provider: SocialProvider;
+  getCodeAuthUrl(flowType: TFlowType, state: string): string;
+  validateAndGetUserInfo(
+    code: string,
+    flowType: TFlowType,
+  ): Promise<ISocialUserInfo>;
 }
 
 export interface IOAuthStateCachingData {
@@ -40,4 +49,27 @@ export interface IKakaoOAuthUserInfo {
     is_email_verified: boolean;
     email: string;
   };
+}
+
+export interface IAppleTokenResponse {
+  access_token: string;
+  token_type: 'Bearer' | 'bearer';
+  expires_in: number;
+  refresh_token: string;
+  id_token: string;
+}
+
+export interface IAppleDecodedPayload {
+  iss: string;
+  aud: string;
+  exp: number;
+  iat: number;
+  sub: string;
+  nonce?: string;
+  c_hash?: string;
+  email: string;
+  email_verified: string;
+  is_private_email: string;
+  auth_time: number;
+  nonce_supported: boolean;
 }

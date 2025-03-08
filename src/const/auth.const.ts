@@ -7,13 +7,20 @@ export const CODE_LIMIT_TIME = 180;
 /** 소셜로그인 제공자 */
 export const SocialProvider = {
   GOOGLE: 'google',
-  // APPLE: 'apple',
+  APPLE: 'apple',
   KAKAO: 'kakao',
 } as const;
 
 /** 소셜로그인 제공자 타입*/
 export type SocialProvider =
   (typeof SocialProvider)[keyof typeof SocialProvider];
+
+export const TFlowType = {
+  LOGIN: 'login',
+  LINK: 'link',
+} as const;
+
+export type TFlowType = (typeof TFlowType)[keyof typeof TFlowType];
 
 export const SocialLoginStatus = {
   SIGNUP: 'SIGNUP',

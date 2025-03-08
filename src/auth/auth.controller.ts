@@ -1,4 +1,5 @@
 import {
+  All,
   Body,
   Controller,
   Delete,
@@ -97,9 +98,9 @@ export class AuthController {
   async socialLogin() {}
 
   /** 소셜 로그인 리다이렉트 처리 엔드포인트 */
-  @Get('login/:provider/callback')
+  @All('login/:provider/callback')
   @UseGuards(SocialAuthGuard)
-  @ApiOperation({ summary: '소셜 로그인 콜백 처리' })
+  @ApiOperation({ summary: '소셜 로그인 콜백 (GET, POST 지원)' })
   @ApiParam({
     name: 'provider',
     enum: SocialProvider,
@@ -155,9 +156,9 @@ export class AuthController {
   async socialLink() {}
 
   /** 소셜 계정 연동 콜백처리 */
-  @Get('link/:provider/callback')
+  @All('link/:provider/callback')
   @UseGuards(SocialAuthGuard)
-  @ApiOperation({ summary: '계정 연동 콜백 처리' })
+  @ApiOperation({ summary: '소셜 계정 연동 콜백 (GET, POST 지원)' })
   @ApiParam({
     name: 'provider',
     enum: SocialProvider,
@@ -183,7 +184,7 @@ export class AuthController {
   ) {
     const { id } = req.cachedUser;
     const { sub } = req.socialUserInfo;
-    const linkResult = await this.accountService.linkSocial({
+    const { status } = await this.accountService.linkSocial({
       user_id: id,
       sub,
       provider,
@@ -193,7 +194,7 @@ export class AuthController {
       this.configService.get('FRONT_END_URL'),
     );
 
-    frontendUrl.searchParams.set('status', linkResult.status);
+    frontendUrl.searchParams.set('status', status);
     return res.redirect(frontendUrl.href); // mypage로 리다이렉트
   }
 
