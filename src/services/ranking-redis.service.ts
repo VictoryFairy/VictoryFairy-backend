@@ -14,7 +14,7 @@ export class RankingRedisService {
       await this.redisClient.zadd(
         `${RedisKeys.RANKING}:${key}`,
         score,
-        userId.toString(),
+        `${userId}`,
       );
     } catch (error) {
       throw new InternalServerErrorException(

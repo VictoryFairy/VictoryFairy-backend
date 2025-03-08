@@ -14,6 +14,7 @@ import { UserModule } from 'src/modules/user.module';
     TermModule,
     RankModule,
     UserModule,
+    RankModule,
   ],
   controllers: [AuthController, UserController],
   providers: [AccountService],

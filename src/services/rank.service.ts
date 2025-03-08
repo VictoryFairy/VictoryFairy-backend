@@ -48,15 +48,23 @@ export class RankService {
     }
   }
 
-  /** @description rank entity에 저장 */
-  async initialSave(watchedGame: Omit<CreateRankDto, 'status'>): Promise<void> {
+  /** @description rank entity에 없으면 저장*/
+  async insertRankIfAbsent(
+    watchedGame: Omit<CreateRankDto, 'status'>,
+  ): Promise<void> {
     const { team_id, user_id, year } = watchedGame;
 
-    await this.rankRepository.insert({
-      team_id,
-      active_year: year,
-      user: { id: user_id },
+    const foundRankData = await this.rankRepository.exists({
+      where: { user: { id: user_id }, active_year: year, team_id },
     });
+
+    if (!foundRankData) {
+      await this.rankRepository.insert({
+        team_id,
+        active_year: year,
+        user: { id: user_id },
+      });
+    }
   }
 
   /** @description rank entity에 업데이트

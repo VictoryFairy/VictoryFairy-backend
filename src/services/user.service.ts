@@ -85,6 +85,7 @@ export class UserService {
         profile_image: dto.image,
         support_team: { id: dto.teamId } as Team,
       });
+      createdUser.support_team = { id: dto.teamId } as Team;
       return createdUser;
     } catch (error) {
       throw new InternalServerErrorException('DB 저장 실패');

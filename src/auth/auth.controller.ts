@@ -127,9 +127,10 @@ export class AuthController {
       email,
       provider,
     );
+    const { id: userId } = user;
 
     const rfToken = this.authService.issueToken(
-      { email: email, id: user.id },
+      { email: email, id: userId },
       'refresh',
     );
     const rfExTime = this.configService.get('REFRESH_EXPIRE_TIME');

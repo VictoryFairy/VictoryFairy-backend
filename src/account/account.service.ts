@@ -104,15 +104,15 @@ export class AccountService {
     const { password, ...userData } = dto;
     const createdUser = await this.userService.saveUser(userData);
 
-    await this.authService.createLocalAuth(createdUser.id, password);
-
-    // Rank table 업데이트
-    await this.rankService.initialSave({
-      team_id: dto.teamId,
-      year: moment().utc().year(),
-      user_id: createdUser.id,
-    });
-
+    await Promise.all([
+      this.authService.createLocalAuth(createdUser.id, password),
+      this.rankService.insertRankIfAbsent({
+        team_id: dto.teamId,
+        year: moment().utc().year(),
+        user_id: createdUser.id,
+      }),
+      this.agreeUserRequireTerm(createdUser.id),
+    ]);
     await this.agreeUserRequireTerm(createdUser.id);
 
     runOnTransactionCommit(async () => {
@@ -135,8 +135,17 @@ export class AccountService {
     socialAuthData: Omit<CreateSocialAuthDto, 'user_id'>,
   ) {
     const createdUser = await this.userService.saveUser(userData);
-    await this.agreeUserRequireTerm(createdUser.id);
-    await this.authService.createSocialAuth(socialAuthData, createdUser.id);
+
+    await Promise.all([
+      this.authService.createSocialAuth(socialAuthData, createdUser.id),
+      this.rankService.insertRankIfAbsent({
+        team_id: createdUser.support_team.id,
+        user_id: createdUser.id,
+        year: moment().utc().year(),
+      }),
+      this.agreeUserRequireTerm(createdUser.id),
+    ]);
+
     return createdUser;
   }
 
@@ -195,6 +204,32 @@ export class AccountService {
       await this.authService.changePassword(user.id, password);
     } catch (error) {
       throw new InternalServerErrorException('비밀번호 업데이트 실패');
+    }
+  }
+
+  async profileUpdate(
+    userId: number,
+    updateInput: { field: 'teamId' | 'image' | 'nickname'; value: any },
+  ) {
+    const prevUserData = await this.userService.getUser(
+      { id: userId },
+      { support_team: true },
+      {
+        id: true,
+        nickname: true,
+        profile_image: true,
+        support_team: { id: true },
+      },
+    );
+    await this.userService.changeUserProfile(updateInput, prevUserData);
+
+    if (updateInput.field === 'teamId') {
+      await this.rankService.insertRankIfAbsent({
+        team_id: updateInput.value,
+        user_id: userId,
+        year: moment().utc().year(),
+      });
+      await this.rankService.updateRedisRankings(userId);
     }
   }
 }

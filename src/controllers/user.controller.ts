@@ -132,9 +132,9 @@ export class UserController {
   @ApiInternalServerErrorResponse({ description: 'DB 업데이트 실패한 경우' })
   async updateUserProfile(
     @Body() body: PatchUserProfileDto,
-    @UserDeco() user: User,
+    @UserDeco('id') userId: number,
   ) {
-    await this.userService.changeUserProfile(body, user);
+    await this.accountService.profileUpdate(userId, body);
   }
 
   /** 해당 유저의 상대 팀 전적 및 승리 중 홈 비율 기록 */

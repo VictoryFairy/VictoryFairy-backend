@@ -287,7 +287,9 @@ describe('AccountService', () => {
         .spyOn(userService, 'saveUser')
         .mockResolvedValue(createdUser as User);
       jest.spyOn(authService, 'createLocalAuth').mockResolvedValue(true);
-      jest.spyOn(rankService, 'initialSave').mockResolvedValue(undefined);
+      jest
+        .spyOn(rankService, 'insertRankIfAbsent')
+        .mockResolvedValue(undefined);
       jest
         .spyOn(accountService, 'agreeUserRequireTerm')
         .mockResolvedValue(true);
@@ -304,7 +306,7 @@ describe('AccountService', () => {
         createdUser.id,
         password,
       );
-      expect(rankService.initialSave).toHaveBeenCalled();
+      expect(rankService.insertRankIfAbsent).toHaveBeenCalled();
       expect(accountService.agreeUserRequireTerm).toHaveBeenCalledWith(
         createdUser.id,
       );
@@ -321,6 +323,7 @@ describe('AccountService', () => {
       const createdUser = {
         id: 1,
         email: userData.email,
+        support_team: { id: 1 },
       };
 
       jest

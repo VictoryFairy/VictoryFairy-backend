@@ -112,7 +112,7 @@ describe('RankService', () => {
       };
       const { user_id, year, team_id } = mockWatchedGame;
 
-      await rankService.initialSave(mockWatchedGame);
+      await rankService.insertRankIfAbsent(mockWatchedGame);
 
       expect(rankRepo.insert).toHaveBeenCalledWith({
         team_id,
