@@ -35,7 +35,8 @@ import { AccountModule } from './account/account.module';
         if (!options) {
           throw new Error('Invalid options passed');
         }
-        return addTransactionalDataSource(new DataSource(options));
+        const dataSource = await new DataSource(options).initialize();
+        return addTransactionalDataSource(dataSource);
       },
       inject: [ConfigService],
     }),
