@@ -122,21 +122,21 @@ export class AuthController {
   ) {
     const { sub, email } = req.socialUserInfo;
 
-    const loginResult = await this.accountService.loginSocialUser(
+    const { user, status } = await this.accountService.loginSocialUser(
       sub,
       email,
       provider,
     );
 
     const rfToken = this.authService.issueToken(
-      { email: email, id: loginResult.user.id },
+      { email: email, id: user.id },
       'refresh',
     );
     const rfExTime = this.configService.get('REFRESH_EXPIRE_TIME');
     res.cookie('token', rfToken, this.getCookieOptions(parseInt(rfExTime)));
 
     const frontendUrl = new URL(this.configService.get('FRONT_END_URL'));
-    frontendUrl.searchParams.set('status', loginResult.status);
+    frontendUrl.searchParams.set('status', status);
     return res.redirect(frontendUrl.href);
   }
 
