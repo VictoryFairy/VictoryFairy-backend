@@ -8,7 +8,11 @@ import {
   UnauthorizedException,
 } from '@nestjs/common';
 import { CreateLocalUserDto, LoginLocalUserDto } from 'src/dtos/user.dto';
-import { SocialLoginStatus, SocialProvider } from 'src/const/auth.const';
+import {
+  SocialLinkStatus,
+  SocialLoginStatus,
+  SocialProvider,
+} from 'src/const/auth.const';
 import { AuthService } from 'src/auth/auth.service';
 import { UserService } from 'src/services/user.service';
 import { UserRedisService } from 'src/services/user-redis.service';
@@ -196,7 +200,7 @@ describe('AccountService', () => {
 
       expect(result).toEqual({
         user: mockUser,
-        status: SocialLoginStatus.SUCCESS,
+        status: SocialLoginStatus.LOGIN,
       });
       expect(authService.getSocialAuth).toHaveBeenCalledWith(
         { sub, provider },
@@ -247,7 +251,7 @@ describe('AccountService', () => {
 
       expect(result).toEqual({
         user: mockUser,
-        status: SocialLoginStatus.SUCCESS,
+        status: SocialLoginStatus.SIGNUP,
       });
       expect(accountService.createSocialUser).toHaveBeenCalledWith(
         { email },
@@ -357,7 +361,7 @@ describe('AccountService', () => {
 
       const result = await accountService.linkSocial(data);
 
-      expect(result).toEqual({ status: SocialLoginStatus.SUCCESS });
+      expect(result).toEqual({ status: SocialLinkStatus.SUCCESS });
       expect(authService.getSocialAuth).toHaveBeenCalledWith({
         sub: data.sub,
         provider: data.provider,
