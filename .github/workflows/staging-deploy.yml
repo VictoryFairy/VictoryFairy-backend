@@ -12,10 +12,10 @@ jobs:
     steps:
       - uses: actions/checkout@v2
 
-      - name: Save docker-compose.yml as an artifact
+      - name: Save docker-compose.staging.yml to artifact
         uses: actions/upload-artifact@v3
         with:
-          name: docker-compose.yml
+          name: docker-compose-file
           path: docker-compose.staging.yml
 
       - name: Login to Docker Hub
@@ -39,11 +39,16 @@ jobs:
     needs: docker-build-and-push
 
     steps:
-      - name: Download docker-compose.yml artifact
+      - name: Download docker-compose.yml from artifact
         uses: actions/download-artifact@v3
         with:
-          name: docker-compose.yml
+          name: docker-compose-file
           path: .
+
+      - name: Rename docker-compose file
+        run: |
+          [ -f docker-compose.yml ] && rm docker-compose.yml
+          mv docker-compose.staging.yml docker-compose.yml
 
       - name: Create .env file from GitHub Secrets
         run: |
