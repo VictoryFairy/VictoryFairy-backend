@@ -1,0 +1,13 @@
+services:
+  was:
+    image: evanskj/dev-sngyo:latest
+    ports:
+      - '3000:3000'
+    env_file:
+      - .env
+    networks:
+      - infra_home_network
+
+networks:
+  infra_home_network:
+    external: true

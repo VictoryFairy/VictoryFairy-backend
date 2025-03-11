@@ -1,0 +1,73 @@
+name: Docker Build and Staging Deploy
+
+on:
+  push:
+    branches: [dev]
+
+jobs:
+  docker-build-and-push:
+    runs-on: ubuntu-latest
+    environment: staging
+
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Save docker-compose.yml as an artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: docker-compose.yml
+          path: docker-compose.staging.yml
+
+      - name: Login to Docker Hub
+        uses: docker/login-action@v3.2.0
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_ACCESS_TOKEN }}
+
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v6.3.0
+        with:
+          context: .
+          file: Dockerfile.prod
+          platform: linux/arm64
+          push: true
+          tags: evanskj/dev-sngyo:latest
+
+  connect-to-home-server-and-deploy:
+    runs-on: ubuntu-latest
+    environment: staging
+    needs: docker-build-and-push
+
+    steps:
+      - name: Download docker-compose.yml artifact
+        uses: actions/download-artifact@v3
+        with:
+          name: docker-compose.yml
+          path: .
+
+      - name: Create .env file from GitHub Secrets
+        run: |
+          cat <<EOF > .env
+          ${{ secrets.ENV_FILE_CONTENT }}
+          EOF
+
+      - name: copy file via ssh password
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.HOME_SERVER_HOST }}
+          username: ${{ secrets.HOME_SERVER_USERNAME }}
+          key: ${{ secrets.HOME_SERVER_KEY }}
+          port: ${{ secrets.HOME_SERVER_PORT }}
+          source: 'docker-compose.yml,.env'
+          target: ~/home-server/sngyo/
+
+      - name: Connect to home server and deploy
+        uses: appleboy/ssh-action@v1.2.2
+        with:
+          host: ${{ secrets.HOME_SERVER_HOST }}
+          username: ${{ secrets.HOME_SERVER_USERNAME }}
+          key: ${{ secrets.HOME_SERVER_KEY }}
+          port: ${{ secrets.HOME_SERVER_PORT }}
+          script: |
+            cd ~/home-server/sngyo
+            ./deploy.sh
