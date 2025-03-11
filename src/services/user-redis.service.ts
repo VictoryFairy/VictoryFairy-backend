@@ -1,44 +1,15 @@
 import { InternalServerErrorException } from '@nestjs/common';
 import Redis from 'ioredis';
-import { CODE_LIMIT_TIME } from 'src/const/auth.const';
 import { RedisKeys } from 'src/const/redis.const';
 import { InjectRedisClient } from 'src/decorator/redis-inject.decorator';
 import { Team } from 'src/entities/team.entity';
 import { User } from 'src/entities/user.entity';
 
-export class RedisCachingService {
+export class UserRedisService {
   constructor(
     @InjectRedisClient()
     private readonly redisClient: Redis,
   ) {}
-
-  async cachingVerificationCode(email: string, code: string) {
-    try {
-      await this.redisClient.set(
-        `${RedisKeys.EMAIL_CODE}:${email}`,
-        code,
-        'EX',
-        CODE_LIMIT_TIME,
-      );
-    } catch (error) {
-      throw new InternalServerErrorException('레디스 저장 실패');
-    }
-  }
-
-  async getCachedVerificationCode(email: string) {
-    const getCachedCode = await this.redisClient.get(
-      `${RedisKeys.EMAIL_CODE}:${email}`,
-    );
-    return getCachedCode;
-  }
-
-  async deleteVerificationCode(email: string) {
-    try {
-      await this.redisClient.del(`${RedisKeys.EMAIL_CODE}:${email}`);
-    } catch (error) {
-      throw new InternalServerErrorException('레디스 삭제 실패');
-    }
-  }
 
   async saveUser(user: User) {
     const { id, nickname, profile_image } = user;
@@ -70,6 +41,7 @@ export class RedisCachingService {
       throw new InternalServerErrorException('캐싱 유저 읽기 실패');
     }
   }
+
   async userSynchronizationTransaction(userId: number, teams: Team[]) {
     const redisTransaction = this.redisClient.multi();
     // redis caching 동기화
@@ -94,38 +66,5 @@ export class RedisCachingService {
       parsedInfo[obj.id] = obj;
     });
     return parsedInfo;
-  }
-
-  async updateRankingScoreByUserId(userId: number, score: string, key: string) {
-    try {
-      await this.redisClient.zadd(
-        `${RedisKeys.RANKING}:${key}`,
-        score,
-        userId.toString(),
-      );
-    } catch (error) {
-      throw new InternalServerErrorException(
-        `Redis 랭킹 업데이트 실패 : ${userId} `,
-      );
-    }
-  }
-
-  async getUserRank(userId: number, teamId?: number): Promise<number | null> {
-    const key = teamId ? teamId : 'total';
-    const userRank = await this.redisClient.zrevrank(
-      `${RedisKeys.RANKING}:${key}`,
-      userId.toString(),
-    );
-    return userRank;
-  }
-
-  async getRankingList(key: number | 'total', start: number, end: number) {
-    const rankList = await this.redisClient.zrevrange(
-      `${RedisKeys.RANKING}:${key}`,
-      start,
-      end,
-      'WITHSCORES',
-    );
-    return rankList;
   }
 }

@@ -1,6 +1,7 @@
-import { ApiProperty, PickType, OmitType } from '@nestjs/swagger';
-import { Exclude, Expose, Transform } from 'class-transformer';
+import { ApiProperty, PickType } from '@nestjs/swagger';
+import { Expose, Transform } from 'class-transformer';
 import {
+  ArrayNotEmpty,
   IsEmail,
   IsIn,
   IsNotEmpty,
@@ -9,8 +10,10 @@ import {
   Length,
   ValidateIf,
 } from 'class-validator';
-import { CODE_LENGTH } from 'src/const/auth.const';
+import { CODE_LENGTH, SocialProvider } from 'src/const/auth.const';
 import { UserRecordDto } from './rank.dto';
+import { SocialAuth } from 'src/entities/social-auth.entity';
+import { User } from 'src/entities/user.entity';
 
 export class BaseUserDto {
   @ApiProperty({
@@ -55,7 +58,15 @@ export class BaseUserDto {
   teamId: number;
 }
 
-export class CreateUserDto extends OmitType(BaseUserDto, ['id']) {
+export class CreateLocalUserDto {
+  @ApiProperty({
+    example: 'test@test.com',
+  })
+  @IsNotEmpty()
+  @IsString()
+  @IsEmail()
+  email: string;
+
   @ApiProperty({
     example: 'should be hidden',
   })
@@ -68,9 +79,16 @@ export class CreateUserDto extends OmitType(BaseUserDto, ['id']) {
 
   @IsString()
   nickname: string;
+
+  @ApiProperty({
+    example: 1,
+  })
+  @IsNotEmpty()
+  @IsNumber()
+  teamId: number;
 }
 
-export class LoginUserDto extends PickType(BaseUserDto, ['email']) {
+export class LoginLocalUserDto extends PickType(BaseUserDto, ['email']) {
   @ApiProperty({
     example: 'should be hidden',
   })
@@ -138,18 +156,20 @@ export class EmailWithCodeDto extends PickType(BaseUserDto, [
   code: string;
 }
 
-@Exclude()
-export class UserResDto extends PickType(BaseUserDto, [
-  'id',
-  'email',
-  'image',
-  'nickname',
-]) {
-  @ApiProperty()
-  @Expose()
-  @IsString()
-  @Transform(({ obj }) => obj.profile_image ?? obj.image)
+export class UserMeResDto {
+  id: number;
+  email: string;
+  nickname: string;
   image: string;
+  provider: SocialProvider[];
+
+  constructor(user: User, socialAuths: SocialAuth[]) {
+    this.id = user.id;
+    this.email = user.email;
+    this.nickname = user.nickname;
+    this.image = user.profile_image;
+    this.provider = socialAuths.map((socialAuth) => socialAuth.provider);
+  }
 }
 
 export class UserMyPageDto {
@@ -159,12 +179,18 @@ export class UserMyPageDto {
       email: 'test11@gmail.com',
       nickname: 'test11',
       image: 'dfdadlkjfk/example',
+      provider: ['google', 'kakao'],
     },
   })
-  user: UserResDto;
+  user: UserMeResDto;
 
   @ApiProperty()
   record: UserRecordDto;
+
+  constructor(userResDto: UserMeResDto, record: UserRecordDto) {
+    this.user = userResDto;
+    this.record = record;
+  }
 }
 
 export class ResCheckPwDto {
@@ -183,4 +209,16 @@ export class ResCheckPwDto {
       },
     };
   }
+}
+
+export class TermAgreeDto {
+  @ApiProperty({
+    type: [String],
+    description: '동의할 약관 ID 목록',
+    example: ['PRIVACY20250304', 'LOCATION20250302'],
+  })
+  @IsNotEmpty()
+  @ArrayNotEmpty()
+  @IsString({ each: true })
+  termIds: string[];
 }

@@ -22,6 +22,10 @@ export class CustomExceptionFilter implements ExceptionFilter {
     const request = ctx.getRequest();
     const { method, url, ip } = request;
     const userAgent = request.get('user-agent') || '';
+    // 이미 응답이 나간 상태면 아무것도 안 하고 종료
+    if (response.headersSent) {
+      return;
+    }
 
     const httpStatus =
       exception instanceof HttpException

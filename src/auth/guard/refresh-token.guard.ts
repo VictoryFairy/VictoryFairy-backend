@@ -4,26 +4,27 @@ import {
   Injectable,
   UnauthorizedException,
 } from '@nestjs/common';
-import { AuthService } from '../auth.service';
-import { ConfigService } from '@nestjs/config';
+import { JwtStrategy } from 'src/auth/strategies/jwt.strategy';
 
 @Injectable()
 export class RefreshTokenGuard implements CanActivate {
-  constructor(
-    private readonly authService: AuthService,
-    private readonly configService: ConfigService,
-  ) {}
+  constructor(private readonly jwtStrategy: JwtStrategy) {}
+
   async canActivate(context: ExecutionContext): Promise<boolean> {
     const req = context.switchToHttp().getRequest();
-
-    if (!req.cookies?.token) {
-      throw new UnauthorizedException('리프레시 토큰이 없음. 재로그인 필요');
+    const token = req.cookies['token'];
+    if (!token) {
+      throw new UnauthorizedException('토큰 없음');
     }
 
-    const token = req.cookies.token;
+    const { user, payload } = await this.jwtStrategy.validateTokenAndGetUser(
+      token,
+      'refresh',
+    );
 
-    const payload = await this.authService.verifyToken(token, true);
-    const user = await this.authService.getUser({ email: payload.email });
+    if (!user) {
+      throw new UnauthorizedException('유저 정보 조회 실패');
+    }
 
     req.user = user;
     req.token = token;

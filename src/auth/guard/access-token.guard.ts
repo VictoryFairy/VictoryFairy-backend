@@ -4,24 +4,29 @@ import {
   Injectable,
   UnauthorizedException,
 } from '@nestjs/common';
-import { AuthService } from '../auth.service';
-import { ConfigService } from '@nestjs/config';
+import { JwtStrategy } from '../strategies/jwt.strategy';
 
 @Injectable()
 export class AccessTokenGuard implements CanActivate {
-  constructor(
-    private readonly authService: AuthService,
-    private readonly configService: ConfigService,
-  ) {}
+  constructor(private readonly jwtStrategy: JwtStrategy) {}
+
   async canActivate(context: ExecutionContext): Promise<boolean> {
     const req = context.switchToHttp().getRequest();
     const authHeader = req.headers['authorization'];
     if (!authHeader) {
       throw new UnauthorizedException('토큰 없음');
     }
-    const token = this.authService.extractTokenFromHeader(authHeader);
-    const payload = await this.authService.verifyToken(token, false);
-    const user = await this.authService.getUser({ email: payload.email });
+
+    const [prefix, token] = authHeader.split(' ');
+
+    if (prefix.toLowerCase() !== 'bearer') {
+      throw new UnauthorizedException('토큰 형식 오류');
+    }
+
+    const { user, payload } = await this.jwtStrategy.validateTokenAndGetUser(
+      token,
+      'access',
+    );
 
     req.user = user;
     req.token = token;

@@ -8,15 +8,7 @@ import {
   Unique,
 } from 'typeorm';
 import { User } from './user.entity';
-
-export const SocialProviderType = {
-  GOOGLE: 'google',
-  APPLE: 'apple',
-  KAKAO: 'kakao',
-} as const;
-
-export type SocialProviderType =
-  (typeof SocialProviderType)[keyof typeof SocialProviderType];
+import { SocialProvider } from 'src/const/auth.const';
 
 @Entity()
 @Unique(['sub', 'provider']) // 복합 유니크 인덱스
@@ -25,7 +17,7 @@ export class SocialAuth {
   id: number;
 
   @Column({ type: 'varchar', length: 15 })
-  provider: SocialProviderType;
+  provider: SocialProvider;
 
   @Column()
   sub: string;
