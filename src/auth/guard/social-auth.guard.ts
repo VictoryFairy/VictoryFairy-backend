@@ -15,6 +15,7 @@ import { OAuthStrategyManager } from '../strategies/OAuthStrategyManager';
 import { IOAuthStrategy } from 'src/types/auth.type';
 import { URL } from 'url';
 import { AuthService } from '../auth.service';
+import { Response } from 'express';
 
 @Injectable()
 export class SocialAuthGuard implements CanActivate {
@@ -83,7 +84,7 @@ export class SocialAuthGuard implements CanActivate {
   /** 소셜 로그인 or 연동인지 확인 후 리다이렉트 uri생성 및 리다이렉트 */
   private async handleEntryPoint(
     req: any,
-    res: any,
+    res: Response,
     provider: SocialProvider,
     strategy: IOAuthStrategy,
     flowType: 'link' | 'login',
@@ -105,7 +106,8 @@ export class SocialAuthGuard implements CanActivate {
     strategy: IOAuthStrategy,
     receivedUrl: URL,
   ): Promise<void> {
-    const receivedState = receivedUrl.searchParams.get('state');
+    const receivedState =
+      receivedUrl.searchParams.get('state') || req.body?.state;
     if (!receivedState) {
       throw new BadRequestException('OAuth state정보 누락');
     }
