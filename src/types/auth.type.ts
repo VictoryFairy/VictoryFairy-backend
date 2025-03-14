@@ -66,7 +66,7 @@ export interface IAppleDecodedPayload {
   iat: number;
   sub: string;
   nonce?: string;
-  c_hash?: string;
+  at_hash?: string;
   email: string;
   email_verified: string;
   is_private_email: string;

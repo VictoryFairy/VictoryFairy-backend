@@ -39,7 +39,7 @@ export class AppleOAuthStrategy implements IOAuthStrategy {
       client_id: this.serviceId,
       redirect_uri: callbackUri,
       response_type: 'code',
-      response_mode: 'query',
+      response_mode: 'form_post',
       scope: this.scope.join(' '),
       state,
     });
@@ -67,13 +67,12 @@ export class AppleOAuthStrategy implements IOAuthStrategy {
     const publicKey = await this.getApplePublicKey(kid);
 
     try {
-      const { sub, email }: IAppleDecodedPayload = jwt.verify(
+      const appleData: IAppleDecodedPayload = jwt.verify(
         tokenData.id_token,
         publicKey,
         { algorithms: ['RS256'] },
       ) as IAppleDecodedPayload;
-
-      return { sub, email };
+      return { sub: appleData.sub, email: appleData.email };
     } catch (error) {
       throw new UnauthorizedException('Apple 인증 실패');
     }

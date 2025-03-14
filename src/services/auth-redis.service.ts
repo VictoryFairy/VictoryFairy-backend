@@ -61,4 +61,4 @@ export class AuthRedisService {
   async deleteOAuthState(state: string) {
     await this.redisClient.del(`${RedisKeys.OAUTH_STATE}:${state}`);
   }
-} 
+}

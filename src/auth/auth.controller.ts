@@ -18,6 +18,7 @@ import { User } from 'src/entities/user.entity';
 import {
   ApiBody,
   ApiCookieAuth,
+  ApiExcludeEndpoint,
   ApiInternalServerErrorResponse,
   ApiNoContentResponse,
   ApiOkResponse,
@@ -25,7 +26,6 @@ import {
   ApiParam,
   ApiResponse,
   ApiTags,
-  ApiTemporaryRedirectResponse,
   ApiUnauthorizedResponse,
 } from '@nestjs/swagger';
 import { CookieOptions, Request, Response } from 'express';
@@ -87,34 +87,26 @@ export class AuthController {
   @Get('login/:provider')
   @UseGuards(SocialAuthGuard)
   @ApiOperation({ summary: '소셜 로그인 요청' })
+  @ApiResponse({
+    status: 302,
+    description:
+      '콜백 처리 후 프론트엔드 기본페이지("/")로 리다이렉트 + 쿼리파람(status: LOGIN | SIGNUP | DUPLICATE | FAIL)',
+    schema: {
+      type: 'string',
+      example: 'https://frontend.com?status=LOGIN',
+    },
+  })
   @ApiParam({
     name: 'provider',
     enum: SocialProvider,
     description: '소셜 로그인 제공자',
-  })
-  @ApiTemporaryRedirectResponse({
-    description: '소셜 로그인 페이지로 리다이렉트',
   })
   async socialLogin() {}
 
   /** 소셜 로그인 리다이렉트 처리 엔드포인트 */
   @All('login/:provider/callback')
   @UseGuards(SocialAuthGuard)
-  @ApiOperation({ summary: '소셜 로그인 콜백 (GET, POST 지원)' })
-  @ApiParam({
-    name: 'provider',
-    enum: SocialProvider,
-    description: '소셜 로그인 제공자',
-  })
-  @ApiResponse({
-    status: 302,
-    description:
-      '프론트엔드로 리다이렉트. 리다이렉트 URL (status: LOGIN | SIGNUP | DUPLICATE | FAIL)',
-    schema: {
-      type: 'string',
-      example: 'https://frontend.com/social-login?status=SUCCESS',
-    },
-  })
+  @ApiExcludeEndpoint() // 스웨거 문서에서 제외
   async handleCallback(
     @Req() req: Request & { socialUserInfo: ISocialUserInfo },
     @Res() res: Response,
@@ -145,35 +137,27 @@ export class AuthController {
   @Get('link/:provider')
   @JwtAuth('refresh', SocialAuthGuard)
   @ApiCookieAuth('token')
-  @ApiOperation({ summary: '계정 연동 요청' })
+  @ApiOperation({ summary: '계정 연동 요청 - 리프레쉬 토큰 필요(엑세스 X)' })
+  @ApiResponse({
+    status: 302,
+    description:
+      '콜백 처리 후 프론트엔드 마이페이지("/mypage")로 리다이렉트 + 쿼리파람 (status: SUCCESS | DUPLICATE | FAIL)',
+    schema: {
+      type: 'string',
+      example: 'https://frontend.com/mypage?status=SUCCESS',
+    },
+  })
   @ApiParam({
     name: 'provider',
     enum: SocialProvider,
     description: '소셜 로그인 제공자',
-  })
-  @ApiTemporaryRedirectResponse({
-    description: '소셜 로그인 페이지로 리다이렉트',
   })
   async socialLink() {}
 
   /** 소셜 계정 연동 콜백처리 */
   @All('link/:provider/callback')
+  @ApiExcludeEndpoint() // 스웨거 문서에서 제외
   @UseGuards(SocialAuthGuard)
-  @ApiOperation({ summary: '소셜 계정 연동 콜백 (GET, POST 지원)' })
-  @ApiParam({
-    name: 'provider',
-    enum: SocialProvider,
-    description: '소셜 로그인 제공자',
-  })
-  @ApiResponse({
-    status: 302,
-    description:
-      '프론트엔드로 리다이렉트. 리다이렉트 URL (status: SUCCESS | DUPLICATE | FAIL)',
-    schema: {
-      type: 'string',
-      example: 'https://frontend.com/social-link?status=SUCCESS',
-    },
-  })
   async handleSocialLinkCallback(
     @Req()
     req: Request & {
