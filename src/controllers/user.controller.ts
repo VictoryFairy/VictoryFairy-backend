@@ -7,6 +7,7 @@ import {
   Patch,
   Delete,
   Get,
+  Res,
 } from '@nestjs/common';
 import {
   ApiBadRequestResponse,
@@ -38,6 +39,8 @@ import { User } from 'src/entities/user.entity';
 import { RankService } from 'src/services/rank.service';
 import { UserService } from 'src/services/user.service';
 import { AuthService } from 'src/auth/auth.service';
+import { ConfigService } from '@nestjs/config';
+import { Response } from 'express';
 
 @ApiTags('User')
 @Controller('users')
@@ -47,6 +50,7 @@ export class UserController {
     private readonly authService: AuthService,
     private readonly userService: UserService,
     private readonly rankService: RankService,
+    private readonly configService: ConfigService,
   ) {}
 
   /** 유저 회원가입 */
@@ -175,8 +179,19 @@ export class UserController {
   @ApiOperation({ summary: '회원탈퇴' })
   @ApiNoContentResponse({ description: '삭제 성공한 경우 상태코드만 응답' })
   @ApiInternalServerErrorResponse({ description: 'DB 삭제 실패한 경우' })
-  async deleteUser(@UserDeco() user: User) {
+  async deleteUser(@UserDeco() user: User, @Res() res: Response) {
+    const domain = this.configService.get('DOMAIN');
+    const nodeEnv = this.configService.get('NODE_ENV');
+
     await this.userService.deleteUser(user);
+    res.clearCookie('token', {
+      maxAge: 0,
+      domain: domain || 'localhost',
+      httpOnly: true,
+      secure: nodeEnv === 'production' || nodeEnv === 'staging',
+      sameSite: nodeEnv === 'staging' ? 'none' : 'lax',
+    });
+    res.sendStatus(HttpStatus.NO_CONTENT);
   }
 
   @Post('term/agreement')
