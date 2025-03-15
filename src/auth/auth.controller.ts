@@ -121,12 +121,15 @@ export class AuthController {
     );
     const { id: userId } = user;
 
-    const rfToken = this.authService.issueToken(
-      { email: email, id: userId },
-      'refresh',
-    );
-    const rfExTime = this.configService.get('REFRESH_EXPIRE_TIME');
-    res.cookie('token', rfToken, this.getCookieOptions(parseInt(rfExTime)));
+    if (status === 'SIGNUP' || status === 'LOGIN') {
+      const rfToken = this.authService.issueToken(
+        { email: email, id: userId },
+        'refresh',
+      );
+      const rfExTime = this.configService.get('REFRESH_EXPIRE_TIME');
+
+      res.cookie('token', rfToken, this.getCookieOptions(parseInt(rfExTime)));
+    }
 
     const frontendUrl = new URL(this.configService.get('FRONT_END_URL'));
     frontendUrl.searchParams.set('status', status);
