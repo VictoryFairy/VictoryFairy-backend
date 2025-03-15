@@ -1,10 +1,12 @@
 import {
   Column,
+  CreateDateColumn,
   Entity,
   Index,
   JoinColumn,
   ManyToOne,
   PrimaryGeneratedColumn,
+  UpdateDateColumn,
   Unique,
 } from 'typeorm';
 import { User } from './user.entity';
@@ -25,6 +27,12 @@ export class SocialAuth {
   @Index() // 인덱스 추가
   @Column()
   user_id: number;
+
+  @CreateDateColumn({ type: 'timestamptz' })
+  created_at: Date;
+
+  @UpdateDateColumn({ type: 'timestamptz' })
+  updated_at: Date;
 
   @ManyToOne(() => User, (user) => user.social_auths, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'user_id' })

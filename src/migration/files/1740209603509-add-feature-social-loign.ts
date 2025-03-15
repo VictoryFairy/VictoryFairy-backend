@@ -6,10 +6,10 @@ export class AddSocialAuthAndLocalAuth1740209603509
   name = 'AddSocialAuthAndLocalAuth1740209603509';
   public async up(queryRunner: QueryRunner): Promise<void> {
     await queryRunner.query(
-      `CREATE TABLE "local_auth" ("user_id" integer NOT NULL, "password" character varying NOT NULL, CONSTRAINT "PK_59f58ddc8b6c54911cf63a8324f" PRIMARY KEY ("user_id"))`,
+      `CREATE TABLE "local_auth" ("user_id" integer NOT NULL, "password" character varying NOT NULL, "created_at" TIMESTAMPTZ NOT NULL DEFAULT now(), "updated_at" TIMESTAMPTZ NOT NULL DEFAULT now(), CONSTRAINT "PK_59f58ddc8b6c54911cf63a8324f" PRIMARY KEY ("user_id"))`,
     );
     await queryRunner.query(
-      `CREATE TABLE "social_auth" ("id" SERIAL NOT NULL, "provider" character varying(15) NOT NULL, "sub" character varying NOT NULL, "user_id" integer NOT NULL, CONSTRAINT "UQ_4444ace7e09dc0172bc0ac5329a" UNIQUE ("sub", "provider"), CONSTRAINT "PK_9cd70d00d72575226868164eb61" PRIMARY KEY ("id"))`,
+      `CREATE TABLE "social_auth" ("id" SERIAL NOT NULL, "provider" character varying(15) NOT NULL, "sub" character varying NOT NULL, "user_id" integer NOT NULL, "created_at" TIMESTAMPTZ NOT NULL DEFAULT now(), "updated_at" TIMESTAMPTZ NOT NULL DEFAULT now(), CONSTRAINT "UQ_4444ace7e09dc0172bc0ac5329a" UNIQUE ("sub", "provider"), CONSTRAINT "PK_9cd70d00d72575226868164eb61" PRIMARY KEY ("id"))`,
     );
     await queryRunner.query(
       `CREATE INDEX "IDX_08ec54f5ff69d5350788315e46" ON "social_auth" ("user_id") `,
