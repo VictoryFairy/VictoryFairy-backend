@@ -80,4 +80,5 @@ jobs:
           port: ${{ secrets.HOME_SERVER_PORT }}
           script: |
             cd ~/home-server/sngyo
+            echo "${{ secrets.DOCKERHUB_ACCESS_TOKEN }}" | docker login -u "${{ secrets.DOCKERHUB_USERNAME }}" --password-stdin
             ./deploy.sh
