@@ -4,8 +4,9 @@ import { RegisteredGame } from 'src/entities/registered-game.entity';
 import { MockRepoFactory, MockServiceFactory } from './mocks/unit-mock-factory';
 import { Repository } from 'typeorm';
 import { Rank } from 'src/entities/rank.entity';
-import { RedisCachingService } from 'src/services/redis-caching.service';
+import { RankingRedisService } from 'src/services/ranking-redis.service';
 import { RankService } from 'src/services/rank.service';
+import { UserRedisService } from 'src/services/user-redis.service';
 import {
   BadRequestException,
   InternalServerErrorException,
@@ -19,7 +20,8 @@ import { IRefinedRankData } from 'src/types/rank.type';
 describe('RankService', () => {
   let registeredGameRepo: Repository<RegisteredGame>;
   let rankRepo: Repository<Rank>;
-  let redisCachingService: RedisCachingService;
+  let rankingRedisService: RankingRedisService;
+  let userRedisService: UserRedisService;
   let rankService: RankService;
   beforeEach(async () => {
     const moduleRef: TestingModule = await Test.createTestingModule({
@@ -34,15 +36,20 @@ describe('RankService', () => {
           useValue: MockRepoFactory.createMockRepo<Rank>(),
         },
         {
-          provide: RedisCachingService,
-          useValue: MockServiceFactory.createMockService(RedisCachingService),
+          provide: RankingRedisService,
+          useValue: MockServiceFactory.createMockService(RankingRedisService),
+        },
+        {
+          provide: UserRedisService,
+          useValue: MockServiceFactory.createMockService(UserRedisService),
         },
       ],
     }).compile();
 
     registeredGameRepo = moduleRef.get(getRepositoryToken(RegisteredGame));
     rankRepo = moduleRef.get(getRepositoryToken(Rank));
-    redisCachingService = moduleRef.get(RedisCachingService);
+    rankingRedisService = moduleRef.get(RankingRedisService);
+    userRedisService = moduleRef.get(UserRedisService);
     rankService = moduleRef.get(RankService);
   });
 
@@ -105,7 +112,7 @@ describe('RankService', () => {
       };
       const { user_id, year, team_id } = mockWatchedGame;
 
-      await rankService.initialSave(mockWatchedGame);
+      await rankService.insertRankIfAbsent(mockWatchedGame);
 
       expect(rankRepo.insert).toHaveBeenCalledWith({
         team_id,
@@ -218,10 +225,10 @@ describe('RankService', () => {
 
   describe('getUserRankWithNeighbors', () => {
     it('정상적으로 처리되면, 해당 유저와 근처 유저 랭킹 리스트 반환', async () => {
-      jest.spyOn(redisCachingService, 'getUserRank').mockResolvedValueOnce(5); // 6등인 경우
-      jest.spyOn(redisCachingService, 'getUserRank').mockResolvedValueOnce(4);
-      jest.spyOn(redisCachingService, 'getUserRank').mockResolvedValueOnce(5); // 해당 유저의 랭킹
-      jest.spyOn(redisCachingService, 'getUserRank').mockResolvedValueOnce(6);
+      jest.spyOn(rankingRedisService, 'getUserRank').mockResolvedValueOnce(5); // 6등인 경우
+      jest.spyOn(rankingRedisService, 'getUserRank').mockResolvedValueOnce(4);
+      jest.spyOn(rankingRedisService, 'getUserRank').mockResolvedValueOnce(5); // 해당 유저의 랭킹
+      jest.spyOn(rankingRedisService, 'getUserRank').mockResolvedValueOnce(6);
       jest
         .spyOn(rankService, 'getRankList')
         .mockResolvedValueOnce([
@@ -235,7 +242,7 @@ describe('RankService', () => {
       } as User);
 
       expect(rankService.getRankList).toHaveBeenCalledWith(4, 6, undefined);
-      expect(redisCachingService.getUserRank).toHaveBeenCalledTimes(4);
+      expect(rankingRedisService.getUserRank).toHaveBeenCalledTimes(4);
       expect(result).toEqual([
         { user_id: 2, rank: 5 },
         { user_id: 3, rank: 6 },
@@ -244,14 +251,14 @@ describe('RankService', () => {
     });
     it('유저 랭킹 리스트가 없다면, 빈 배열 반환', async () => {
       jest
-        .spyOn(redisCachingService, 'getUserRank')
+        .spyOn(rankingRedisService, 'getUserRank')
         .mockResolvedValueOnce(null);
 
       const result = await rankService.getUserRankWithNeighbors({
         id: 1,
       } as User);
       expect(result).toEqual([]);
-      expect(redisCachingService.getUserRank).toHaveBeenCalledWith(
+      expect(rankingRedisService.getUserRank).toHaveBeenCalledWith(
         1,
         undefined,
       );
@@ -288,9 +295,9 @@ describe('RankService', () => {
     it('팀 ID가 제공되었을 때, 해당 팀의 랭킹 리스트를 반환', async () => {
       const teamId = 1;
 
-      const spyRedis = jest.spyOn(redisCachingService, 'getRankingList');
+      const spyRedis = jest.spyOn(rankingRedisService, 'getRankingList');
       jest
-        .spyOn(rankService as any, 'processRankList')
+        .spyOn(rankService as any, 'refineRankData')
         .mockResolvedValue(mockRefinedData);
 
       const result = await rankService.getRankList(0, 2, teamId);
@@ -300,10 +307,10 @@ describe('RankService', () => {
     });
 
     it('팀 ID가 제공되지 않았을 때, 종합 랭킹 리스트를 반환', async () => {
-      const spyRedis = jest.spyOn(redisCachingService, 'getRankingList');
+      const spyRedis = jest.spyOn(rankingRedisService, 'getRankingList');
 
       jest
-        .spyOn(rankService as any, 'processRankList')
+        .spyOn(rankService as any, 'refineRankData')
         .mockResolvedValue(mockRefinedData);
 
       const result = await rankService.getRankList(0, 2);
@@ -330,7 +337,7 @@ describe('RankService', () => {
           total: { win: 0, lose: 0, score: 1000 },
         });
       const spyRedis = jest.spyOn(
-        redisCachingService,
+        rankingRedisService,
         'updateRankingScoreByUserId',
       );
       await rankService.updateRedisRankings(1);

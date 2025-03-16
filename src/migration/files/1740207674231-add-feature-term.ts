@@ -8,7 +8,7 @@ export class AddTermFeature1740207674231 implements MigrationInterface {
       `CREATE TABLE "term" ("id" character varying NOT NULL, "title" character varying NOT NULL, "content" text NOT NULL, "version" character varying(50) NOT NULL, "is_required" boolean NOT NULL, "is_active" boolean NOT NULL, "created_at" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(), "updated_at" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(), CONSTRAINT "PK_55b0479f0743f2e5d5ec414821e" PRIMARY KEY ("id"))`,
     );
     await queryRunner.query(
-      `CREATE TABLE "user_term" ("id" SERIAL NOT NULL, "user_id" integer NOT NULL, "term_id" character varying NOT NULL, "agreed_at" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(), "updated_at" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(), CONSTRAINT "PK_0b52c74d33ffa4ea6a80c579811" PRIMARY KEY ("id"))`,
+      `CREATE TABLE "user_term" ("id" SERIAL NOT NULL, "user_id" integer NOT NULL, "term_id" character varying NOT NULL, "agreed_at" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(), "updated_at" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(), CONSTRAINT "PK_0b52c74d33ffa4ea6a80c579811" PRIMARY KEY ("id"), CONSTRAINT "UQ_user_term_user_id_term_id" UNIQUE ("user_id", "term_id"))`,
     );
     await queryRunner.query(
       `ALTER TABLE "user_term" ADD CONSTRAINT "FK_618bf2611fd6a7dbaf5eb271553" FOREIGN KEY ("user_id") REFERENCES "user"("id") ON DELETE CASCADE ON UPDATE NO ACTION`,

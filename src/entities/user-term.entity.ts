@@ -5,12 +5,14 @@ import {
   JoinColumn,
   ManyToOne,
   PrimaryGeneratedColumn,
+  Unique,
   UpdateDateColumn,
 } from 'typeorm';
 import { User } from './user.entity';
 import { Term } from './term.entity';
 
 @Entity()
+@Unique(['user_id', 'term_id'])
 export class UserTerm {
   @PrimaryGeneratedColumn()
   id: number;
@@ -19,7 +21,7 @@ export class UserTerm {
   user_id: number;
 
   @Column()
-  term_id: number;
+  term_id: string;
 
   @CreateDateColumn({ type: 'timestamptz' })
   agreed_at: Date;

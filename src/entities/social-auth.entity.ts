@@ -1,22 +1,16 @@
 import {
   Column,
+  CreateDateColumn,
   Entity,
   Index,
   JoinColumn,
   ManyToOne,
   PrimaryGeneratedColumn,
+  UpdateDateColumn,
   Unique,
 } from 'typeorm';
 import { User } from './user.entity';
-
-export const SocialProviderType = {
-  GOOGLE: 'google',
-  APPLE: 'apple',
-  KAKAO: 'kakao',
-} as const;
-
-export type SocialProviderType =
-  (typeof SocialProviderType)[keyof typeof SocialProviderType];
+import { SocialProvider } from 'src/const/auth.const';
 
 @Entity()
 @Unique(['sub', 'provider']) // 복합 유니크 인덱스
@@ -25,7 +19,7 @@ export class SocialAuth {
   id: number;
 
   @Column({ type: 'varchar', length: 15 })
-  provider: SocialProviderType;
+  provider: SocialProvider;
 
   @Column()
   sub: string;
@@ -33,6 +27,12 @@ export class SocialAuth {
   @Index() // 인덱스 추가
   @Column()
   user_id: number;
+
+  @CreateDateColumn({ type: 'timestamptz' })
+  created_at: Date;
+
+  @UpdateDateColumn({ type: 'timestamptz' })
+  updated_at: Date;
 
   @ManyToOne(() => User, (user) => user.social_auths, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'user_id' })

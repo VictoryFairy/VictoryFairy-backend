@@ -2,47 +2,47 @@ name: Docker Build and Local Test
 
 on:
   push:
-    branches-ignore: [ main ]
+    branches-ignore: [main, dev]
 
 jobs:
   build-and-test:
     runs-on: ubuntu-latest
     environment: development
-    
+
     steps:
-    - uses: actions/checkout@v2
+      - uses: actions/checkout@v2
 
-    - name: Install dependencies
-      run: |
-        sudo apt-get update
-        sudo apt-get install -y jq docker-compose
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y jq docker-compose
 
-    - name: Create .env file from secrets
-      run: |
-        {
-          echo '${{ toJson(secrets) }}' | jq -r 'to_entries | .[] | "\(.key)=\(.value)"';
-          echo '${{ toJson(vars) }}' | jq -r 'to_entries | .[] | "\(.key)=\(.value)"'
-        } > .env
+      - name: Create .env file from secrets
+        run: |
+          {
+            echo '${{ toJson(secrets) }}' | jq -r 'to_entries | .[] | "\(.key)=\(.value)"';
+            echo '${{ toJson(vars) }}' | jq -r 'to_entries | .[] | "\(.key)=\(.value)"'
+          } > .env
 
-    - name: Build and run with docker-compose
-      run: |
-        docker-compose -f docker-compose.yml up -d --build
-        sleep 20
+      - name: Build and run with docker-compose
+        run: |
+          docker-compose -f docker-compose.yml up -d --build
+          sleep 20
 
-    - name: Health check
-      run: |
-        chmod +x ./.github/workflows/health_check.sh
-        ./.github/workflows/health_check.sh
-    - name : Run Test Code
-      run: |
-        docker exec -i api npm run test
+      - name: Health check
+        run: |
+          chmod +x ./.github/workflows/health_check.sh
+          ./.github/workflows/health_check.sh
+      - name: Run Test Code
+        run: |
+          docker exec -i api npm run test
 
-    - name: View logs
-      if: failure()
-      run: docker-compose -f docker-compose.yml logs
+      - name: View logs
+        if: failure()
+        run: docker-compose -f docker-compose.yml logs
 
-    - name: Clean up
-      if: always()
-      run: |
-        docker-compose -f docker-compose.yml down -v
-        rm .env
+      - name: Clean up
+        if: always()
+        run: |
+          docker-compose -f docker-compose.yml down -v
+          rm .env

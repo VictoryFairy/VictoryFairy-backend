@@ -7,6 +7,7 @@ import {
   Patch,
   Delete,
   Get,
+  Res,
 } from '@nestjs/common';
 import {
   ApiBadRequestResponse,
@@ -19,39 +20,47 @@ import {
   ApiTags,
 } from '@nestjs/swagger';
 import { plainToInstance } from 'class-transformer';
+import { AccountService } from 'src/account/account.service';
 import { JwtAuth } from 'src/decorator/jwt-token.decorator';
 import { UserDeco } from 'src/decorator/user.decorator';
 import { OverallOppTeamDto } from 'src/dtos/rank.dto';
 import {
-  CreateUserDto,
+  CreateLocalUserDto,
   EmailDto,
-  LoginUserDto,
+  LoginLocalUserDto,
   NicknameDto,
   PatchUserProfileDto,
   ResCheckPwDto,
+  TermAgreeDto,
   UserMyPageDto,
-  UserResDto,
+  UserMeResDto,
 } from 'src/dtos/user.dto';
 import { User } from 'src/entities/user.entity';
 import { RankService } from 'src/services/rank.service';
 import { UserService } from 'src/services/user.service';
+import { AuthService } from 'src/auth/auth.service';
+import { ConfigService } from '@nestjs/config';
+import { Response } from 'express';
 
 @ApiTags('User')
 @Controller('users')
 export class UserController {
   constructor(
+    private readonly accountService: AccountService,
+    private readonly authService: AuthService,
     private readonly userService: UserService,
     private readonly rankService: RankService,
+    private readonly configService: ConfigService,
   ) {}
 
   /** 유저 회원가입 */
   @Post('signup')
   @ApiOperation({ summary: '회원가입' })
-  @ApiBody({ type: CreateUserDto, description: '회원가입에 필요한 정보' })
+  @ApiBody({ type: CreateLocalUserDto, description: '회원가입에 필요한 정보' })
   @ApiCreatedResponse({ description: '성공 시 데이터 없이 상태코드만 응답' })
   @ApiInternalServerErrorResponse({ description: 'DB 유저 저장 실패한 경우' })
-  async signIn(@Body() body: CreateUserDto) {
-    await this.userService.createLocalUser(body);
+  async signUp(@Body() body: CreateLocalUserDto) {
+    await this.accountService.createLocalUser(body);
   }
 
   /** 이메일 중복 확인 */
@@ -93,10 +102,10 @@ export class UserController {
   })
   async checkPassword(
     @UserDeco() user: User,
-    @Body() body: Pick<LoginUserDto, 'password'>,
+    @Body() body: Pick<LoginLocalUserDto, 'password'>,
   ) {
     const { password } = body;
-    const isCorrect = await this.userService.checkUserPw(user, password);
+    const isCorrect = await this.authService.verifyLocalAuth(user.id, password);
     return plainToInstance(ResCheckPwDto, { isCorrect });
   }
 
@@ -109,8 +118,8 @@ export class UserController {
     description: '해당 이메일로 가입된 계정이 없는 경우',
   })
   @ApiInternalServerErrorResponse({ description: 'DB 업데이트 실패' })
-  async resetPw(@Body() body: LoginUserDto) {
-    await this.userService.changeUserPw(body);
+  async resetPw(@Body() body: LoginLocalUserDto) {
+    await this.accountService.changePassword(body.email, body.password);
   }
 
   /** 유저 프로필 변경 */
@@ -127,9 +136,9 @@ export class UserController {
   @ApiInternalServerErrorResponse({ description: 'DB 업데이트 실패한 경우' })
   async updateUserProfile(
     @Body() body: PatchUserProfileDto,
-    @UserDeco() user: User,
+    @UserDeco('id') userId: number,
   ) {
-    await this.userService.changeUserProfile(body, user);
+    await this.accountService.profileUpdate(userId, body);
   }
 
   /** 해당 유저의 상대 팀 전적 및 승리 중 홈 비율 기록 */
@@ -152,11 +161,15 @@ export class UserController {
   @ApiOkResponse({ type: UserMyPageDto })
   @ApiInternalServerErrorResponse({ description: 'DB 문제인 경우' })
   async getUserInfo(@UserDeco() user: User) {
-    const record = await this.rankService.userOverallGameStats(user.id);
+    const { id: userId } = user;
+    const record = await this.rankService.userOverallGameStats(userId);
+    const socialAuths =
+      await this.authService.getUserWithSocialAuthList(userId);
+    const foundUser = await this.userService.getUser({ id: userId });
 
-    const userDto = plainToInstance(UserResDto, user);
+    const userDto = new UserMeResDto(foundUser, socialAuths);
 
-    return plainToInstance(UserMyPageDto, { user: userDto, record });
+    return new UserMyPageDto(userDto, record);
   }
 
   /** 회원 탈퇴 */
@@ -166,7 +179,31 @@ export class UserController {
   @ApiOperation({ summary: '회원탈퇴' })
   @ApiNoContentResponse({ description: '삭제 성공한 경우 상태코드만 응답' })
   @ApiInternalServerErrorResponse({ description: 'DB 삭제 실패한 경우' })
-  async deleteUser(@UserDeco() user: User) {
+  async deleteUser(@UserDeco() user: User, @Res() res: Response) {
+    const domain = this.configService.get('DOMAIN');
+    const nodeEnv = this.configService.get('NODE_ENV');
+
     await this.userService.deleteUser(user);
+    res.clearCookie('token', {
+      maxAge: 0,
+      domain: domain || 'localhost',
+      httpOnly: true,
+      secure: nodeEnv === 'production' || nodeEnv === 'staging',
+      sameSite: nodeEnv === 'staging' ? 'none' : 'lax',
+    });
+    res.sendStatus(HttpStatus.NO_CONTENT);
+  }
+
+  @Post('term/agreement')
+  @JwtAuth('access')
+  @HttpCode(HttpStatus.NO_CONTENT)
+  @ApiOperation({ summary: '약관 동의' })
+  @ApiBody({ type: TermAgreeDto })
+  @ApiNoContentResponse({ description: '성공 시 데이터 없이 상태코드만 응답' })
+  @ApiInternalServerErrorResponse({ description: 'DB 업데이트 실패한 경우' })
+  async agreeTerm(@UserDeco() user: User, @Body() body: TermAgreeDto) {
+    const { termIds } = body;
+
+    await this.userService.agreeTerm(user, termIds);
   }
 }
