@@ -84,6 +84,6 @@ jobs:
         aws_secret_key: ${{ secrets.AWS_EB_SECRET_ACCESS_KEY }}
         version_label: "${{ github.run_number }}-${{ github.run_attempt }}-${{ github.sha }}"
         application_name: Sngyo
-        environment_name: Sngyo
+        environment_name: Sngyo-new
         region: ap-northeast-2
         deployment_package: deploy.zip
