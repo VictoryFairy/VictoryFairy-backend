@@ -35,7 +35,7 @@ jobs:
         echo "option_settings:" > .ebextensions/env.config
         echo "  aws:elasticbeanstalk:application:environment:" >> .ebextensions/env.config
         if [ -n "${{ secrets.APPLE_PRIVATE_KEY }}" ]; then
-        echo "    APPLE_PRIVATE_KEY: \"$(echo '${{ secrets.APPLE_PRIVATE_KEY }}' | base64 --decode)\"" >> .ebextensions/env.config
+          echo "    APPLE_PRIVATE_KEY: \"${{ secrets.APPLE_PRIVATE_KEY }}\"" >> .ebextensions/env.config
         fi
         echo '${{ toJson(secrets) }}' | jq 'to_entries | 
           map(select(.key | 
@@ -44,7 +44,7 @@ jobs:
         jq -r 'to_entries[] | "    \(.key): \"\(.value)\""' >> .ebextensions/env.config
         echo '${{ toJson(vars) }}' | jq 'to_entries | 
           map(select(.key | 
-            test("^(AWS_EB|DOCKERHUB|APPLE_PRIVATE_KEY)") | not)) | 
+            test("^(AWS_EB|DOCKERHUB)") | not)) | 
           from_entries' |
         jq -r 'to_entries[] | "    \(.key): \"\(.value)\""' >> .ebextensions/env.config
 
