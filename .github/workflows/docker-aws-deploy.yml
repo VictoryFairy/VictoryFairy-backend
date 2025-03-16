@@ -34,9 +34,12 @@ jobs:
         mkdir -p .ebextensions
         echo "option_settings:" > .ebextensions/env.config
         echo "  aws:elasticbeanstalk:application:environment:" >> .ebextensions/env.config
+        if [ -n "${{ secrets.APPLE_PRIVATE_KEY }}" ]; then
+          echo "    APPLE_PRIVATE_KEY: \"${{ secrets.APPLE_PRIVATE_KEY }}\"" >> .ebextensions/env.config
+        fi
         echo '${{ toJson(secrets) }}' | jq 'to_entries | 
           map(select(.key | 
-            test("^(AWS_EB|DOCKERHUB)") | not)) | 
+            test("^(AWS_EB|DOCKERHUB|APPLE_PRIVATE_KEY)") | not)) | 
           from_entries' |
         jq -r 'to_entries[] | "    \(.key): \"\(.value)\""' >> .ebextensions/env.config
         echo '${{ toJson(vars) }}' | jq 'to_entries | 
