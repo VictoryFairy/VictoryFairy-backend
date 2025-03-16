@@ -4,7 +4,7 @@ import {
   ExecutionContext,
   Inject,
   Injectable,
-  InternalServerErrorException,
+  Logger,
 } from '@nestjs/common';
 import {
   OAUTH_STRATEGY_MANAGER,
@@ -19,6 +19,7 @@ import { Response } from 'express';
 
 @Injectable()
 export class SocialAuthGuard implements CanActivate {
+  private readonly logger = new Logger(SocialAuthGuard.name);
   constructor(
     @Inject(OAUTH_STRATEGY_MANAGER)
     private readonly oAuthStrategyManager: OAuthStrategyManager,
@@ -38,7 +39,7 @@ export class SocialAuthGuard implements CanActivate {
       return false;
     }
 
-    // 소셜 로그인 콜백 처리
+    // 콜백 처리 시 애플은 POST 요청만 받고, 그 외의 소셜 로그인은 GET 요청만 받음
     if (
       (provider === SocialProvider.APPLE && req.method !== 'POST') ||
       (provider !== SocialProvider.APPLE && req.method !== 'GET')
@@ -46,9 +47,10 @@ export class SocialAuthGuard implements CanActivate {
       const msg =
         provider === SocialProvider.APPLE
           ? '애플 로그인은 POST 요청만 가능'
-          : '그외의 소셜 로그인은 GET 요청만 가능';
+          : '그 외의 소셜 로그인은 GET 요청만 가능';
       throw new BadRequestException(msg);
     }
+    // 소셜 로그인 콜백 처리
     await this.handleCallback(req, code, flowType, strategy, receivedUrl);
     return true;
   }
@@ -109,15 +111,22 @@ export class SocialAuthGuard implements CanActivate {
     const receivedState =
       receivedUrl.searchParams.get('state') || req.body?.state;
     if (!receivedState) {
-      throw new BadRequestException('OAuth state정보 누락');
+      this.logger.error('OAuth state정보 누락');
+      req.socialAuthError = true;
+      req.cachedUser = null;
+      return;
     }
 
     const { state, userId, provider } =
       await this.authService.getOAuthStateData(receivedState);
 
     if (!state) {
-      throw new BadRequestException('OAuth state 일치하지 않음');
+      this.logger.error('OAuth state 일치하지 않음');
+      req.socialAuthError = true;
+      req.cachedUser = null;
+      return;
     }
+
     try {
       const socialUserInfo = await strategy.validateAndGetUserInfo(
         code,
@@ -126,10 +135,11 @@ export class SocialAuthGuard implements CanActivate {
 
       req.socialUserInfo = socialUserInfo;
       req.cachedUser = { id: userId, provider };
+      req.socialAuthError = false;
     } catch (error) {
-      throw new InternalServerErrorException(
-        '소셜 로그인 처리 중 오류가 발생했습니다',
-      );
+      this.logger.error('소셜 로그인 처리 중 오류가 발생했습니다');
+      req.socialAuthError = true;
+      req.cachedUser = null;
     }
   }
 }

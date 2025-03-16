@@ -31,7 +31,7 @@ import {
 import { CookieOptions, Request, Response } from 'express';
 import { ConfigService } from '@nestjs/config';
 import { JwtAuth } from 'src/decorator/jwt-token.decorator';
-import { SocialProvider } from 'src/const/auth.const';
+import { SocialLinkStatus, SocialProvider } from 'src/const/auth.const';
 import { AccessTokenResDto } from 'src/dtos/auth.dto';
 import {
   EmailDto,
@@ -108,10 +108,22 @@ export class AuthController {
   @UseGuards(SocialAuthGuard)
   @ApiExcludeEndpoint() // 스웨거 문서에서 제외
   async handleCallback(
-    @Req() req: Request & { socialUserInfo: ISocialUserInfo },
+    @Req()
+    req: Request & {
+      socialUserInfo: ISocialUserInfo;
+      cachedUser: { id: number; provider: SocialProvider } | null;
+      socialAuthError: boolean;
+    },
     @Res() res: Response,
     @Param('provider') provider: SocialProvider,
   ) {
+    const frontendUrl = new URL(this.configService.get('FRONT_END_URL'));
+    // 소셜로그인 처리 중 오류가 발생한 경우 : 리다이렉트로 보내면서 상태 보내기
+    if (req.socialAuthError || !req.cachedUser) {
+      frontendUrl.searchParams.set('status', SocialLinkStatus.FAIL);
+      return res.redirect(frontendUrl.href);
+    }
+
     const { sub, email } = req.socialUserInfo;
 
     const { user, status } = await this.accountService.loginSocialUser(
@@ -131,7 +143,6 @@ export class AuthController {
       res.cookie('token', rfToken, this.getCookieOptions(parseInt(rfExTime)));
     }
 
-    const frontendUrl = new URL(this.configService.get('FRONT_END_URL'));
     frontendUrl.searchParams.set('status', status);
     return res.redirect(frontendUrl.href);
   }
@@ -165,11 +176,23 @@ export class AuthController {
     @Req()
     req: Request & {
       socialUserInfo: ISocialUserInfo;
-      cachedUser: { id: number; provider: SocialProvider };
+      cachedUser: { id: number; provider: SocialProvider } | null;
+      socialAuthError: boolean;
     },
     @Res() res: Response,
     @Param('provider') provider: SocialProvider,
   ) {
+    const frontendUrl = new URL(
+      '/mypage',
+      this.configService.get('FRONT_END_URL'),
+    );
+
+    // 소셜 계정 연동 처리 중 오류가 발생한 경우 : 리다이렉트로 보내면서 상태 보내기
+    if (req.socialAuthError || !req.cachedUser) {
+      frontendUrl.searchParams.set('status', SocialLinkStatus.FAIL);
+      return res.redirect(frontendUrl.href);
+    }
+
     const { id } = req.cachedUser;
     const { sub } = req.socialUserInfo;
     const { status } = await this.accountService.linkSocial({
@@ -177,13 +200,9 @@ export class AuthController {
       sub,
       provider,
     });
-    const frontendUrl = new URL(
-      '/mypage',
-      this.configService.get('FRONT_END_URL'),
-    );
 
     frontendUrl.searchParams.set('status', status);
-    return res.redirect(frontendUrl.href); // mypage로 리다이렉트
+    return res.redirect(frontendUrl.href);
   }
 
   /** 유저 로그아웃 */
