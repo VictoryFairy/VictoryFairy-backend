@@ -79,6 +79,7 @@ jobs:
           key: ${{ secrets.HOME_SERVER_KEY }}
           port: ${{ secrets.HOME_SERVER_PORT }}
           script: |
+            export PATH="/opt/homebrew/bin:$PATH"
             cd ~/home-server/sngyo
             echo "${{ secrets.DOCKERHUB_ACCESS_TOKEN }}" | docker login -u "${{ secrets.DOCKERHUB_USERNAME }}" --password-stdin
             ./deploy.sh

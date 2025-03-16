@@ -160,11 +160,12 @@ export class AccountService {
     if (socialAuth) {
       return { status: SocialLinkStatus.DUPLICATE };
     }
-    const result = await this.authService.createSocialAuth(data, user_id);
-
-    return {
-      status: result ? SocialLinkStatus.SUCCESS : SocialLinkStatus.FAIL,
-    };
+    try {
+      await this.authService.createSocialAuth(data, user_id);
+      return { status: SocialLinkStatus.SUCCESS };
+    } catch (error) {
+      return { status: SocialLinkStatus.FAIL };
+    }
   }
 
   /** User생성 및 약관 동의까지 같이 저장*/
