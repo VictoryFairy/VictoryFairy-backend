@@ -167,13 +167,14 @@ export class RankService {
       end,
     );
 
-    const refinedRankData = await this.refineRankData(rankList);
+    const refinedRankData = await this.refineRankData(rankList, start);
     return refinedRankData;
   }
 
   /** @description 레디스 랭킹과 유저 정보 데이터 합쳐서 가공 */
   private async refineRankData(
     rankList: string[],
+    start: number,
   ): Promise<IRefinedRankData[]> {
     const userInfoHashmap = await this.userRedisService.getUserInfo();
 
@@ -185,6 +186,7 @@ export class RankService {
       if (!userInfo) continue;
 
       rankData.push({
+        rank: start + 1 + Math.floor(i / 2),
         user_id: userId,
         nickname: userInfo.nickname,
         profile_image: userInfo.profile_image,
