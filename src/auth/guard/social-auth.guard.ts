@@ -117,11 +117,10 @@ export class SocialAuthGuard implements CanActivate {
       return;
     }
 
-    const { state, userId, provider } =
-      await this.authService.getOAuthStateData(receivedState);
+    const result = await this.authService.getOAuthStateData(receivedState);
 
-    if (!state) {
-      this.logger.error('OAuth state 일치하지 않음');
+    if (!result.state) {
+      this.logger.error('OAuth state 없거나 일치하지 않음');
       req.socialAuthError = true;
       req.cachedUser = null;
       return;
@@ -134,7 +133,7 @@ export class SocialAuthGuard implements CanActivate {
       );
 
       req.socialUserInfo = socialUserInfo;
-      req.cachedUser = { id: userId, provider };
+      req.cachedUser = { id: result.userId, provider: result.provider };
       req.socialAuthError = false;
     } catch (error) {
       this.logger.error('소셜 로그인 처리 중 오류가 발생했습니다');

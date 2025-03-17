@@ -22,7 +22,7 @@ export class TeamController {
 
   @Get()
   @HttpCode(HttpStatus.OK)
-  @ApiOperation({ summary: '모든 팀 혹은 해당 이름의 팀 정보 반환' })
+  @ApiOperation({ summary: '모든 정규 팀 혹은 해당 이름의 팀 정보 반환' })
   @ApiQuery({
     name: 'name',
     description: '팀 이름',
