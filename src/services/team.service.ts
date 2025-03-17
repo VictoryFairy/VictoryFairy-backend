@@ -1,7 +1,7 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Team } from 'src/entities/team.entity';
-import { Repository } from 'typeorm';
+import { Between, Repository } from 'typeorm';
 
 @Injectable()
 export class TeamService {
@@ -23,10 +23,17 @@ export class TeamService {
   async findAll(name?: string): Promise<Team[]> {
     if (name) {
       return await this.teamRepository.find({
-        where: { name },
+        where: {
+          id: Between(1, 10),
+          name,
+        },
       });
     } else {
-      return await this.teamRepository.find();
+      return await this.teamRepository.find({
+        where: {
+          id: Between(1, 10),
+        },
+      });
     }
   }
 
