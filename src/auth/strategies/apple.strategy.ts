@@ -26,7 +26,7 @@ export class AppleOAuthStrategy implements IOAuthStrategy {
     this.teamId = this.configService.get<string>('APPLE_TEAM_ID');
     this.keyId = this.configService.get<string>('APPLE_KEY_ID');
     this.privateKey = Buffer.from(
-      this.configService.get<string>('APPLE_PRIVATE_KEY'),
+      this.configService.get<string>('APPLE_PRIVATE_KEY_BASE64') || '',
       'base64',
     ).toString('utf-8');
     this.jwksClient = jwksClient({
