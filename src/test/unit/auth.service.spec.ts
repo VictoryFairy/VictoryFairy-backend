@@ -481,6 +481,7 @@ describe('AuthService Test', () => {
       const socialAuthData = {
         sub: 'google123',
         provider: SocialProvider.GOOGLE,
+        providerEmail: 'test@gmail.com',
       };
       const userId = 1;
 
@@ -490,7 +491,9 @@ describe('AuthService Test', () => {
 
       expect(result).toBe(true);
       expect(socialAuthRepository.insert).toHaveBeenCalledWith({
-        ...socialAuthData,
+        sub: socialAuthData.sub,
+        provider: socialAuthData.provider,
+        provider_email: socialAuthData.providerEmail,
         user_id: userId,
       });
     });
@@ -499,6 +502,7 @@ describe('AuthService Test', () => {
       const socialAuthData = {
         sub: 'google123',
         provider: SocialProvider.GOOGLE,
+        providerEmail: 'test@gmail.com',
       };
       const userId = 1;
 

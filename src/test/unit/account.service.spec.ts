@@ -233,7 +233,7 @@ describe('AccountService', () => {
 
     it('새로운 유저는 계정 생성 후 로그인 성공', async () => {
       const sub = 'social123';
-      const email = 'new@test.com';
+      const email = 'new@gmail.com';
       const provider = SocialProvider.GOOGLE;
       const mockUser = { id: 1, email };
 
@@ -255,7 +255,7 @@ describe('AccountService', () => {
       });
       expect(accountService.createSocialUser).toHaveBeenCalledWith(
         { email },
-        { sub, provider },
+        { sub, provider, providerEmail: email },
       );
       expect(userRedisService.saveUser).toHaveBeenCalledWith(mockUser);
       expect(rankService.updateRedisRankings).toHaveBeenCalledWith(
@@ -319,6 +319,7 @@ describe('AccountService', () => {
       const socialAuthData = {
         sub: 'social123',
         provider: SocialProvider.GOOGLE,
+        providerEmail: 'test@gmail.com',
       };
       const createdUser = {
         id: 1,
@@ -354,9 +355,10 @@ describe('AccountService', () => {
   describe('linkSocial', () => {
     it('소셜 계정 연결 성공', async () => {
       const data = {
-        user_id: 1,
+        userId: 1,
         sub: 'social123',
         provider: SocialProvider.GOOGLE,
+        providerEmail: 'test@gmail.com',
       };
 
       jest.spyOn(authService, 'getSocialAuth').mockResolvedValue(null);
@@ -368,21 +370,27 @@ describe('AccountService', () => {
       expect(authService.getSocialAuth).toHaveBeenCalledWith({
         sub: data.sub,
         provider: data.provider,
-        user_id: data.user_id,
+        user_id: data.userId,
       });
       expect(authService.createSocialAuth).toHaveBeenCalledWith(
         data,
-        data.user_id,
+        data.userId,
       );
     });
 
     it('이미 연결된 소셜 계정이면 DUPLICATE 상태 반환', async () => {
       const data = {
-        user_id: 1,
+        userId: 1,
         sub: 'social123',
         provider: SocialProvider.GOOGLE,
+        providerEmail: 'test@gmail.com',
       };
-      const mockSocialAuth = { ...data } as SocialAuth;
+      const mockSocialAuth = {
+        sub: data.sub,
+        provider: data.provider,
+        provider_email: data.providerEmail,
+        user_id: data.userId,
+      } as SocialAuth;
 
       jest
         .spyOn(authService, 'getSocialAuth')
