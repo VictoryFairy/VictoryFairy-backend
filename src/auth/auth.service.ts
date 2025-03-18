@@ -135,6 +135,17 @@ export class AuthService {
     }
   }
 
+  async getLocalAuth(
+    userId: number,
+    select?: FindOptionsSelect<LocalAuth>,
+  ): Promise<LocalAuth | null> {
+    const localAuth = await this.localAuthRepository.findOne({
+      where: { user_id: userId },
+      select,
+    });
+    return localAuth;
+  }
+
   async getUserWithSocialAuthList(userId: number): Promise<SocialAuth[]> {
     const socialAuths = await this.socialAuthRepository.find({
       where: { user_id: userId },
@@ -154,6 +165,21 @@ export class AuthService {
     });
 
     return found;
+  }
+
+  async getSocialAuthListWithUserId(
+    userId: number,
+    select?: FindOptionsSelect<SocialAuth>,
+  ) {
+    const socialAuths = await this.socialAuthRepository.find({
+      where: { user_id: userId },
+      select,
+    });
+    return socialAuths;
+  }
+
+  async deleteSocialAuth(userId: number, provider: SocialProvider) {
+    await this.socialAuthRepository.delete({ user_id: userId, provider });
   }
 
   async saveOAuthStateWithUser(data: {

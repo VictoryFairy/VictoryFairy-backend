@@ -16,8 +16,8 @@ import { AuthService } from './auth.service';
 import { UserDeco } from 'src/decorator/user.decorator';
 import { User } from 'src/entities/user.entity';
 import {
+  ApiBadRequestResponse,
   ApiBody,
-  ApiCookieAuth,
   ApiExcludeEndpoint,
   ApiInternalServerErrorResponse,
   ApiNoContentResponse,
@@ -41,6 +41,8 @@ import {
 import { SocialAuthGuard } from './guard/social-auth.guard';
 import { ISocialUserInfo } from 'src/types/auth.type';
 import { AccountService } from 'src/account/account.service';
+import { ProviderParamCheckPipe } from 'src/pipe/provider-param-check.pipe';
+
 @ApiTags('Auth')
 @Controller('auth')
 export class AuthController {
@@ -104,9 +106,9 @@ export class AuthController {
   async socialLogin() {}
 
   /** 소셜 로그인 리다이렉트 처리 엔드포인트 */
+  @ApiExcludeEndpoint() // 스웨거 문서에서 제외
   @All('login/:provider/callback')
   @UseGuards(SocialAuthGuard)
-  @ApiExcludeEndpoint() // 스웨거 문서에서 제외
   async handleCallback(
     @Req()
     req: Request & {
@@ -150,7 +152,6 @@ export class AuthController {
   /** 소셜 계정 연동 진입점 */
   @Get('link/:provider')
   @JwtAuth('refresh', SocialAuthGuard)
-  @ApiCookieAuth('token')
   @ApiOperation({ summary: '계정 연동 요청 - 리프레쉬 토큰 필요(엑세스 X)' })
   @ApiResponse({
     status: 302,
@@ -169,8 +170,8 @@ export class AuthController {
   async socialLink() {}
 
   /** 소셜 계정 연동 콜백처리 */
-  @All('link/:provider/callback')
   @ApiExcludeEndpoint() // 스웨거 문서에서 제외
+  @All('link/:provider/callback')
   @UseGuards(SocialAuthGuard)
   async handleSocialLinkCallback(
     @Req()
@@ -204,6 +205,31 @@ export class AuthController {
 
     frontendUrl.searchParams.set('status', status);
     return res.redirect(frontendUrl.href);
+  }
+
+  /** 소셜 계정 연동 해제*/
+  @Delete('link/:provider')
+  @HttpCode(HttpStatus.NO_CONTENT)
+  @JwtAuth('access')
+  @ApiOperation({ summary: '소셜 계정 연동 해제, 엑세스 토큰 필요' })
+  @ApiParam({
+    name: 'provider',
+    enum: SocialProvider,
+    description: '소셜 로그인 제공자',
+  })
+  @ApiNoContentResponse({ description: '성공 시 데이터 없이 상태코드만 응답' })
+  @ApiBadRequestResponse({
+    description: '유효하지 않은 요청 url or 계정 연동 해제 할 수 없는 경우',
+  })
+  async deleteSocialLink(
+    @Param('provider', ProviderParamCheckPipe)
+    provider: SocialProvider,
+    @UserDeco() user: User,
+  ) {
+    await this.accountService.unlinkSocial({
+      userId: user.id,
+      provider,
+    });
   }
 
   /** 유저 로그아웃 */

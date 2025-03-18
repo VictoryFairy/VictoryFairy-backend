@@ -181,6 +181,54 @@ export class AccountService {
     }
   }
 
+  @Transactional()
+  async unlinkSocial(data: {
+    userId: number;
+    provider: SocialProvider;
+  }): Promise<void> {
+    const { userId, provider } = data;
+    const isExistLocalAuth = await this.authService.getLocalAuth(userId);
+    // 로컬 회원가입이면 연동 해제 후 종료
+    if (isExistLocalAuth) {
+      await this.authService.deleteSocialAuth(userId, provider);
+      return;
+    }
+
+    const socialAuthList =
+      await this.authService.getUserWithSocialAuthList(userId);
+
+    // 소셜 게정 회원가입이면서 연동 계정이 하나인 경우 연동 해제 불가
+    if (socialAuthList.length === 1) {
+      throw new BadRequestException('소셜 계정 연동 해제 불가능');
+    }
+
+    const user = await this.userService.getUser(
+      { id: userId },
+      {},
+      { id: true, email: true },
+    );
+
+    // 연동 날짜 기준으로 정렬
+    const filteredSocialAuthList = socialAuthList
+      .filter((auth) => auth.provider !== provider)
+      .sort((a, b) => a.created_at.getTime() - b.created_at.getTime());
+
+    const isExistSameMainEmail = filteredSocialAuthList.findIndex(
+      (auth) => auth.provider_email === user.email,
+    );
+
+    // 동일한 이메일이 없으면 메인 이메일 업데이트
+    if (isExistSameMainEmail === -1) {
+      await this.userService.updateUserMainEmail(
+        userId,
+        filteredSocialAuthList[0].provider_email,
+      );
+    }
+
+    await this.authService.deleteSocialAuth(userId, provider);
+    return;
+  }
+
   /** User생성 및 약관 동의까지 같이 저장*/
   async agreeUserRequireTerm(userId: number): Promise<boolean> {
     try {
