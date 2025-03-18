@@ -124,18 +124,18 @@ export class AuthController {
       return res.redirect(frontendUrl.href);
     }
 
-    const { sub, email } = req.socialUserInfo;
+    const { sub, email: providerEmail } = req.socialUserInfo;
 
     const { user, status } = await this.accountService.loginSocialUser(
       sub,
-      email,
+      providerEmail,
       provider,
     );
     const { id: userId } = user;
 
     if (status === 'SIGNUP' || status === 'LOGIN') {
       const rfToken = this.authService.issueToken(
-        { email: email, id: userId },
+        { email: providerEmail, id: userId },
         'refresh',
       );
       const rfExTime = this.configService.get('REFRESH_EXPIRE_TIME');
@@ -194,11 +194,12 @@ export class AuthController {
     }
 
     const { id } = req.cachedUser;
-    const { sub } = req.socialUserInfo;
+    const { sub, email: providerEmail } = req.socialUserInfo;
     const { status } = await this.accountService.linkSocial({
-      user_id: id,
+      userId: id,
       sub,
       provider,
+      providerEmail,
     });
 
     frontendUrl.searchParams.set('status', status);

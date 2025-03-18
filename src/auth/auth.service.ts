@@ -167,16 +167,17 @@ export class AuthService {
 
   /** @returns 정상가입 - true | 소셜로그인 없으나 기존 이메일 있는 경우 - false | 그 외 DB저장 실패 - Throw Error */
   async createSocialAuth(
-    socialAuthData: Omit<CreateSocialAuthDto, 'user_id'>,
+    socialAuthData: Omit<CreateSocialAuthDto, 'userId'>,
     userId: number,
   ): Promise<boolean> {
-    const { sub, provider } = socialAuthData;
+    const { sub, provider, providerEmail } = socialAuthData;
 
     try {
       await this.socialAuthRepository.insert({
         sub,
         provider,
         user_id: userId,
+        provider_email: providerEmail,
       });
 
       return true;
