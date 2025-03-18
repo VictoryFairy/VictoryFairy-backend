@@ -131,9 +131,9 @@ export class AuthController {
       providerEmail,
       provider,
     );
-    const { id: userId } = user;
 
     if (status === 'SIGNUP' || status === 'LOGIN') {
+      const { id: userId } = user;
       const rfToken = this.authService.issueToken(
         { email: providerEmail, id: userId },
         'refresh',
