@@ -75,16 +75,19 @@ export class AccountService {
       user = socialAuth?.user ?? null;
 
       if (!user) {
-        const isExistUser = await this.userService.getUser(
-          { email: providerEmail },
-          {},
-          { id: true, email: true },
-        );
-        const isExistSocialAuth = await this.authService.getSocialAuth(
-          { provider_email: providerEmail },
-          {},
-          { id: true, provider_email: true, provider: true },
-        );
+        const [isExistUser, isExistSocialAuth] = await Promise.all([
+          this.userService.getUser(
+            { email: providerEmail },
+            {},
+            { id: true, email: true },
+          ),
+          this.authService.getSocialAuth(
+            { provider_email: providerEmail },
+            {},
+            { id: true, provider_email: true, provider: true },
+          ),
+        ]);
+
         // 동일 이메일이 이미 가입된 경우
         if (isExistUser || isExistSocialAuth) {
           status = SocialLoginStatus.DUPLICATE;
@@ -164,13 +167,16 @@ export class AccountService {
 
   /** SocialAuth 연결 */
   async linkSocial(data: CreateSocialAuthDto) {
-    const { userId, sub, provider } = data;
-    const socialAuth = await this.authService.getSocialAuth({
-      sub,
-      provider,
-      user_id: userId,
-    });
-    if (socialAuth) {
+    const { userId, sub, provider, providerEmail } = data;
+    const [socialAuth, isExistUser] = await Promise.all([
+      this.authService.getSocialAuth({
+        sub,
+        provider,
+      }),
+      this.userService.isExistEmail(providerEmail),
+    ]);
+
+    if (socialAuth || isExistUser) {
       return { status: SocialLinkStatus.DUPLICATE };
     }
     try {

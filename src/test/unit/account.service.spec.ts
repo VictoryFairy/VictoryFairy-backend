@@ -370,7 +370,6 @@ describe('AccountService', () => {
       expect(authService.getSocialAuth).toHaveBeenCalledWith({
         sub: data.sub,
         provider: data.provider,
-        user_id: data.userId,
       });
       expect(authService.createSocialAuth).toHaveBeenCalledWith(
         data,
