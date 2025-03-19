@@ -9,10 +9,13 @@ export class AddSocialAuthAndLocalAuth1740209603509
       `CREATE TABLE "local_auth" ("user_id" integer NOT NULL, "password" character varying NOT NULL, "created_at" TIMESTAMPTZ NOT NULL DEFAULT now(), "updated_at" TIMESTAMPTZ NOT NULL DEFAULT now(), CONSTRAINT "PK_59f58ddc8b6c54911cf63a8324f" PRIMARY KEY ("user_id"))`,
     );
     await queryRunner.query(
-      `CREATE TABLE "social_auth" ("id" SERIAL NOT NULL, "provider" character varying(15) NOT NULL, "sub" character varying NOT NULL, "user_id" integer NOT NULL, "created_at" TIMESTAMPTZ NOT NULL DEFAULT now(), "updated_at" TIMESTAMPTZ NOT NULL DEFAULT now(), CONSTRAINT "UQ_4444ace7e09dc0172bc0ac5329a" UNIQUE ("sub", "provider"), CONSTRAINT "PK_9cd70d00d72575226868164eb61" PRIMARY KEY ("id"))`,
+      `CREATE TABLE "social_auth" ("id" SERIAL NOT NULL, "provider" character varying(15) NOT NULL, "sub" character varying NOT NULL, "provider_email" character varying(100) NOT NULL, "user_id" integer NOT NULL, "created_at" TIMESTAMPTZ NOT NULL DEFAULT now(), "updated_at" TIMESTAMPTZ NOT NULL DEFAULT now(), CONSTRAINT "UQ_4444ace7e09dc0172bc0ac5329a" UNIQUE ("sub", "provider"), CONSTRAINT "PK_9cd70d00d72575226868164eb61" PRIMARY KEY ("id"))`,
     );
     await queryRunner.query(
       `CREATE INDEX "IDX_08ec54f5ff69d5350788315e46" ON "social_auth" ("user_id") `,
+    );
+    await queryRunner.query(
+      `CREATE INDEX "IDX_ab5dd23b3995ca05d4e2c04d37" ON "social_auth" ("provider_email") `,
     );
     await queryRunner.query(
       `ALTER TABLE "user" ADD "is_active" boolean NOT NULL DEFAULT true`,
@@ -33,6 +36,9 @@ export class AddSocialAuthAndLocalAuth1740209603509
       `ALTER TABLE "local_auth" DROP CONSTRAINT "FK_59f58ddc8b6c54911cf63a8324f"`,
     );
     await queryRunner.query(`ALTER TABLE "user" DROP COLUMN "is_active"`);
+    await queryRunner.query(
+      `DROP INDEX "public"."IDX_ab5dd23b3995ca05d4e2c04d37"`,
+    );
     await queryRunner.query(
       `DROP INDEX "public"."IDX_08ec54f5ff69d5350788315e46"`,
     );

@@ -57,11 +57,16 @@ export class AccountService {
   }
 
   @Transactional()
-  async loginSocialUser(sub: string, email: string, provider: SocialProvider) {
+  async loginSocialUser(
+    sub: string,
+    providerEmail: string,
+    provider: SocialProvider,
+  ) {
     let user: User | null;
     let status: SocialLoginStatus = SocialLoginStatus.LOGIN;
 
     try {
+      //해당 플랫폼으로 가입된 유저 조회
       const socialAuth = await this.authService.getSocialAuth(
         { sub, provider },
         { user: true },
@@ -70,18 +75,29 @@ export class AccountService {
       user = socialAuth?.user ?? null;
 
       if (!user) {
-        const isExistUser = await this.userService.getUser(
-          { email },
-          {},
-          { id: true, email: true },
-        );
+        const [isExistUser, isExistSocialAuth] = await Promise.all([
+          this.userService.getUser(
+            { email: providerEmail },
+            {},
+            { id: true, email: true },
+          ),
+          this.authService.getSocialAuth(
+            { provider_email: providerEmail },
+            {},
+            { id: true, provider_email: true, provider: true },
+          ),
+        ]);
+
         // 동일 이메일이 이미 가입된 경우
-        if (isExistUser) {
+        if (isExistUser || isExistSocialAuth) {
           status = SocialLoginStatus.DUPLICATE;
           return { user: isExistUser, status };
         }
         //없는 경우
-        user = await this.createSocialUser({ email }, { sub, provider });
+        user = await this.createSocialUser(
+          { email: providerEmail },
+          { sub, provider, providerEmail },
+        );
         status = SocialLoginStatus.SIGNUP;
         runOnTransactionCommit(async () => {
           try {
@@ -132,7 +148,7 @@ export class AccountService {
    * User생성 및 SocialAuth 생성 */
   async createSocialUser(
     userData: Pick<CreateUserDto, 'email'>,
-    socialAuthData: Omit<CreateSocialAuthDto, 'user_id'>,
+    socialAuthData: Omit<CreateSocialAuthDto, 'userId'>,
   ) {
     const createdUser = await this.userService.saveUser(userData);
 
@@ -151,21 +167,72 @@ export class AccountService {
 
   /** SocialAuth 연결 */
   async linkSocial(data: CreateSocialAuthDto) {
-    const { user_id, sub, provider } = data;
-    const socialAuth = await this.authService.getSocialAuth({
-      sub,
-      provider,
-      user_id,
-    });
-    if (socialAuth) {
+    const { userId, sub, provider, providerEmail } = data;
+    const [socialAuth, isExistUser] = await Promise.all([
+      this.authService.getSocialAuth({
+        sub,
+        provider,
+      }),
+      this.userService.isExistEmail(providerEmail),
+    ]);
+
+    if (socialAuth || isExistUser) {
       return { status: SocialLinkStatus.DUPLICATE };
     }
     try {
-      await this.authService.createSocialAuth(data, user_id);
+      await this.authService.createSocialAuth(data, userId);
       return { status: SocialLinkStatus.SUCCESS };
     } catch (error) {
       return { status: SocialLinkStatus.FAIL };
     }
+  }
+
+  @Transactional()
+  async unlinkSocial(data: {
+    userId: number;
+    provider: SocialProvider;
+  }): Promise<void> {
+    const { userId, provider } = data;
+    const isExistLocalAuth = await this.authService.getLocalAuth(userId);
+    // 로컬 회원가입이면 연동 해제 후 종료
+    if (isExistLocalAuth) {
+      await this.authService.deleteSocialAuth(userId, provider);
+      return;
+    }
+
+    const socialAuthList =
+      await this.authService.getUserWithSocialAuthList(userId);
+
+    // 소셜 게정 회원가입이면서 연동 계정이 하나인 경우 연동 해제 불가
+    if (socialAuthList.length === 1) {
+      throw new BadRequestException('소셜 계정 연동 해제 불가능');
+    }
+
+    const user = await this.userService.getUser(
+      { id: userId },
+      {},
+      { id: true, email: true },
+    );
+
+    // 연동 날짜 기준으로 정렬
+    const filteredSocialAuthList = socialAuthList
+      .filter((auth) => auth.provider !== provider)
+      .sort((a, b) => a.created_at.getTime() - b.created_at.getTime());
+
+    const isExistSameMainEmail = filteredSocialAuthList.findIndex(
+      (auth) => auth.provider_email === user.email,
+    );
+
+    // 동일한 이메일이 없으면 메인 이메일 업데이트
+    if (isExistSameMainEmail === -1) {
+      await this.userService.updateUserMainEmail(
+        userId,
+        filteredSocialAuthList[0].provider_email,
+      );
+    }
+
+    await this.authService.deleteSocialAuth(userId, provider);
+    return;
   }
 
   /** User생성 및 약관 동의까지 같이 저장*/

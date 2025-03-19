@@ -28,6 +28,10 @@ export class SocialAuth {
   @Column()
   user_id: number;
 
+  @Index()
+  @Column({ type: 'varchar', length: 100 })
+  provider_email: string;
+
   @CreateDateColumn({ type: 'timestamptz' })
   created_at: Date;
 

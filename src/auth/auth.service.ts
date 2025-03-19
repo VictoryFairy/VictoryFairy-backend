@@ -135,6 +135,17 @@ export class AuthService {
     }
   }
 
+  async getLocalAuth(
+    userId: number,
+    select?: FindOptionsSelect<LocalAuth>,
+  ): Promise<LocalAuth | null> {
+    const localAuth = await this.localAuthRepository.findOne({
+      where: { user_id: userId },
+      select,
+    });
+    return localAuth;
+  }
+
   async getUserWithSocialAuthList(userId: number): Promise<SocialAuth[]> {
     const socialAuths = await this.socialAuthRepository.find({
       where: { user_id: userId },
@@ -156,6 +167,21 @@ export class AuthService {
     return found;
   }
 
+  async getSocialAuthListWithUserId(
+    userId: number,
+    select?: FindOptionsSelect<SocialAuth>,
+  ) {
+    const socialAuths = await this.socialAuthRepository.find({
+      where: { user_id: userId },
+      select,
+    });
+    return socialAuths;
+  }
+
+  async deleteSocialAuth(userId: number, provider: SocialProvider) {
+    await this.socialAuthRepository.delete({ user_id: userId, provider });
+  }
+
   async saveOAuthStateWithUser(data: {
     provider: SocialProvider;
     userId?: number;
@@ -167,16 +193,17 @@ export class AuthService {
 
   /** @returns 정상가입 - true | 소셜로그인 없으나 기존 이메일 있는 경우 - false | 그 외 DB저장 실패 - Throw Error */
   async createSocialAuth(
-    socialAuthData: Omit<CreateSocialAuthDto, 'user_id'>,
+    socialAuthData: Omit<CreateSocialAuthDto, 'userId'>,
     userId: number,
   ): Promise<boolean> {
-    const { sub, provider } = socialAuthData;
+    const { sub, provider, providerEmail } = socialAuthData;
 
     try {
       await this.socialAuthRepository.insert({
         sub,
         provider,
         user_id: userId,
+        provider_email: providerEmail,
       });
 
       return true;

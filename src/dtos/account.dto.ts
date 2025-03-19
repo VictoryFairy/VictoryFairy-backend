@@ -10,5 +10,6 @@ export class CreateUserDto {
 export class CreateSocialAuthDto {
   sub: string;
   provider: SocialProvider;
-  user_id: number;
+  providerEmail: string;
+  userId: number;
 }
