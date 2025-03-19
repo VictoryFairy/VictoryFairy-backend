@@ -32,6 +32,9 @@ export class SocialAuth {
   @Column({ type: 'varchar', length: 100 })
   provider_email: string;
 
+  @Column({ default: false, nullable: false })
+  is_primary: boolean;
+
   @CreateDateColumn({ type: 'timestamptz' })
   created_at: Date;
 

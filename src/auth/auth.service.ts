@@ -196,7 +196,7 @@ export class AuthService {
     socialAuthData: Omit<CreateSocialAuthDto, 'userId'>,
     userId: number,
   ): Promise<boolean> {
-    const { sub, provider, providerEmail } = socialAuthData;
+    const { sub, provider, providerEmail, isPrimary } = socialAuthData;
 
     try {
       await this.socialAuthRepository.insert({
@@ -204,6 +204,7 @@ export class AuthService {
         provider,
         user_id: userId,
         provider_email: providerEmail,
+        is_primary: isPrimary,
       });
 
       return true;

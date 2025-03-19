@@ -162,6 +162,7 @@ export class UserMeResDto {
   nickname: string;
   image: string;
   provider: SocialProvider[];
+  primaryProvider: SocialProvider | null;
 
   constructor(user: User, socialAuths: SocialAuth[]) {
     this.id = user.id;
@@ -169,6 +170,9 @@ export class UserMeResDto {
     this.nickname = user.nickname;
     this.image = user.profile_image;
     this.provider = socialAuths.map((socialAuth) => socialAuth.provider);
+    this.primaryProvider =
+      socialAuths.find((socialAuth) => socialAuth.is_primary === true)
+        ?.provider || null;
   }
 }
 
@@ -180,6 +184,7 @@ export class UserMyPageDto {
       nickname: 'test11',
       image: 'dfdadlkjfk/example',
       provider: ['google', 'kakao'],
+      primaryProvider: 'google',
     },
   })
   user: UserMeResDto;
