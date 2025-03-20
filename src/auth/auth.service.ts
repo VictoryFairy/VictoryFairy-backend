@@ -135,6 +135,17 @@ export class AuthService {
     }
   }
 
+  async getLocalAuth(
+    userId: number,
+    select?: FindOptionsSelect<LocalAuth>,
+  ): Promise<LocalAuth | null> {
+    const localAuth = await this.localAuthRepository.findOne({
+      where: { user_id: userId },
+      select,
+    });
+    return localAuth;
+  }
+
   async getUserWithSocialAuthList(userId: number): Promise<SocialAuth[]> {
     const socialAuths = await this.socialAuthRepository.find({
       where: { user_id: userId },
@@ -156,6 +167,10 @@ export class AuthService {
     return found;
   }
 
+  async deleteSocialAuth(userId: number, provider: SocialProvider) {
+    await this.socialAuthRepository.delete({ user_id: userId, provider });
+  }
+
   async saveOAuthStateWithUser(data: {
     provider: SocialProvider;
     userId?: number;
@@ -170,7 +185,7 @@ export class AuthService {
     socialAuthData: Omit<CreateSocialAuthDto, 'userId'>,
     userId: number,
   ): Promise<boolean> {
-    const { sub, provider, providerEmail } = socialAuthData;
+    const { sub, provider, providerEmail, isPrimary } = socialAuthData;
 
     try {
       await this.socialAuthRepository.insert({
@@ -178,6 +193,7 @@ export class AuthService {
         provider,
         user_id: userId,
         provider_email: providerEmail,
+        is_primary: isPrimary,
       });
 
       return true;

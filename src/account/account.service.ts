@@ -1,5 +1,6 @@
 import {
   BadRequestException,
+  ForbiddenException,
   Injectable,
   InternalServerErrorException,
   Logger,
@@ -80,20 +81,16 @@ export class AccountService {
           {},
           { id: true, email: true },
         );
-        const isExistSocialAuth = await this.authService.getSocialAuth(
-          { provider_email: providerEmail },
-          {},
-          { id: true, provider_email: true, provider: true },
-        );
+
         // 동일 이메일이 이미 가입된 경우
-        if (isExistUser || isExistSocialAuth) {
+        if (isExistUser) {
           status = SocialLoginStatus.DUPLICATE;
           return { user: isExistUser, status };
         }
         //없는 경우
         user = await this.createSocialUser(
           { email: providerEmail },
-          { sub, provider, providerEmail },
+          { sub, provider, providerEmail, isPrimary: true },
         );
         status = SocialLoginStatus.SIGNUP;
         runOnTransactionCommit(async () => {
@@ -168,8 +165,8 @@ export class AccountService {
     const socialAuth = await this.authService.getSocialAuth({
       sub,
       provider,
-      user_id: userId,
     });
+
     if (socialAuth) {
       return { status: SocialLinkStatus.DUPLICATE };
     }
@@ -179,6 +176,45 @@ export class AccountService {
     } catch (error) {
       return { status: SocialLinkStatus.FAIL };
     }
+  }
+
+  @Transactional()
+  async unlinkSocial(data: {
+    userId: number;
+    provider: SocialProvider;
+  }): Promise<void> {
+    const { userId, provider } = data;
+    const isExistLocalAuth = await this.authService.getLocalAuth(userId);
+
+    // 로컬 회원가입이면 연동 해제 후 종료
+    if (isExistLocalAuth) {
+      await this.authService.deleteSocialAuth(userId, provider);
+      return;
+    }
+
+    const socialAuthList =
+      await this.authService.getUserWithSocialAuthList(userId);
+
+    // 소셜 게정 회원가입이면서 연동 계정이 하나인 경우 연동 해제 불가
+    if (socialAuthList.length === 1) {
+      throw new BadRequestException('소셜 계정 연동 해제 불가능');
+    }
+
+    const isExistPrimarySocialAuth = socialAuthList.filter(
+      (social) => social.is_primary === true,
+    );
+    if (isExistPrimarySocialAuth.length === 0) {
+      throw new BadRequestException('소셜 계정 연동 해제 불가능');
+    }
+    // 소셜플랫폼 처음 회원가입 이메일은 연동 해제 불가
+    if (isExistPrimarySocialAuth[0].provider === provider) {
+      throw new ForbiddenException(
+        '소셜플랫폼 처음 회원가입 이메일 연동 해제 불가능',
+      );
+    }
+
+    await this.authService.deleteSocialAuth(userId, provider);
+    return;
   }
 
   /** User생성 및 약관 동의까지 같이 저장*/

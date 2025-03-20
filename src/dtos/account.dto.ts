@@ -12,4 +12,5 @@ export class CreateSocialAuthDto {
   provider: SocialProvider;
   providerEmail: string;
   userId: number;
+  isPrimary: boolean;
 }

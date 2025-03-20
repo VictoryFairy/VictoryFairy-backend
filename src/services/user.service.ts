@@ -20,6 +20,7 @@ import { UserRedisService } from './user-redis.service';
 import { runOnTransactionCommit, Transactional } from 'typeorm-transactional';
 import { TermService } from './term.service';
 import { CreateUserDto } from 'src/dtos/account.dto';
+
 @Injectable()
 export class UserService {
   private readonly logger = new Logger(UserService.name);
