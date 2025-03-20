@@ -1,5 +1,6 @@
 import {
   BadRequestException,
+  ForbiddenException,
   Injectable,
   InternalServerErrorException,
   Logger,
@@ -75,28 +76,21 @@ export class AccountService {
       user = socialAuth?.user ?? null;
 
       if (!user) {
-        const [isExistUser, isExistSocialAuth] = await Promise.all([
-          this.userService.getUser(
-            { email: providerEmail },
-            {},
-            { id: true, email: true },
-          ),
-          this.authService.getSocialAuth(
-            { provider_email: providerEmail },
-            {},
-            { id: true, provider_email: true, provider: true },
-          ),
-        ]);
+        const isExistUser = await this.userService.getUser(
+          { email: providerEmail },
+          {},
+          { id: true, email: true },
+        );
 
         // 동일 이메일이 이미 가입된 경우
-        if (isExistUser || isExistSocialAuth) {
+        if (isExistUser) {
           status = SocialLoginStatus.DUPLICATE;
           return { user: isExistUser, status };
         }
         //없는 경우
         user = await this.createSocialUser(
           { email: providerEmail },
-          { sub, provider, providerEmail },
+          { sub, provider, providerEmail, isPrimary: true },
         );
         status = SocialLoginStatus.SIGNUP;
         runOnTransactionCommit(async () => {
@@ -167,16 +161,13 @@ export class AccountService {
 
   /** SocialAuth 연결 */
   async linkSocial(data: CreateSocialAuthDto) {
-    const { userId, sub, provider, providerEmail } = data;
-    const [socialAuth, isExistUser] = await Promise.all([
-      this.authService.getSocialAuth({
-        sub,
-        provider,
-      }),
-      this.userService.isExistEmail(providerEmail),
-    ]);
+    const { userId, sub, provider } = data;
+    const socialAuth = await this.authService.getSocialAuth({
+      sub,
+      provider,
+    });
 
-    if (socialAuth || isExistUser) {
+    if (socialAuth) {
       return { status: SocialLinkStatus.DUPLICATE };
     }
     try {
@@ -208,26 +199,16 @@ export class AccountService {
       throw new BadRequestException('소셜 계정 연동 해제 불가능');
     }
 
-    const user = await this.userService.getUser(
-      { id: userId },
-      {},
-      { id: true, email: true },
+    const isExistPrimarySocialAuth = socialAuthList.filter(
+      (social) => social.is_primary === true,
     );
-
-    // 연동 날짜 기준으로 정렬
-    const filteredSocialAuthList = socialAuthList
-      .filter((auth) => auth.provider !== provider)
-      .sort((a, b) => a.created_at.getTime() - b.created_at.getTime());
-
-    const isExistSameMainEmail = filteredSocialAuthList.findIndex(
-      (auth) => auth.provider_email === user.email,
-    );
-
-    // 동일한 이메일이 없으면 메인 이메일 업데이트
-    if (isExistSameMainEmail === -1) {
-      await this.userService.updateUserMainEmail(
-        userId,
-        filteredSocialAuthList[0].provider_email,
+    if (isExistPrimarySocialAuth.length === 0) {
+      throw new BadRequestException('소셜 계정 연동 해제 불가능');
+    }
+    // 소셜플랫폼 처음 회원가입 이메일은 연동 해제 불가
+    if (isExistPrimarySocialAuth[0].provider === provider) {
+      throw new ForbiddenException(
+        '소셜플랫폼 처음 회원가입 이메일 연동 해제 불가능',
       );
     }
 

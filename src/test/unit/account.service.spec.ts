@@ -255,7 +255,7 @@ describe('AccountService', () => {
       });
       expect(accountService.createSocialUser).toHaveBeenCalledWith(
         { email },
-        { sub, provider, providerEmail: email },
+        { sub, provider, providerEmail: email, isPrimary: true },
       );
       expect(userRedisService.saveUser).toHaveBeenCalledWith(mockUser);
       expect(rankService.updateRedisRankings).toHaveBeenCalledWith(
@@ -320,6 +320,7 @@ describe('AccountService', () => {
         sub: 'social123',
         provider: SocialProvider.GOOGLE,
         providerEmail: 'test@gmail.com',
+        isPrimary: true,
       };
       const createdUser = {
         id: 1,
@@ -359,6 +360,7 @@ describe('AccountService', () => {
         sub: 'social123',
         provider: SocialProvider.GOOGLE,
         providerEmail: 'test@gmail.com',
+        isPrimary: true,
       };
 
       jest.spyOn(authService, 'getSocialAuth').mockResolvedValue(null);
@@ -383,6 +385,7 @@ describe('AccountService', () => {
         sub: 'social123',
         provider: SocialProvider.GOOGLE,
         providerEmail: 'test@gmail.com',
+        isPrimary: false,
       };
       const mockSocialAuth = {
         sub: data.sub,

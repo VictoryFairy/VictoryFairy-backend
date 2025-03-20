@@ -482,6 +482,7 @@ describe('AuthService Test', () => {
         sub: 'google123',
         provider: SocialProvider.GOOGLE,
         providerEmail: 'test@gmail.com',
+        isPrimary: false,
       };
       const userId = 1;
 
@@ -495,6 +496,7 @@ describe('AuthService Test', () => {
         provider: socialAuthData.provider,
         provider_email: socialAuthData.providerEmail,
         user_id: userId,
+        is_primary: socialAuthData.isPrimary,
       });
     });
 
@@ -503,6 +505,7 @@ describe('AuthService Test', () => {
         sub: 'google123',
         provider: SocialProvider.GOOGLE,
         providerEmail: 'test@gmail.com',
+        isPrimary: false,
       };
       const userId = 1;
 

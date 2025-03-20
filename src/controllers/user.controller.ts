@@ -158,7 +158,10 @@ export class UserController {
   @Get('me')
   @JwtAuth('access')
   @ApiOperation({ summary: '해당 유저의 간단한 정보와 직관 전적 가져오기' })
-  @ApiOkResponse({ type: UserMyPageDto })
+  @ApiOkResponse({
+    type: UserMyPageDto,
+    description: 'primaryProvider가 없는 경우 null',
+  })
   @ApiInternalServerErrorResponse({ description: 'DB 문제인 경우' })
   async getUserInfo(@UserDeco() user: User) {
     const { id: userId } = user;
