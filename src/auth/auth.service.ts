@@ -167,17 +167,6 @@ export class AuthService {
     return found;
   }
 
-  async getSocialAuthListWithUserId(
-    userId: number,
-    select?: FindOptionsSelect<SocialAuth>,
-  ) {
-    const socialAuths = await this.socialAuthRepository.find({
-      where: { user_id: userId },
-      select,
-    });
-    return socialAuths;
-  }
-
   async deleteSocialAuth(userId: number, provider: SocialProvider) {
     await this.socialAuthRepository.delete({ user_id: userId, provider });
   }

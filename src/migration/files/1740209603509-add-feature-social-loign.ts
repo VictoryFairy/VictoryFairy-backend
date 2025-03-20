@@ -15,9 +15,6 @@ export class AddSocialAuthAndLocalAuth1740209603509
       `CREATE INDEX "IDX_08ec54f5ff69d5350788315e46" ON "social_auth" ("user_id") `,
     );
     await queryRunner.query(
-      `CREATE INDEX "IDX_ab5dd23b3995ca05d4e2c04d37" ON "social_auth" ("provider_email") `,
-    );
-    await queryRunner.query(
       `ALTER TABLE "user" ADD "is_active" boolean NOT NULL DEFAULT true`,
     );
     await queryRunner.query(
@@ -36,9 +33,6 @@ export class AddSocialAuthAndLocalAuth1740209603509
       `ALTER TABLE "local_auth" DROP CONSTRAINT "FK_59f58ddc8b6c54911cf63a8324f"`,
     );
     await queryRunner.query(`ALTER TABLE "user" DROP COLUMN "is_active"`);
-    await queryRunner.query(
-      `DROP INDEX "public"."IDX_ab5dd23b3995ca05d4e2c04d37"`,
-    );
     await queryRunner.query(
       `DROP INDEX "public"."IDX_08ec54f5ff69d5350788315e46"`,
     );
