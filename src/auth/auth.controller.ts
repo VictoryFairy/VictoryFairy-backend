@@ -19,6 +19,7 @@ import {
   ApiBadRequestResponse,
   ApiBody,
   ApiExcludeEndpoint,
+  ApiForbiddenResponse,
   ApiInternalServerErrorResponse,
   ApiNoContentResponse,
   ApiOkResponse,
@@ -201,6 +202,7 @@ export class AuthController {
       sub,
       provider,
       providerEmail,
+      isPrimary: false,
     });
 
     frontendUrl.searchParams.set('status', status);
@@ -220,6 +222,9 @@ export class AuthController {
   @ApiNoContentResponse({ description: '성공 시 데이터 없이 상태코드만 응답' })
   @ApiBadRequestResponse({
     description: '유효하지 않은 요청 url or 계정 연동 해제 할 수 없는 경우',
+  })
+  @ApiForbiddenResponse({
+    description: '소셜플랫폼 처음 회원가입 이메일 연동 해제 불가능',
   })
   async deleteSocialLink(
     @Param('provider', ProviderParamCheckPipe)
