@@ -50,8 +50,8 @@ export class SocialAuthGuard implements CanActivate {
           : '그 외의 소셜 로그인은 GET 요청만 가능';
       throw new BadRequestException(msg);
     }
-    // 소셜 로그인 콜백 처리
-    await this.handleCallback(req, code, flowType, strategy, receivedUrl);
+    // 소셜 로그인 콜백 처리 - uuid및 코드 캐싱 후 프론트엔드로 리다이렉트
+    await this.handleCallback(req, code, flowType, receivedUrl);
     return true;
   }
 
@@ -105,7 +105,6 @@ export class SocialAuthGuard implements CanActivate {
     req: any,
     code: string,
     flowType: 'link' | 'login',
-    strategy: IOAuthStrategy,
     receivedUrl: URL,
   ): Promise<void> {
     const receivedState =
@@ -113,7 +112,7 @@ export class SocialAuthGuard implements CanActivate {
     if (!receivedState) {
       this.logger.error('OAuth state정보 누락');
       req.socialAuthError = true;
-      req.cachedUser = null;
+
       return;
     }
 
@@ -122,23 +121,17 @@ export class SocialAuthGuard implements CanActivate {
     if (!result.state) {
       this.logger.error('OAuth state 없거나 일치하지 않음');
       req.socialAuthError = true;
-      req.cachedUser = null;
       return;
     }
 
-    try {
-      const socialUserInfo = await strategy.validateAndGetUserInfo(
-        code,
-        flowType,
-      );
-
-      req.socialUserInfo = socialUserInfo;
-      req.cachedUser = { id: result.userId, provider: result.provider };
-      req.socialAuthError = false;
-    } catch (error) {
-      this.logger.error('소셜 로그인 처리 중 오류가 발생했습니다');
+    const pid = await this.authService.createUuidAndCachingCode(code);
+    if (!pid) {
       req.socialAuthError = true;
-      req.cachedUser = null;
+      return;
     }
+    req.socialAuthError = false;
+    req.flowType = flowType;
+    req.pid = pid;
+    return;
   }
 }
