@@ -2,6 +2,7 @@ import {
   BadRequestException,
   ConflictException,
   ForbiddenException,
+  HttpException,
   Injectable,
   InternalServerErrorException,
   Logger,
@@ -109,7 +110,9 @@ export class AccountService {
 
       return { user, isNewUser };
     } catch (error) {
-      this.logger.error('Social login or signup failed');
+      if (error instanceof HttpException) {
+        throw error;
+      }
       throw new InternalServerErrorException('소셜 로그인 실패');
     }
   }
@@ -176,6 +179,9 @@ export class AccountService {
     try {
       await this.authService.createSocialAuth(data, userId);
     } catch (error) {
+      if (error instanceof HttpException) {
+        throw error;
+      }
       throw new InternalServerErrorException('계정 연동 실패');
     }
   }
