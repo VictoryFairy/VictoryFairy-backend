@@ -1,5 +1,6 @@
 import {
   All,
+  BadRequestException,
   Body,
   Controller,
   Delete,
@@ -18,6 +19,7 @@ import { User } from 'src/entities/user.entity';
 import {
   ApiBadRequestResponse,
   ApiBody,
+  ApiConflictResponse,
   ApiExcludeEndpoint,
   ApiForbiddenResponse,
   ApiInternalServerErrorResponse,
@@ -32,7 +34,7 @@ import {
 import { CookieOptions, Request, Response } from 'express';
 import { ConfigService } from '@nestjs/config';
 import { JwtAuth } from 'src/decorator/jwt-token.decorator';
-import { SocialLinkStatus, SocialProvider } from 'src/const/auth.const';
+import { OAuthStatus, SocialProvider } from 'src/const/auth.const';
 import { AccessTokenResDto } from 'src/dtos/auth.dto';
 import {
   EmailDto,
@@ -40,9 +42,11 @@ import {
   LoginLocalUserDto,
 } from 'src/dtos/user.dto';
 import { SocialAuthGuard } from './guard/social-auth.guard';
-import { ISocialUserInfo } from 'src/types/auth.type';
 import { AccountService } from 'src/account/account.service';
 import { ProviderParamCheckPipe } from 'src/pipe/provider-param-check.pipe';
+import { SocialPostGuard } from './guard/social-post.guard';
+import { ISocialUserInfo, SocialFlowType } from 'src/types/auth.type';
+import { SocialFlowParamPipe } from 'src/pipe/social-flow-param-check.pipe';
 
 @ApiTags('Auth')
 @Controller('auth')
@@ -92,12 +96,20 @@ export class AuthController {
   @ApiOperation({ summary: '소셜 로그인 요청' })
   @ApiResponse({
     status: 302,
-    description:
-      '콜백 처리 후 프론트엔드 기본페이지("/")로 리다이렉트 + 쿼리파람(status: LOGIN | SIGNUP | DUPLICATE | FAIL)',
-    schema: {
-      type: 'string',
-      example: 'https://frontend.com?status=LOGIN',
-    },
+    description: [
+      '콜백 처리 후 프론트엔드 콜백 페이지(`/oauth/callback`)로 리다이렉트됩니다.',
+      '**쿼리 파라미터 목록:**',
+      '- `status`: 처리 결과 상태 (success | fail)',
+      '- `flow_type`: 소셜 로그인 흐름 (login | link)',
+      '- `pid`: 임시 인증 식별자 (uuid)',
+      '- `provider`: 소셜 플랫폼 이름 (google | kakao | apple 등)',
+      '',
+      '**Success 예시:** :',
+      'https://frontend.com/oauth/callback?status=success&flow_type=login&pid=1234&provider=google',
+      '',
+      '**Fail 예시:** :',
+      'https://frontend.com/oauth/callback?status=fail',
+    ].join('\n'),
   })
   @ApiParam({
     name: 'provider',
@@ -106,62 +118,26 @@ export class AuthController {
   })
   async socialLogin() {}
 
-  /** 소셜 로그인 리다이렉트 처리 엔드포인트 */
-  @ApiExcludeEndpoint() // 스웨거 문서에서 제외
-  @All('login/:provider/callback')
-  @UseGuards(SocialAuthGuard)
-  async handleCallback(
-    @Req()
-    req: Request & {
-      socialUserInfo: ISocialUserInfo;
-      cachedUser: { id: number; provider: SocialProvider } | null;
-      socialAuthError: boolean;
-    },
-    @Res() res: Response,
-    @Param('provider') provider: SocialProvider,
-  ) {
-    const frontendUrl = new URL(this.configService.get('FRONT_END_URL'));
-    // 소셜로그인 처리 중 오류가 발생한 경우 : 리다이렉트로 보내면서 상태 보내기
-    if (req.socialAuthError || !req.cachedUser) {
-      frontendUrl.searchParams.set('status', SocialLinkStatus.FAIL);
-      return res.redirect(frontendUrl.href);
-    }
-
-    const { sub, email: providerEmail } = req.socialUserInfo;
-
-    const { user, status } = await this.accountService.loginSocialUser(
-      sub,
-      providerEmail,
-      provider,
-    );
-
-    if (status === 'SIGNUP' || status === 'LOGIN') {
-      const { id: userId } = user;
-      const rfToken = this.authService.issueToken(
-        { email: providerEmail, id: userId },
-        'refresh',
-      );
-      const rfExTime = this.configService.get('REFRESH_EXPIRE_TIME');
-
-      res.cookie('token', rfToken, this.getCookieOptions(parseInt(rfExTime)));
-    }
-
-    frontendUrl.searchParams.set('status', status);
-    return res.redirect(frontendUrl.href);
-  }
-
   /** 소셜 계정 연동 진입점 */
   @Get('link/:provider')
   @JwtAuth('refresh', SocialAuthGuard)
   @ApiOperation({ summary: '계정 연동 요청 - 리프레쉬 토큰 필요(엑세스 X)' })
   @ApiResponse({
     status: 302,
-    description:
-      '콜백 처리 후 프론트엔드 마이페이지("/mypage")로 리다이렉트 + 쿼리파람 (status: SUCCESS | DUPLICATE | FAIL)',
-    schema: {
-      type: 'string',
-      example: 'https://frontend.com/mypage?status=SUCCESS',
-    },
+    description: [
+      '콜백 처리 후 프론트엔드 콜백 페이지(`/oauth/callback`)로 리다이렉트됩니다.',
+      '**쿼리 파라미터 목록:**',
+      '- `status`: 처리 결과 상태 (success | fail)',
+      '- `flow_type`: 소셜 로그인 흐름 (login | link)',
+      '- `pid`: 임시 인증 식별자 (uuid)',
+      '- `provider`: 소셜 플랫폼 이름 (google | kakao | apple 등)',
+      '',
+      '**Success 예시:** :',
+      'https://frontend.com/oauth/callback?status=success&flow_type=link&pid=1234&provider=google',
+      '',
+      '**Fail 예시:** :',
+      'https://frontend.com/oauth/callback?status=fail',
+    ].join('\n'),
   })
   @ApiParam({
     name: 'provider',
@@ -170,43 +146,125 @@ export class AuthController {
   })
   async socialLink() {}
 
-  /** 소셜 계정 연동 콜백처리 */
+  /** 소셜 플랫폼에서 리다이렉트 처리 엔드포인트 및 코드 캐싱 후 프론트에 pid 전달 */
   @ApiExcludeEndpoint() // 스웨거 문서에서 제외
-  @All('link/:provider/callback')
+  @All(':flowType/:provider/callback')
   @UseGuards(SocialAuthGuard)
-  async handleSocialLinkCallback(
+  async handleCallback(
     @Req()
     req: Request & {
-      socialUserInfo: ISocialUserInfo;
-      cachedUser: { id: number; provider: SocialProvider } | null;
       socialAuthError: boolean;
+      flowType?: SocialFlowType;
+      pid?: string;
     },
     @Res() res: Response,
-    @Param('provider') provider: SocialProvider,
+    @Param('provider', ProviderParamCheckPipe) provider: SocialProvider,
+    @Param('flowType', SocialFlowParamPipe) flowType: SocialFlowType,
   ) {
+    if (flowType !== req.flowType) {
+      throw new BadRequestException('유효하지 않은 url');
+    }
     const frontendUrl = new URL(
-      '/mypage',
+      `oauth/callback`,
       this.configService.get('FRONT_END_URL'),
     );
-
-    // 소셜 계정 연동 처리 중 오류가 발생한 경우 : 리다이렉트로 보내면서 상태 보내기
-    if (req.socialAuthError || !req.cachedUser) {
-      frontendUrl.searchParams.set('status', SocialLinkStatus.FAIL);
+    // 소셜로그인 처리 중 오류가 발생한 경우 : 리다이렉트로 보내면서 상태 보내기
+    if (req.socialAuthError || !req.flowType || !req.pid) {
+      frontendUrl.searchParams.set('status', OAuthStatus.FAIL);
       return res.redirect(frontendUrl.href);
     }
 
-    const { id } = req.cachedUser;
+    const params = new URLSearchParams({
+      status: OAuthStatus.SUCCESS,
+      flow_type: flowType,
+      pid: req.pid,
+      provider,
+    });
+
+    frontendUrl.search = params.toString();
+
+    return res.redirect(frontendUrl.href);
+  }
+
+  /** pid받아서 소셜 플랫폼의 유저 정보 확인 후 계정 회원가입 및 로그인 처리 */
+  @ApiOperation({ summary: 'pid로 소셜 로그인 및 회원가입 처리 요청' })
+  @ApiParam({
+    name: 'provider',
+    enum: SocialProvider,
+    description: '소셜 로그인 제공자',
+  })
+  @ApiOkResponse({
+    type: AccessTokenResDto,
+    description: [
+      '리프레쉬는 쿠키, 엑세스는 json으로 응답',
+      '',
+      '회원가입한 유저는 teamId, teamName이 Null',
+      '',
+      '로그인 유저는 teamId, teamName이 정상적으로 응답',
+    ].join('\n'),
+  })
+  @ApiConflictResponse({ description: '이미 해당 이메일로 가입한 경우' })
+  @ApiInternalServerErrorResponse({ description: '소셜 로그인 처리 실패' })
+  @Post('/login/:provider/handle')
+  @UseGuards(SocialPostGuard)
+  async handleSocialLogin(
+    @Param('provider', ProviderParamCheckPipe) provider: SocialProvider,
+    @Req() req: Request & { socialUserInfo: ISocialUserInfo },
+    @Res() res: Response,
+  ) {
     const { sub, email: providerEmail } = req.socialUserInfo;
-    const { status } = await this.accountService.linkSocial({
-      userId: id,
+
+    const { user, isNewUser } = await this.accountService.loginSocialUser(
+      sub,
+      providerEmail,
+      provider,
+    );
+
+    const [rfToken, acToken] = [
+      this.authService.issueToken(
+        { email: user.email, id: user.id },
+        'refresh',
+      ),
+      this.authService.issueToken({ email: user.email, id: user.id }, 'access'),
+    ];
+
+    const rfExTime = this.configService.get('REFRESH_EXPIRE_TIME');
+    res.cookie('token', rfToken, this.getCookieOptions(parseInt(rfExTime)));
+    res.json({
+      acToken,
+      teamId: isNewUser ? null : user.support_team.id,
+      teamName: isNewUser ? null : user.support_team.name,
+    });
+  }
+
+  /** pid받아서 소셜 플랫폼의 유저 정보 확인 후 계정 연동 처리 */
+  @ApiOperation({ summary: 'pid로 소셜 연동 처리 요청, Access 토큰 필요' })
+  @ApiParam({
+    name: 'provider',
+    enum: SocialProvider,
+    description: '소셜 로그인 제공자',
+  })
+  @ApiNoContentResponse({ description: '성공 시 상태코드만 응답' })
+  @ApiConflictResponse({
+    description: '이미 해당 계정으로 연동되어 있거나 가입되어 있는 경우',
+  })
+  @ApiInternalServerErrorResponse({ description: '소셜 연동 처리 실패' })
+  @Post('/link/:provider/handle')
+  @HttpCode(HttpStatus.NO_CONTENT)
+  @JwtAuth('access', SocialPostGuard)
+  async handleSocialLink(
+    @Param('provider', ProviderParamCheckPipe) provider: SocialProvider,
+    @Req() req: Request & { socialUserInfo: ISocialUserInfo; user: User },
+    @UserDeco('id') userId: number,
+  ) {
+    const { sub, email: providerEmail } = req.socialUserInfo;
+    await this.accountService.linkSocial({
+      userId,
       sub,
       provider,
       providerEmail,
       isPrimary: false,
     });
-
-    frontendUrl.searchParams.set('status', status);
-    return res.redirect(frontendUrl.href);
   }
 
   /** 소셜 계정 연동 해제*/
