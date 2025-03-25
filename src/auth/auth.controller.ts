@@ -18,6 +18,7 @@ import { UserDeco } from 'src/decorator/user.decorator';
 import { User } from 'src/entities/user.entity';
 import {
   ApiBadRequestResponse,
+  ApiBearerAuth,
   ApiBody,
   ApiConflictResponse,
   ApiExcludeEndpoint,
@@ -35,7 +36,7 @@ import { CookieOptions, Request, Response } from 'express';
 import { ConfigService } from '@nestjs/config';
 import { JwtAuth } from 'src/decorator/jwt-token.decorator';
 import { OAuthStatus, SocialProvider } from 'src/const/auth.const';
-import { AccessTokenResDto } from 'src/dtos/auth.dto';
+import { AccessTokenResDto, PidReqDto } from 'src/dtos/auth.dto';
 import {
   EmailDto,
   EmailWithCodeDto,
@@ -47,6 +48,7 @@ import { ProviderParamCheckPipe } from 'src/pipe/provider-param-check.pipe';
 import { SocialPostGuard } from './guard/social-post.guard';
 import { ISocialUserInfo, SocialFlowType } from 'src/types/auth.type';
 import { SocialFlowParamPipe } from 'src/pipe/social-flow-param-check.pipe';
+import { AccessTokenGuard } from './guard/access-token.guard';
 
 @ApiTags('Auth')
 @Controller('auth')
@@ -203,6 +205,8 @@ export class AuthController {
       '로그인 유저는 teamId, teamName이 정상적으로 응답',
     ].join('\n'),
   })
+  @ApiUnauthorizedResponse({ description: '유효하지 않거나 만료된 pid인 경우' })
+  @ApiBadRequestResponse({ description: '유효하지 않은 provider인 경우' })
   @ApiConflictResponse({ description: '이미 해당 이메일로 가입한 경우' })
   @ApiInternalServerErrorResponse({ description: '소셜 로그인 처리 실패' })
   @Post('/login/:provider/handle')
@@ -211,6 +215,7 @@ export class AuthController {
     @Param('provider', ProviderParamCheckPipe) provider: SocialProvider,
     @Req() req: Request & { socialUserInfo: ISocialUserInfo },
     @Res() res: Response,
+    @Body() body: PidReqDto,
   ) {
     const { sub, email: providerEmail } = req.socialUserInfo;
 
@@ -239,6 +244,7 @@ export class AuthController {
 
   /** pid받아서 소셜 플랫폼의 유저 정보 확인 후 계정 연동 처리 */
   @ApiOperation({ summary: 'pid로 소셜 연동 처리 요청, Access 토큰 필요' })
+  @ApiBearerAuth('access')
   @ApiParam({
     name: 'provider',
     enum: SocialProvider,
@@ -248,14 +254,20 @@ export class AuthController {
   @ApiConflictResponse({
     description: '이미 해당 계정으로 연동되어 있거나 가입되어 있는 경우',
   })
+  @ApiUnauthorizedResponse({
+    description:
+      '유효하지 않거나 만료된 pid인 경우 또는 엑세스 토큰이 유효하지 않은 경우',
+  })
+  @ApiBadRequestResponse({ description: '유효하지 않은 provider인 경우' })
   @ApiInternalServerErrorResponse({ description: '소셜 연동 처리 실패' })
   @Post('/link/:provider/handle')
   @HttpCode(HttpStatus.NO_CONTENT)
-  @JwtAuth('access', SocialPostGuard)
+  @UseGuards(AccessTokenGuard, SocialPostGuard)
   async handleSocialLink(
     @Param('provider', ProviderParamCheckPipe) provider: SocialProvider,
     @Req() req: Request & { socialUserInfo: ISocialUserInfo; user: User },
     @UserDeco('id') userId: number,
+    @Body() body: PidReqDto,
   ) {
     const { sub, email: providerEmail } = req.socialUserInfo;
     await this.accountService.linkSocial({
