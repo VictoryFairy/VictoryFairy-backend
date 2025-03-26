@@ -1,4 +1,7 @@
-import { InternalServerErrorException } from '@nestjs/common';
+import {
+  InternalServerErrorException,
+  UnauthorizedException,
+} from '@nestjs/common';
 import Redis from 'ioredis';
 import { CODE_LIMIT_TIME } from 'src/const/auth.const';
 import { RedisKeys } from 'src/const/redis.const';
@@ -60,5 +63,30 @@ export class AuthRedisService {
 
   async deleteOAuthState(state: string) {
     await this.redisClient.del(`${RedisKeys.OAUTH_STATE}:${state}`);
+  }
+
+  async saveOAuthCode(code: string, uuid: string): Promise<string | null> {
+    const stringifiedCode = JSON.stringify(code);
+    const result = await this.redisClient.set(
+      `${RedisKeys.OAUTH_CODE}:${uuid}`,
+      stringifiedCode,
+      'EX',
+      15,
+    );
+    return result === 'OK' ? uuid : null;
+  }
+
+  async getOAuthCode(uuid: string): Promise<string> {
+    const rawCode = await this.redisClient.get(
+      `${RedisKeys.OAUTH_CODE}:${uuid}`,
+    );
+    if (!rawCode) throw new UnauthorizedException('코드 만료 또는 없음');
+    const code = JSON.parse(rawCode);
+    await this.deleteOAuthCode(uuid);
+    return code;
+  }
+
+  async deleteOAuthCode(uuid: string): Promise<void> {
+    await this.redisClient.del(`${RedisKeys.OAUTH_CODE}:${uuid}`);
   }
 }

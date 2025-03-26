@@ -206,4 +206,16 @@ export class AuthService {
     const data = await this.authRedisService.getOAuthState(state);
     return data;
   }
+
+  async createUuidAndCachingCode(code: string): Promise<string | null> {
+    const uuid = uuidv7();
+    const result = await this.authRedisService.saveOAuthCode(code, uuid);
+
+    return result;
+  }
+
+  async getCodeByPid(uuid: string): Promise<string | null> {
+    const code = await this.authRedisService.getOAuthCode(uuid);
+    return code;
+  }
 }
