@@ -22,6 +22,7 @@ export class SocialPostGuard implements CanActivate {
 
     const provider = req.params.provider as SocialProvider;
     const pid = req.body?.pid;
+    const flowType = req.url.includes('link') ? 'link' : 'login';
 
     if (!provider || !Object.values(SocialProvider).includes(provider)) {
       throw new BadRequestException('유효하지 않은 provider');
@@ -34,7 +35,10 @@ export class SocialPostGuard implements CanActivate {
     const code = await this.authService.getCodeByPid(pid);
     if (!code) throw new UnauthorizedException('code 만료 또는 없음');
 
-    const socialUserInfo = await strategy.validateAndGetUserInfo(code, 'login');
+    const socialUserInfo = await strategy.validateAndGetUserInfo(
+      code,
+      flowType,
+    );
     req.socialUserInfo = socialUserInfo;
 
     return true;

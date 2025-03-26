@@ -209,7 +209,7 @@ export class AuthController {
   @ApiBadRequestResponse({ description: '유효하지 않은 provider인 경우' })
   @ApiConflictResponse({ description: '이미 해당 이메일로 가입한 경우' })
   @ApiInternalServerErrorResponse({ description: '소셜 로그인 처리 실패' })
-  @Post('/login/:provider/handle')
+  @Post('login/:provider/handle')
   @UseGuards(SocialPostGuard)
   async handleSocialLogin(
     @Param('provider', ProviderParamCheckPipe) provider: SocialProvider,
@@ -260,7 +260,7 @@ export class AuthController {
   })
   @ApiBadRequestResponse({ description: '유효하지 않은 provider인 경우' })
   @ApiInternalServerErrorResponse({ description: '소셜 연동 처리 실패' })
-  @Post('/link/:provider/handle')
+  @Post('link/:provider/handle')
   @HttpCode(HttpStatus.NO_CONTENT)
   @UseGuards(AccessTokenGuard, SocialPostGuard)
   async handleSocialLink(
