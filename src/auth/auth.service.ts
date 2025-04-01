@@ -118,6 +118,7 @@ export class AuthService {
     const localAuth = await this.localAuthRepository.findOne({
       where: { user_id: userId },
     });
+    if (!localAuth?.password) return false;
     return bcrypt.compare(password, localAuth.password);
   }
 
@@ -204,6 +205,24 @@ export class AuthService {
 
   async getOAuthStateData(state: string): Promise<IOAuthStateCachingData> {
     const data = await this.authRedisService.getOAuthState(state);
+    // 캐싱 삭제
+    await this.authRedisService.deleteOAuthState(state);
     return data;
+  }
+
+  async createUuidAndCachingCode(
+    code: string,
+    ip: string,
+  ): Promise<string | null> {
+    const uuid = uuidv7();
+    const result = await this.authRedisService.saveOAuthCode(code, uuid, ip);
+    return result;
+  }
+
+  async getCodeByPid(uuid: string): Promise<{ code: string; ip: string }> {
+    const codeWithIp = await this.authRedisService.getOAuthCode(uuid);
+    //캐싱 삭제
+    await this.authRedisService.deleteOAuthCode(uuid);
+    return codeWithIp;
   }
 }

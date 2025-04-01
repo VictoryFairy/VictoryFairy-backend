@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { Module, NestModule, MiddlewareConsumer } from '@nestjs/common';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { ParkingInfoModule } from './modules/parking-info.module';
@@ -23,6 +23,7 @@ import { SlackModule } from './modules/slack.module';
 import { addTransactionalDataSource } from 'typeorm-transactional';
 import { DataSource } from 'typeorm';
 import { AccountModule } from './account/account.module';
+import { RequestMetaMiddleware } from './middleware/request-meta.middleware';
 
 @Module({
   imports: [
@@ -62,4 +63,8 @@ import { AccountModule } from './account/account.module';
     { provide: APP_FILTER, useClass: CustomExceptionFilter },
   ],
 })
-export class AppModule {}
+export class AppModule implements NestModule {
+  configure(consumer: MiddlewareConsumer) {
+    consumer.apply(RequestMetaMiddleware).forRoutes('*');
+  }
+}

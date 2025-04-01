@@ -22,23 +22,11 @@ export const TFlowType = {
 
 export type TFlowType = (typeof TFlowType)[keyof typeof TFlowType];
 
-export const SocialLoginStatus = {
-  SIGNUP: 'SIGNUP',
-  LOGIN: 'LOGIN',
-  DUPLICATE: 'DUPLICATE',
-  FAIL: 'FAIL',
+export const OAuthStatus = {
+  SUCCESS: 'success',
+  FAIL: 'fail',
 } as const;
 
-export type SocialLoginStatus =
-  (typeof SocialLoginStatus)[keyof typeof SocialLoginStatus];
-
-export const SocialLinkStatus = {
-  SUCCESS: 'SUCCESS',
-  FAIL: 'FAIL',
-  DUPLICATE: 'DUPLICATE',
-} as const;
-
-export type SocialLinkStatus =
-  (typeof SocialLinkStatus)[keyof typeof SocialLinkStatus];
+export type OAuthStatus = (typeof OAuthStatus)[keyof typeof OAuthStatus];
 
 export const OAUTH_STRATEGY_MANAGER = Symbol('OAUTH_STRATEGY_MANAGER');

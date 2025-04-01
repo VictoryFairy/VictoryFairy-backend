@@ -227,3 +227,13 @@ export class TermAgreeDto {
   @IsString({ each: true })
   termIds: string[];
 }
+
+export class UserWithSupportTeamDto {
+  id: number;
+  email: string;
+  nickname: string;
+  support_team: {
+    id: number;
+    name: string;
+  };
+}

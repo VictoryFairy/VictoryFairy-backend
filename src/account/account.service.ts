@@ -1,13 +1,18 @@
 import {
   BadRequestException,
+  ConflictException,
   ForbiddenException,
+  HttpException,
   Injectable,
   InternalServerErrorException,
   Logger,
   UnauthorizedException,
 } from '@nestjs/common';
-import { User } from 'src/entities/user.entity';
-import { CreateLocalUserDto, LoginLocalUserDto } from 'src/dtos/user.dto';
+import {
+  CreateLocalUserDto,
+  LoginLocalUserDto,
+  UserWithSupportTeamDto,
+} from 'src/dtos/user.dto';
 import { CreateSocialAuthDto, CreateUserDto } from 'src/dtos/account.dto';
 import { TermService } from 'src/services/term.service';
 import { UserRedisService } from 'src/services/user-redis.service';
@@ -16,11 +21,7 @@ import { UserService } from 'src/services/user.service';
 import { Transactional, runOnTransactionCommit } from 'typeorm-transactional';
 import * as moment from 'moment';
 import { AuthService } from 'src/auth/auth.service';
-import {
-  SocialLinkStatus,
-  SocialLoginStatus,
-  SocialProvider,
-} from 'src/const/auth.const';
+import { SocialProvider } from 'src/const/auth.const';
 import { CachedTermList } from 'src/types/term.type';
 import { TermRedisService } from 'src/services/term-redis.service';
 @Injectable()
@@ -62,54 +63,60 @@ export class AccountService {
     sub: string,
     providerEmail: string,
     provider: SocialProvider,
-  ) {
-    let user: User | null;
-    let status: SocialLoginStatus = SocialLoginStatus.LOGIN;
-
+  ): Promise<{ user: UserWithSupportTeamDto; isNewUser: boolean }> {
+    let isNewUser = false;
     try {
       //해당 플랫폼으로 가입된 유저 조회
       const socialAuth = await this.authService.getSocialAuth(
         { sub, provider },
-        { user: true },
-        { user: { id: true, email: true } },
+        {},
+        { user_id: true },
       );
-      user = socialAuth?.user ?? null;
 
-      if (!user) {
-        const isExistUser = await this.userService.getUser(
-          { email: providerEmail },
-          {},
-          { id: true, email: true },
+      if (socialAuth) {
+        const user = await this.userService.getUserWithSupportTeamWithId(
+          socialAuth.user_id,
         );
-
-        // 동일 이메일이 이미 가입된 경우
-        if (isExistUser) {
-          status = SocialLoginStatus.DUPLICATE;
-          return { user: isExistUser, status };
-        }
-        //없는 경우
-        user = await this.createSocialUser(
-          { email: providerEmail },
-          { sub, provider, providerEmail, isPrimary: true },
-        );
-        status = SocialLoginStatus.SIGNUP;
-        runOnTransactionCommit(async () => {
-          try {
-            await this.userRedisService.saveUser(user);
-            await this.rankService.updateRedisRankings(user.id);
-          } catch (error) {
-            this.logger.warn(`유저 ${user.id} 캐싱 실패`, error.stack);
-          }
-        });
+        return { user, isNewUser };
       }
-      return { user, status };
+
+      const isExistUser = await this.userService.getUser(
+        { email: providerEmail },
+        {},
+        { id: true, email: true },
+      );
+
+      // 동일 이메일이 이미 가입된 경우
+      if (isExistUser) {
+        throw new ConflictException('이미 가입된 이메일입니다.');
+      }
+      //없는 경우
+      const createdUser = await this.createSocialUser(
+        { email: providerEmail },
+        { sub, provider, providerEmail, isPrimary: true },
+      );
+      const user = await this.userService.getUserWithSupportTeamWithId(
+        createdUser.id,
+      );
+      isNewUser = true;
+      runOnTransactionCommit(async () => {
+        try {
+          await this.userRedisService.saveUser(createdUser);
+          await this.rankService.updateRedisRankings(user.id);
+        } catch (error) {
+          this.logger.warn(`유저 ${user.id} 캐싱 실패`, error.stack);
+        }
+      });
+
+      return { user, isNewUser };
     } catch (error) {
-      this.logger.error('Social login or signup failed');
-      return { user, status: SocialLoginStatus.FAIL };
+      if (error instanceof HttpException) {
+        throw error;
+      }
+      throw new InternalServerErrorException('소셜 로그인 실패');
     }
   }
 
-  @Transactional()
   async createLocalUser(dto: CreateLocalUserDto): Promise<{ id: number }> {
     const { password, ...userData } = dto;
     const createdUser = await this.userService.saveUser(userData);
@@ -123,7 +130,6 @@ export class AccountService {
       }),
       this.agreeUserRequireTerm(createdUser.id),
     ]);
-    await this.agreeUserRequireTerm(createdUser.id);
 
     runOnTransactionCommit(async () => {
       try {
@@ -168,13 +174,15 @@ export class AccountService {
     });
 
     if (socialAuth) {
-      return { status: SocialLinkStatus.DUPLICATE };
+      throw new ConflictException('이미 연동했거나 가입하였습니다.');
     }
     try {
       await this.authService.createSocialAuth(data, userId);
-      return { status: SocialLinkStatus.SUCCESS };
     } catch (error) {
-      return { status: SocialLinkStatus.FAIL };
+      if (error instanceof HttpException) {
+        throw error;
+      }
+      throw new InternalServerErrorException('계정 연동 실패');
     }
   }
 

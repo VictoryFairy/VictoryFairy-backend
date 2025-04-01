@@ -15,8 +15,7 @@ export class ApiLoggingInterceptor implements NestInterceptor {
   intercept(context: ExecutionContext, next: CallHandler): Observable<any> {
     const request = context.switchToHttp().getRequest();
     const response = context.switchToHttp().getResponse();
-    const { method, url, ip } = request;
-    const userAgent = request.get('user-agent') || '';
+    const { method, url, userAgent, extractedIp } = request;
 
     const startTime = Date.now();
 
@@ -31,7 +30,7 @@ export class ApiLoggingInterceptor implements NestInterceptor {
         }
 
         this.logger.log(
-          `${method} ${url} ${statusCode} - \x1b[33m+${responseTime}ms\x1b[32m \n${userAgent} ${ip} `,
+          `${method} ${url} ${statusCode} - \x1b[33m+${responseTime}ms\x1b[32m \n${userAgent} / ${extractedIp} `,
         );
       }),
     );

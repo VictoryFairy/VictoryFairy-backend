@@ -4,15 +4,12 @@ import { User } from 'src/entities/user.entity';
 import { SocialAuth } from 'src/entities/social-auth.entity';
 import {
   BadRequestException,
+  ConflictException,
   InternalServerErrorException,
   UnauthorizedException,
 } from '@nestjs/common';
 import { CreateLocalUserDto, LoginLocalUserDto } from 'src/dtos/user.dto';
-import {
-  SocialLinkStatus,
-  SocialLoginStatus,
-  SocialProvider,
-} from 'src/const/auth.const';
+import { SocialProvider } from 'src/const/auth.const';
 import { AuthService } from 'src/auth/auth.service';
 import { UserService } from 'src/services/user.service';
 import { UserRedisService } from 'src/services/user-redis.service';
@@ -181,86 +178,127 @@ describe('AccountService', () => {
   });
 
   describe('loginSocialUser', () => {
-    it('이미 소셜 연동된 유저가 로그인하면 성공', async () => {
-      const sub = 'social123';
-      const email = 'test@test.com';
-      const provider = SocialProvider.GOOGLE;
-      const mockUser = { id: 1, email };
-      const mockSocialAuth = {
-        sub,
-        provider,
-        user: mockUser,
+    const mockSocialUserInfo = {
+      sub: 'social123',
+      email: 'test@test.com',
+      provider: SocialProvider.GOOGLE,
+    };
+
+    it('이미 소셜 연동된 유저가 로그인하면 성공 (isNewUser: false)', async () => {
+      const mockUser = {
+        id: 1,
+        email: mockSocialUserInfo.email,
+        support_team: { id: 1, name: 'Team' },
       };
+      const mockSocialAuth = { user_id: mockUser.id };
 
       jest
         .spyOn(authService, 'getSocialAuth')
         .mockResolvedValue(mockSocialAuth as SocialAuth);
+      jest
+        .spyOn(userService, 'getUserWithSupportTeamWithId')
+        .mockResolvedValue(mockUser as any);
 
-      const result = await accountService.loginSocialUser(sub, email, provider);
+      const result = await accountService.loginSocialUser(
+        mockSocialUserInfo.sub,
+        mockSocialUserInfo.email,
+        mockSocialUserInfo.provider,
+      );
 
       expect(result).toEqual({
         user: mockUser,
-        status: SocialLoginStatus.LOGIN,
+        isNewUser: false,
       });
       expect(authService.getSocialAuth).toHaveBeenCalledWith(
-        { sub, provider },
-        { user: true },
-        { user: { id: true, email: true } },
+        { sub: mockSocialUserInfo.sub, provider: mockSocialUserInfo.provider },
+        {},
+        { user_id: true },
+      );
+      expect(userService.getUserWithSupportTeamWithId).toHaveBeenCalledWith(
+        mockUser.id,
       );
     });
 
-    it('동일 이메일로 가입된 유저가 있으면 DUPLICATE 상태 반환', async () => {
-      const sub = 'social123';
-      const email = 'test@test.com';
-      const provider = SocialProvider.GOOGLE;
-      const mockUser = { id: 1, email };
+    it('동일 이메일로 가입된 유저가 있으면 ConflictException 발생', async () => {
+      const mockUser = { id: 1, email: mockSocialUserInfo.email };
 
       jest.spyOn(authService, 'getSocialAuth').mockResolvedValue(null);
       jest.spyOn(userService, 'getUser').mockResolvedValue(mockUser as User);
 
-      const result = await accountService.loginSocialUser(sub, email, provider);
+      await expect(
+        accountService.loginSocialUser(
+          mockSocialUserInfo.sub,
+          mockSocialUserInfo.email,
+          mockSocialUserInfo.provider,
+        ),
+      ).rejects.toThrow(new ConflictException('이미 가입된 이메일입니다.'));
 
-      expect(result).toEqual({
-        user: mockUser,
-        status: SocialLoginStatus.DUPLICATE,
-      });
       expect(userService.getUser).toHaveBeenCalledWith(
-        { email },
+        { email: mockSocialUserInfo.email },
         {},
         { id: true, email: true },
       );
     });
 
-    it('새로운 유저는 계정 생성 후 로그인 성공', async () => {
-      const sub = 'social123';
-      const email = 'new@gmail.com';
-      const provider = SocialProvider.GOOGLE;
-      const mockUser = { id: 1, email };
+    it('새로운 유저는 계정 생성 후 로그인 성공 (isNewUser: true)', async () => {
+      const mockCreatedUser = {
+        id: 1,
+        email: mockSocialUserInfo.email,
+        support_team: { id: 1, name: 'Team' },
+      };
 
       jest.spyOn(authService, 'getSocialAuth').mockResolvedValue(null);
       jest.spyOn(userService, 'getUser').mockResolvedValue(null);
       jest
         .spyOn(accountService, 'createSocialUser')
-        .mockResolvedValue(mockUser as User);
+        .mockResolvedValue(mockCreatedUser as User);
+      jest
+        .spyOn(userService, 'getUserWithSupportTeamWithId')
+        .mockResolvedValue(mockCreatedUser as any);
       jest.spyOn(userRedisService, 'saveUser').mockResolvedValue(undefined);
       jest
         .spyOn(rankService, 'updateRedisRankings')
         .mockResolvedValue(undefined);
 
-      const result = await accountService.loginSocialUser(sub, email, provider);
+      const result = await accountService.loginSocialUser(
+        mockSocialUserInfo.sub,
+        mockSocialUserInfo.email,
+        mockSocialUserInfo.provider,
+      );
 
       expect(result).toEqual({
-        user: mockUser,
-        status: SocialLoginStatus.SIGNUP,
+        user: mockCreatedUser,
+        isNewUser: true,
       });
       expect(accountService.createSocialUser).toHaveBeenCalledWith(
-        { email },
-        { sub, provider, providerEmail: email, isPrimary: true },
+        { email: mockSocialUserInfo.email },
+        {
+          sub: mockSocialUserInfo.sub,
+          provider: mockSocialUserInfo.provider,
+          providerEmail: mockSocialUserInfo.email,
+          isPrimary: true,
+        },
       );
-      expect(userRedisService.saveUser).toHaveBeenCalledWith(mockUser);
+      expect(userRedisService.saveUser).toHaveBeenCalledWith(mockCreatedUser);
       expect(rankService.updateRedisRankings).toHaveBeenCalledWith(
-        result.user.id,
+        mockCreatedUser.id,
       );
+    });
+
+    it('소셜 로그인 처리 중 에러 발생시 InternalServerErrorException 발생', async () => {
+      jest
+        .spyOn(authService, 'getSocialAuth')
+        .mockRejectedValue(new Error('DB Error'));
+
+      await expect(
+        accountService.loginSocialUser(
+          mockSocialUserInfo.sub,
+          mockSocialUserInfo.email,
+          mockSocialUserInfo.provider,
+        ),
+      ).rejects.toThrow(new InternalServerErrorException('소셜 로그인 실패'));
+
+      expect(authService.getSocialAuth).toHaveBeenCalled();
     });
   });
 
@@ -368,7 +406,7 @@ describe('AccountService', () => {
 
       const result = await accountService.linkSocial(data);
 
-      expect(result).toEqual({ status: SocialLinkStatus.SUCCESS });
+      expect(result).toBeUndefined();
       expect(authService.getSocialAuth).toHaveBeenCalledWith({
         sub: data.sub,
         provider: data.provider,
@@ -379,7 +417,7 @@ describe('AccountService', () => {
       );
     });
 
-    it('이미 연결된 소셜 계정이면 DUPLICATE 상태 반환', async () => {
+    it('이미 연결된 소셜 계정이면 ConflictException 발생 ', async () => {
       const data = {
         userId: 1,
         sub: 'social123',
@@ -398,9 +436,9 @@ describe('AccountService', () => {
         .spyOn(authService, 'getSocialAuth')
         .mockResolvedValue(mockSocialAuth);
 
-      const result = await accountService.linkSocial(data);
-
-      expect(result).toEqual({ status: SocialLoginStatus.DUPLICATE });
+      await expect(accountService.linkSocial(data)).rejects.toThrow(
+        ConflictException,
+      );
       expect(authService.createSocialAuth).not.toHaveBeenCalled();
     });
   });

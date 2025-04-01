@@ -16,6 +16,7 @@ import { LocalAuth } from 'src/entities/local-auth.entity';
 import { User } from 'src/entities/user.entity';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { AppleOAuthStrategy } from './strategies/apple.strategy';
+import { SocialPostGuard } from './guard/social-post.guard';
 
 @Global()
 @Module({
@@ -31,6 +32,7 @@ import { AppleOAuthStrategy } from './strategies/apple.strategy';
     AccessTokenGuard,
     JwtStrategy,
     SocialAuthGuard,
+    SocialPostGuard,
     GoogleOAuthStrategy,
     KakaoOAuthStrategy,
     AppleOAuthStrategy,

@@ -6,6 +6,8 @@ export interface IJwtPayload {
   type: 'ac' | 'rf';
 }
 
+export type SocialFlowType = 'login' | 'link';
+
 export interface IOAuthStrategy {
   provider: SocialProvider;
   getCodeAuthUrl(flowType: TFlowType, state: string): string;

@@ -8,11 +8,12 @@ import { ConfigService } from '@nestjs/config';
 import { ApiLoggingInterceptor } from './interceptor/api-logger.interceptor';
 import * as basicAuth from 'express-basic-auth';
 import { initializeTransactionalContext } from 'typeorm-transactional';
+import { NestExpressApplication } from '@nestjs/platform-express';
 
 async function bootstrap() {
   initializeTransactionalContext();
 
-  const app = await NestFactory.create(AppModule);
+  const app = await NestFactory.create<NestExpressApplication>(AppModule);
   const configService = app.get(ConfigService);
   const backendRootUrl = configService.get<string>('BACK_END_URL');
   const frontendRootUrl = configService.get<string>('FRONT_END_URL');
@@ -20,6 +21,7 @@ async function bootstrap() {
   const swaggerUser = configService.get<string>('SWAGGER_USER');
   const swaggerPw = configService.get<string>('SWAGGER_PW');
 
+  app.set('trust proxy', true);
   app.use(cookieParser());
   app.useGlobalPipes(
     new ValidationPipe({

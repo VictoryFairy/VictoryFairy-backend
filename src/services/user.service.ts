@@ -20,6 +20,7 @@ import { UserRedisService } from './user-redis.service';
 import { runOnTransactionCommit, Transactional } from 'typeorm-transactional';
 import { TermService } from './term.service';
 import { CreateUserDto } from 'src/dtos/account.dto';
+import { UserWithSupportTeamDto } from 'src/dtos/user.dto';
 
 @Injectable()
 export class UserService {
@@ -104,6 +105,22 @@ export class UserService {
       select,
     });
     return user;
+  }
+
+  async getUserWithSupportTeamWithId(
+    userId: number,
+  ): Promise<UserWithSupportTeamDto> {
+    const user = await this.userRepository.findOne({
+      where: { id: userId },
+      relations: { support_team: true },
+      select: {
+        id: true,
+        email: true,
+        nickname: true,
+        support_team: { id: true, name: true },
+      },
+    });
+    return user as UserWithSupportTeamDto;
   }
 
   async changeUserProfile(
