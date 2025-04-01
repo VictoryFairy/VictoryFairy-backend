@@ -15,7 +15,7 @@ import { OAuthStrategyManager } from '../strategies/OAuthStrategyManager';
 import { IOAuthStrategy } from 'src/types/auth.type';
 import { URL } from 'url';
 import { AuthService } from '../auth.service';
-import { Response } from 'express';
+import { Request, Response } from 'express';
 
 @Injectable()
 export class SocialAuthGuard implements CanActivate {
@@ -102,7 +102,7 @@ export class SocialAuthGuard implements CanActivate {
 
   /** sns플랫폼에서 받은 콜백 처리 - 소셜 플랫폼 제공 유저 req에 넣기 */
   private async handleCallback(
-    req: any,
+    req: Request,
     code: string,
     flowType: 'link' | 'login',
     receivedUrl: URL,
@@ -124,7 +124,9 @@ export class SocialAuthGuard implements CanActivate {
       return;
     }
 
-    const pid = await this.authService.createUuidAndCachingCode(code);
+    const reqIp = req.extractedIp;
+
+    const pid = await this.authService.createUuidAndCachingCode(code, reqIp);
     if (!pid) {
       req.socialAuthError = true;
       return;

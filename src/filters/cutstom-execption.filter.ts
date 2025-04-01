@@ -20,8 +20,7 @@ export class CustomExceptionFilter implements ExceptionFilter {
     const ctx = host.switchToHttp();
     const response = ctx.getResponse();
     const request = ctx.getRequest();
-    const { method, url, ip } = request;
-    const userAgent = request.get('user-agent') || '';
+    const { method, url, extractedIp, userAgent } = request;
     // 이미 응답이 나간 상태면 아무것도 안 하고 종료
     if (response.headersSent) {
       return;
@@ -46,7 +45,7 @@ export class CustomExceptionFilter implements ExceptionFilter {
 
     if (responseBody.statusCode >= 500) {
       this.logger.error(
-        `${method} ${url} ${httpStatus} - \n${userAgent} ${ip} \nError: ${responseBody.message} \nErrorStack : ${(exception as any).stack}`,
+        `${method} ${url} ${httpStatus} - \n${userAgent} / ${extractedIp} \nError: ${responseBody.message} \nErrorStack : ${(exception as any).stack}`,
       );
       const isProd =
         this.configService.get<string>('NODE_ENV') === 'production';
@@ -59,7 +58,7 @@ export class CustomExceptionFilter implements ExceptionFilter {
       }
     } else {
       this.logger.warn(
-        `${method} ${url} ${httpStatus} - \n${userAgent} ${ip} \nError: ${responseBody.message}`,
+        `${method} ${url} ${httpStatus} - \n${userAgent} / ${extractedIp} \nError: ${responseBody.message}`,
       );
     }
 

@@ -58,6 +58,13 @@ export class OverallOppTeamDto {
 
   @ApiProperty({
     type: 'object',
+    additionalProperties: {
+      type: 'object',
+      properties: {
+        total: { type: 'number' },
+        win: { type: 'number' },
+      },
+    },
     example: {
       '2': { total: 1, win: 1 },
       '5': { total: 1, win: 1 },

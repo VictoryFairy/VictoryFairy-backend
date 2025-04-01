@@ -46,7 +46,7 @@ import { SocialAuthGuard } from './guard/social-auth.guard';
 import { AccountService } from 'src/account/account.service';
 import { ProviderParamCheckPipe } from 'src/pipe/provider-param-check.pipe';
 import { SocialPostGuard } from './guard/social-post.guard';
-import { ISocialUserInfo, SocialFlowType } from 'src/types/auth.type';
+import { SocialFlowType } from 'src/types/auth.type';
 import { SocialFlowParamPipe } from 'src/pipe/social-flow-param-check.pipe';
 import { AccessTokenGuard } from './guard/access-token.guard';
 
@@ -153,12 +153,7 @@ export class AuthController {
   @All(':flowType/:provider/callback')
   @UseGuards(SocialAuthGuard)
   async handleCallback(
-    @Req()
-    req: Request & {
-      socialAuthError: boolean;
-      flowType?: SocialFlowType;
-      pid?: string;
-    },
+    @Req() req: Request,
     @Res() res: Response,
     @Param('provider', ProviderParamCheckPipe) provider: SocialProvider,
     @Param('flowType', SocialFlowParamPipe) flowType: SocialFlowType,
@@ -213,10 +208,13 @@ export class AuthController {
   @UseGuards(SocialPostGuard)
   async handleSocialLogin(
     @Param('provider', ProviderParamCheckPipe) provider: SocialProvider,
-    @Req() req: Request & { socialUserInfo: ISocialUserInfo },
+    @Req() req: Request,
     @Res() res: Response,
     @Body() body: PidReqDto,
   ) {
+    if (!req.socialUserInfo) {
+      throw new BadRequestException('소셜 유저 정보 없음');
+    }
     const { sub, email: providerEmail } = req.socialUserInfo;
 
     const { user, isNewUser } = await this.accountService.loginSocialUser(
@@ -265,10 +263,13 @@ export class AuthController {
   @UseGuards(AccessTokenGuard, SocialPostGuard)
   async handleSocialLink(
     @Param('provider', ProviderParamCheckPipe) provider: SocialProvider,
-    @Req() req: Request & { socialUserInfo: ISocialUserInfo; user: User },
+    @Req() req: Request,
     @UserDeco('id') userId: number,
     @Body() body: PidReqDto,
   ) {
+    if (!req.socialUserInfo) {
+      throw new BadRequestException('소셜 유저 정보 없음');
+    }
     const { sub, email: providerEmail } = req.socialUserInfo;
     await this.accountService.linkSocial({
       userId,
