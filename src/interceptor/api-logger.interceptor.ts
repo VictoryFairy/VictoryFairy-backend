@@ -19,15 +19,13 @@ export class ApiLoggingInterceptor implements NestInterceptor {
 
     const startTime = Date.now();
 
+    if (method === 'GET' && url === '/') return next.handle();
+
     return next.handle().pipe(
       tap(() => {
         const endTime = Date.now();
         const responseTime = endTime - startTime;
         const statusCode = response.statusCode;
-
-        if (userAgent.includes('ELB-HealthChecker')) {
-          return;
-        }
 
         this.logger.log(
           `${method} ${url} ${statusCode} - \x1b[33m+${responseTime}ms\x1b[32m \n${userAgent} / ${extractedIp} `,
