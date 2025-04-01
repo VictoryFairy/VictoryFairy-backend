@@ -48,7 +48,7 @@ export class AuthRedisService {
       `${RedisKeys.OAUTH_STATE}:${data.state}`,
       stringifiedData,
       'EX',
-      30, // 30초만 캐싱
+      60, // 60초만 캐싱
     );
     return result;
   }
@@ -57,6 +57,7 @@ export class AuthRedisService {
     const rawData = await this.redisClient.get(
       `${RedisKeys.OAUTH_STATE}:${state}`,
     );
+    if (!rawData) throw new UnauthorizedException('state 만료되었거나 없음');
     const data: IOAuthStateCachingData = await JSON.parse(rawData);
     return data;
   }
@@ -65,25 +66,29 @@ export class AuthRedisService {
     await this.redisClient.del(`${RedisKeys.OAUTH_STATE}:${state}`);
   }
 
-  async saveOAuthCode(code: string, uuid: string): Promise<string | null> {
-    const stringifiedCode = JSON.stringify(code);
+  async saveOAuthCode(
+    code: string,
+    uuid: string,
+    ip: string,
+  ): Promise<string | null> {
+    const data = { code, ip };
+    const stringifiedCode = JSON.stringify(data);
     const result = await this.redisClient.set(
       `${RedisKeys.OAUTH_CODE}:${uuid}`,
       stringifiedCode,
       'EX',
-      15,
+      30,
     );
     return result === 'OK' ? uuid : null;
   }
 
-  async getOAuthCode(uuid: string): Promise<string> {
-    const rawCode = await this.redisClient.get(
+  async getOAuthCode(uuid: string): Promise<{ code: string; ip: string }> {
+    const rawCodeWithIp = await this.redisClient.get(
       `${RedisKeys.OAUTH_CODE}:${uuid}`,
     );
-    if (!rawCode) throw new UnauthorizedException('코드 만료 또는 없음');
-    const code = JSON.parse(rawCode);
-    await this.deleteOAuthCode(uuid);
-    return code;
+    if (!rawCodeWithIp) throw new UnauthorizedException('코드 만료 또는 없음');
+    const data = JSON.parse(rawCodeWithIp);
+    return data;
   }
 
   async deleteOAuthCode(uuid: string): Promise<void> {

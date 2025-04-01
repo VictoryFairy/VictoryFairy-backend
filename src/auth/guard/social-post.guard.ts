@@ -9,6 +9,7 @@ import { OAuthStrategyManager } from '../strategies/OAuthStrategyManager';
 import { AuthService } from '../auth.service';
 import { OAUTH_STRATEGY_MANAGER, SocialProvider } from 'src/const/auth.const';
 import { Injectable } from '@nestjs/common';
+import { Request } from 'express';
 
 @Injectable()
 export class SocialPostGuard implements CanActivate {
@@ -18,7 +19,7 @@ export class SocialPostGuard implements CanActivate {
     private readonly authService: AuthService,
   ) {}
   async canActivate(context: ExecutionContext): Promise<boolean> {
-    const req = context.switchToHttp().getRequest();
+    const req: Request = context.switchToHttp().getRequest();
 
     const provider = req.params.provider as SocialProvider;
     const pid = req.body?.pid;
@@ -32,11 +33,16 @@ export class SocialPostGuard implements CanActivate {
     }
 
     const strategy = this.oAuthStrategyManager.getStrategy(provider);
-    const code = await this.authService.getCodeByPid(pid);
-    if (!code) throw new UnauthorizedException('code 만료 또는 없음');
+    const codeWithIp = await this.authService.getCodeByPid(pid);
 
+    if (!codeWithIp) {
+      throw new UnauthorizedException('code 만료 또는 없음');
+    }
+    if (req.extractedIp !== codeWithIp.ip) {
+      throw new UnauthorizedException('동일한 사용자 아님');
+    }
     const socialUserInfo = await strategy.validateAndGetUserInfo(
-      code,
+      codeWithIp.code,
       flowType,
     );
     req.socialUserInfo = socialUserInfo;

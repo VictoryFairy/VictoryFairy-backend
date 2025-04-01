@@ -17,11 +17,13 @@ if [ -z "$BACK_END_URL" ]; then
 fi
 
 # 헬스 체크 수행
-response=$(curl -sS -o /dev/null -w "%{http_code}" "${BACK_END_URL}")
-if [ $response = "200" ]; then
-    echo "Health check passed for ${BACK_END_URL}"
-    exit 0
-else
-    echo "Health check failed for ${BACK_END_URL} with status code: $response"
-    exit 1
-fi
+for i in {1..30}; do
+    response=$(curl -sS -o /dev/null -w "%{http_code}" "$BACK_END_URL")
+    if [ "$response" = "200" ]; then
+        echo "Health check passed for ${BACK_END_URL}"
+        exit 0
+    fi
+    sleep 2
+done
+echo "Health check failed for ${BACK_END_URL} with status code: $response"
+exit 1
