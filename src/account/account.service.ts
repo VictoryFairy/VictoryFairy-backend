@@ -193,7 +193,6 @@ export class AccountService {
   }): Promise<void> {
     const { userId, provider } = data;
     const isExistLocalAuth = await this.authService.getLocalAuth(userId);
-
     // 로컬 회원가입이면 연동 해제 후 종료
     if (isExistLocalAuth) {
       await this.authService.deleteSocialAuth(userId, provider);
