@@ -2,10 +2,10 @@ import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 import { ValidationPipe } from '@nestjs/common';
 import { SwaggerModule } from '@nestjs/swagger';
-import { swaggerConfig } from './config/swagger.config';
+import { swaggerConfig } from './core/config/swagger.config';
 import * as cookieParser from 'cookie-parser';
 import { ConfigService } from '@nestjs/config';
-import { ApiLoggingInterceptor } from './interceptor/api-logger.interceptor';
+import { ApiLoggingInterceptor } from './common/interceptors/api-logger.interceptor';
 import * as basicAuth from 'express-basic-auth';
 import { initializeTransactionalContext } from 'typeorm-transactional';
 import { NestExpressApplication } from '@nestjs/platform-express';
@@ -15,8 +15,14 @@ async function bootstrap() {
 
   const app = await NestFactory.create<NestExpressApplication>(AppModule);
   const configService = app.get(ConfigService);
-  const backendRootUrl = configService.get<string>('BACK_END_URL');
-  const frontendRootUrl = configService.get<string>('FRONT_END_URL');
+  const backendRootUrl = configService.get<string>(
+    'BACK_END_URL',
+    'http://localhost:3000',
+  );
+  const frontendRootUrl = configService.get<string>(
+    'FRONT_END_URL',
+    'http://localhost:5173',
+  );
   const nodeEnv = configService.get<string>('NODE_ENV');
   const swaggerUser = configService.get<string>('SWAGGER_USER');
   const swaggerPw = configService.get<string>('SWAGGER_PW');

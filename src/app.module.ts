@@ -1,29 +1,29 @@
 import { Module, NestModule, MiddlewareConsumer } from '@nestjs/common';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
-import { ParkingInfoModule } from './modules/parking-info.module';
+import { ParkingInfoModule } from './modules/parking-info/parking-info.module';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { ConfigModule, ConfigService } from '@nestjs/config';
-import { getDatabaseConfig } from './config/database.config';
-import { StadiumModule } from './modules/stadium.module';
-import { TeamModule } from './modules/team.module';
-import { RegisteredGameModule } from './modules/registered-game.module';
-import { GameModule } from './modules/game.module';
-import { RedisModule } from './modules/redis.module';
-import { RankModule } from './modules/rank.module';
-import { MailModule } from './modules/mail.module';
-import { AwsS3Module } from './modules/aws-s3.module';
-import { SeederService } from './services/seeder.service';
-import { SchedulingModule } from './modules/scheduling.module';
-import { CheeringSongModule } from './modules/cheering-song.module';
+import { getDatabaseConfig } from './core/config/database.config';
+import { StadiumModule } from './modules/stadium/stadium.module';
+import { TeamModule } from './modules/team/team.module';
+import { RegisteredGameModule } from './modules/registered-game/registered-game.module';
+import { RedisModule } from './core/redis/redis.module';
+import { MailModule } from './core/mail/mail.module';
+import { AwsS3Module } from './core/aws-s3/aws-s3.module';
+import { SeederService } from './core/seeder/seeder.service';
+import { SchedulingModule } from './modules/game/scheduling/scheduling.module';
+import { CheeringSongModule } from './modules/cheering-song/cheering-song.module';
 import { EventEmitterModule } from '@nestjs/event-emitter';
 import { APP_FILTER } from '@nestjs/core';
-import { CustomExceptionFilter } from './filters/cutstom-execption.filter';
-import { SlackModule } from './modules/slack.module';
+import { CustomExceptionFilter } from './common/filters/cutstom-execption.filter';
 import { addTransactionalDataSource } from 'typeorm-transactional';
 import { DataSource } from 'typeorm';
-import { AccountModule } from './account/account.module';
-import { RequestMetaMiddleware } from './middleware/request-meta.middleware';
+import { AccountModule } from './modules/account/account.module';
+import { RequestMetaMiddleware } from './common/middleware/request-meta.middleware';
+import { GameModule } from './modules/game/game.module';
+import { RankModule } from './modules/rank/rank.module';
+import { SlackModule } from './core/slack/slack.module';
 
 @Module({
   imports: [

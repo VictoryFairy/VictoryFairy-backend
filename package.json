@@ -18,17 +18,17 @@
     "test:cov": "jest --coverage",
     "test:debug": "node --inspect-brk -r tsconfig-paths/register -r ts-node/register node_modules/.bin/jest --runInBand",
     "test:e2e": "jest --config ./test/jest-e2e.json",
-    "convert-song": "ts-node ./src/migration/seeds/data/cheering-song-converter.ts",
-    "seed": "ts-node -r tsconfig-paths/register ./node_modules/typeorm-extension/bin/cli.cjs seed:run -d ./src/migration/datasource.ts",
+    "convert-song": "ts-node ./tools/seeds/data/cheering-song-converter.ts",
+    "seed": "ts-node -r tsconfig-paths/register ./node_modules/typeorm-extension/bin/cli.cjs seed:run -d ./tools/datasource.ts",
     "typeorm": "ts-node -r tsconfig-paths/register ./node_modules/typeorm/cli.js",
-    "migration:create": "npm run typeorm -- migration:create ./src/migration/files/schema-update",
-    "migration:generate": "npm run typeorm -- migration:generate ./src/migration/files/schema-update -d ./src/migration/datasource.ts",
-    "migration:show": "npm run typeorm -- migration:show -d ./dist/migration/datasource.js",
-    "migration:show:dev": "npm run typeorm -- migration:show -d ./src/migration/datasource.ts",
-    "migration:run": "npm run typeorm -- migration:run -d ./dist/migration/datasource.js",
-    "migration:run:dev": "npm run typeorm -- migration:run -d ./src/migration/datasource.ts",
-    "migration:revert": "npm run typeorm -- migration:revert -d ./dist/migration/datasource.js",
-    "migration:revert:dev": "npm run typeorm -- migration:revert -d ./src/migration/datasource.ts"
+    "migration:create": "npm run typeorm -- migration:create ./tools/migrations/schema-update",
+    "migration:generate": "npm run typeorm -- migration:generate ./tools/migrations/schema-update -d ./tools/datasource.ts",
+    "migration:show": "npm run typeorm -- migration:show -d ./tools/datasource.js",
+    "migration:show:dev": "npm run typeorm -- migration:show -d ./tools/datasource.ts",
+    "migration:run": "npm run typeorm -- migration:run -d ./tools/datasource.js",
+    "migration:run:dev": "npm run typeorm -- migration:run -d ./tools/datasource.ts",
+    "migration:revert": "npm run typeorm -- migration:revert -d ./tools/datasource.js",
+    "migration:revert:dev": "npm run typeorm -- migration:revert -d ./tools/datasource.ts"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.623.0",
@@ -104,7 +104,7 @@
       "ts"
     ],
     "roots": [
-      "<rootDir>/src/test"
+      "<rootDir>/test"
     ],
     "testRegex": ".*\\.spec\\.ts$",
     "transform": {

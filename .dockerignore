@@ -9,4 +9,6 @@ test
 .prettierrc
 Dockerfile*
 docker-compose*
+.vscode
+.coverage
 README.md
