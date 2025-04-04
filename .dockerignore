@@ -2,11 +2,12 @@ node_modules
 db_data
 dist
 .env*
-test
 .gitignore
 .github
 .git
 .prettierrc
 Dockerfile*
 docker-compose*
+.vscode
+.coverage
 README.md
