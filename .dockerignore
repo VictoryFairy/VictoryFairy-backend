@@ -2,7 +2,6 @@ node_modules
 db_data
 dist
 .env*
-test
 .gitignore
 .github
 .git
