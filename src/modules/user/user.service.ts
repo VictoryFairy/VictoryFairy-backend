@@ -183,4 +183,8 @@ export class UserService {
       }
     }
   }
+
+  async updateUserMainEmail(userId: number, email: string) {
+    await this.userRepository.update({ id: userId }, { email });
+  }
 }
