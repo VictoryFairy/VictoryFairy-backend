@@ -2,7 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { StadiumService } from '../stadium/stadium.service';
-import { parkingInfoSeeder } from 'tools/seeds/data/parking-info.seed';
+import { parkingInfoSeeder } from 'src/tools/seeds/data/parking-info.seed';
 import { ParkingInfo } from './entities/parking-info.entity';
 
 @Injectable()

@@ -1,5 +1,5 @@
 import { Stadium } from 'src/modules/stadium/entities/stadium.entity';
-import { parkingInfoSeeder } from 'tools/seeds/data/parking-info.seed';
+import { parkingInfoSeeder } from 'src/tools/seeds/data/parking-info.seed';
 import { DataSource } from 'typeorm';
 import { Seeder } from 'typeorm-extension';
 import { ParkingInfo } from 'src/modules/parking-info/entities/parking-info.entity';
