@@ -21,8 +21,8 @@ import {
 } from '@nestjs/swagger';
 import { plainToInstance } from 'class-transformer';
 import { AccountService } from 'src/modules/account/account.service';
-import { JwtAuth } from 'src/core/decorators/jwt-token.decorator';
-import { UserDeco } from 'src/core/decorators/user.decorator';
+import { JwtAuth } from 'src/common/decorators/jwt-token.decorator';
+import { UserDeco } from 'src/common/decorators/user.decorator';
 import { OverallOppTeamDto } from 'src/modules/rank/dto/rank.dto';
 import {
   CreateLocalUserDto,

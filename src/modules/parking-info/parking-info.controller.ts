@@ -14,7 +14,7 @@ import {
   ApiTags,
 } from '@nestjs/swagger';
 import { plainToInstance } from 'class-transformer';
-import { JwtAuth } from 'src/core/decorators/jwt-token.decorator';
+import { JwtAuth } from 'src/common/decorators/jwt-token.decorator';
 import { ParkingInfoService } from 'src/modules/parking-info/parking-info.service';
 import { ParkingInfoDto } from './dto/parking-info.dto';
 

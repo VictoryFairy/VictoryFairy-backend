@@ -14,7 +14,7 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import { AuthService } from './auth.service';
-import { UserDeco } from 'src/core/decorators/user.decorator';
+import { UserDeco } from 'src/common/decorators/user.decorator';
 import {
   ApiBadRequestResponse,
   ApiBearerAuth,
@@ -33,7 +33,7 @@ import {
 } from '@nestjs/swagger';
 import { CookieOptions, Request, Response } from 'express';
 import { ConfigService } from '@nestjs/config';
-import { JwtAuth } from 'src/core/decorators/jwt-token.decorator';
+import { JwtAuth } from 'src/common/decorators/jwt-token.decorator';
 import { OAuthStatus, SocialProvider } from 'src/modules/auth/const/auth.const';
 import { AccessTokenResDto, PidReqDto } from 'src/modules/auth/dto/auth.dto';
 import {

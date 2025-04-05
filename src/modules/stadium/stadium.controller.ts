@@ -10,7 +10,7 @@ import {
 import { ApiOperation, ApiParam, ApiQuery, ApiTags } from '@nestjs/swagger';
 import { ApiOkResponse, ApiNotFoundResponse } from '@nestjs/swagger';
 import { plainToInstance } from 'class-transformer';
-import { JwtAuth } from 'src/core/decorators/jwt-token.decorator';
+import { JwtAuth } from 'src/common/decorators/jwt-token.decorator';
 import { StadiumDto } from 'src/modules/stadium/dto/stadium.dto';
 import { StadiumService } from 'src/modules/stadium/stadium.service';
 

@@ -22,8 +22,8 @@ import {
   ApiParam,
 } from '@nestjs/swagger';
 import { plainToInstance } from 'class-transformer';
-import { JwtAuth } from 'src/core/decorators/jwt-token.decorator';
-import { UserDeco } from 'src/core/decorators/user.decorator';
+import { JwtAuth } from 'src/common/decorators/jwt-token.decorator';
+import { UserDeco } from 'src/common/decorators/user.decorator';
 import { RegisteredGameService } from 'src/modules/registered-game/registered-game.service';
 import {
   CreateRegisteredGameDto,

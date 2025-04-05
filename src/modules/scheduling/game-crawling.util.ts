@@ -7,9 +7,9 @@ import {
   ITeamAndScore,
   TGameSchedule,
   TTeam,
-} from 'src/modules/game/scheduling/crawling-game.type';
+} from 'src/modules/scheduling/crawling-game.type';
 import { DataSource } from 'typeorm';
-import { teamNameToTeamId } from '../../../common/utils/teamid-mapper';
+import { teamNameToTeamId } from 'src/common/utils/teamid-mapper';
 import {
   convertDateFormat,
   isNotTimeFormat,

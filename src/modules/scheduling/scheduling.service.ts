@@ -5,10 +5,10 @@ import { CronJob } from 'cron';
 import * as moment from 'moment-timezone';
 import { getNextMonth } from 'src/common/utils/get-next-month.util';
 import { ConfigService } from '@nestjs/config';
-import { upsertSchedules } from 'src/modules/game/scheduling/game-crawling.util';
 import { DataSource } from 'typeorm';
 import { GameService } from 'src/modules/game/game.service';
 import { RegisteredGameService } from 'src/modules/registered-game/registered-game.service';
+import { upsertSchedules } from './game-crawling.util';
 
 @Injectable()
 export class SchedulingService {

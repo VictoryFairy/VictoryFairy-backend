@@ -1,6 +1,6 @@
 import { Injectable, OnApplicationBootstrap } from '@nestjs/common';
 import { RedisConnectionService } from '../redis/redis-connection.service';
-import { SchedulingService } from '../../modules/game/scheduling/scheduling.service';
+import { SchedulingService } from 'src/modules/scheduling/scheduling.service';
 
 @Injectable()
 export class SeederService implements OnApplicationBootstrap {

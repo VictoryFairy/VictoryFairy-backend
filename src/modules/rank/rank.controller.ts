@@ -1,14 +1,14 @@
 import { Controller, Get, Query } from '@nestjs/common';
 import { RankService } from './rank.service';
 import { ApiOkResponse, ApiOperation, ApiTags } from '@nestjs/swagger';
-import { JwtAuth } from 'src/core/decorators/jwt-token.decorator';
+import { JwtAuth } from 'src/common/decorators/jwt-token.decorator';
 import {
   QueryTotalRankingListAboutTeamDto,
   ResNearByDto,
   ResRankDto,
   ResRankTopThreeDto,
 } from 'src/modules/rank/dto/rank.dto';
-import { UserDeco } from 'src/core/decorators/user.decorator';
+import { UserDeco } from 'src/common/decorators/user.decorator';
 import { plainToInstance } from 'class-transformer';
 import { User } from '../user/entities/user.entity';
 
