@@ -5,10 +5,10 @@ import { CronJob } from 'cron';
 import * as moment from 'moment-timezone';
 import { getNextMonth } from 'src/common/utils/get-next-month.util';
 import { ConfigService } from '@nestjs/config';
-import { upsertSchedules } from 'src/modules/game/scheduling/game-crawling.util';
 import { DataSource } from 'typeorm';
 import { GameService } from 'src/modules/game/game.service';
 import { RegisteredGameService } from 'src/modules/registered-game/registered-game.service';
+import { upsertSchedules } from './game-crawling.util';
 
 @Injectable()
 export class SchedulingService {
@@ -117,13 +117,12 @@ export class SchedulingService {
 
           this.logger.log(`Current game status is ${currentStatus.status}.`);
           await this.gameService.updateStatusRepeatedly(gameId, currentStatus);
-          this.logger.log(`Score for Game ${gameId} updated.`);
           if (currentStatus.status === '경기종료') {
             this.logger.log(`Game ${gameId} ended. Stopping updates.`);
             await this.gameService.updateStatusFinally(gameId, currentStatus);
             intervalJob.stop(); // Updates stopped
           } else if (/.*취소$/.test(currentStatus.status)) {
-            this.logger.log(`Game ${gameId} cancled. Stopping updates.`);
+            this.logger.log(`Game ${gameId} canceled. Stopping updates.`);
             await this.gameService.updateStatusFinally(gameId, currentStatus);
             intervalJob.stop(); // Updates stopped
           }

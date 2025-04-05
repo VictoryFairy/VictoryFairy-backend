@@ -2,7 +2,7 @@ import { DataSource } from 'typeorm';
 import { Seeder } from 'typeorm-extension';
 import { Logger } from '@nestjs/common';
 import * as moment from 'moment';
-import { upsertSchedules } from 'src/modules/game/scheduling/game-crawling.util';
+import { upsertSchedules } from 'src/modules/scheduling/game-crawling.util';
 
 export default class GameSeeder implements Seeder {
   private readonly logger = new Logger(GameSeeder.name);

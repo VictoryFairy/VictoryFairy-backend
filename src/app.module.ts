@@ -12,7 +12,7 @@ import { RedisModule } from './core/redis/redis.module';
 import { MailModule } from './core/mail/mail.module';
 import { AwsS3Module } from './core/aws-s3/aws-s3.module';
 import { SeederService } from './core/seeder/seeder.service';
-import { SchedulingModule } from './modules/game/scheduling/scheduling.module';
+import { SchedulingModule } from './modules/scheduling/scheduling.module';
 import { CheeringSongModule } from './modules/cheering-song/cheering-song.module';
 import { EventEmitterModule } from '@nestjs/event-emitter';
 import { APP_FILTER } from '@nestjs/core';
