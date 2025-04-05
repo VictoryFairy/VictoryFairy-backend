@@ -78,17 +78,17 @@ export class GameService {
     gameId: string,
     currentStatus: BatchUpdateGameDto,
   ): Promise<void> {
+    if (currentStatus.awayScore === null || currentStatus.homeScore === null)
+      return;
     return await this.gameRepository.manager.transaction(async (manager) => {
       const game = await this.findOne(gameId);
-      if (currentStatus.awayScore === null || currentStatus.homeScore === null)
-        return;
       game.home_team_score = currentStatus.homeScore;
       game.away_team_score = currentStatus.awayScore;
       if (currentStatus.status !== null) {
         game.status = currentStatus.status;
       }
-
       await manager.update(Game, { id: gameId }, game);
+      this.logger.log(`Score for Game ${gameId} updated.`);
     });
   }
 

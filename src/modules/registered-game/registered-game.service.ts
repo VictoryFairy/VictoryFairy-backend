@@ -5,7 +5,7 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Between, DataSource, QueryRunner, Repository } from 'typeorm';
+import { Between, DataSource, Repository } from 'typeorm';
 import { RegisteredGame } from 'src/modules/registered-game/entities/registered-game.entity';
 import { TeamService } from '../team/team.service';
 import { GameService } from '../game/game.service';
@@ -16,7 +16,10 @@ import { TRegisteredGameStatus } from 'src/modules/registered-game/types/registe
 import { Transactional } from 'typeorm-transactional';
 import { User } from '../user/entities/user.entity';
 import { Game } from '../game/entities/game.entity';
-import { CreateRegisteredGameDto, UpdateRegisteredGameDto } from './dto/registered-game.dto';
+import {
+  CreateRegisteredGameDto,
+  UpdateRegisteredGameDto,
+} from './dto/registered-game.dto';
 
 @Injectable()
 export class RegisteredGameService {
@@ -237,12 +240,8 @@ export class RegisteredGameService {
     }
   }
 
+  @Transactional()
   async batchBulkUpdateByGameId(gameId: string) {
-    const qrRunner: QueryRunner = this.dataSource.createQueryRunner();
-
-    await qrRunner.connect();
-    await qrRunner.startTransaction();
-
     try {
       const game = await this.gameService.findOne(gameId);
       const registeredGames = await this.registeredGameRepository.find({
@@ -252,6 +251,12 @@ export class RegisteredGameService {
         },
         relations: { cheering_team: true, game: true, user: true },
       });
+      if (!registeredGames.length) {
+        this.logger.log(
+          `당일 경기:${gameId}을 경기 중에 등록한 유저 없음. 스킵`,
+        );
+        return;
+      }
 
       for (const registeredGame of registeredGames) {
         const team_id = registeredGame.cheering_team.id;
@@ -261,9 +266,8 @@ export class RegisteredGameService {
         registeredGame.status = registeredGameStatus;
 
         // 직관 경기 저장
-        const updatedGame = await qrRunner.manager
-          .getRepository(RegisteredGame)
-          .save(registeredGame);
+        const updatedGame =
+          await this.registeredGameRepository.save(registeredGame);
         const status = updatedGame.status;
         // Rank 업데이트
         await this.rankService.updateRankEntity(
@@ -278,16 +282,12 @@ export class RegisteredGameService {
         await this.rankService.updateRedisRankings(user_id);
       }
 
-      await qrRunner.commitTransaction();
       this.logger.log(`당일 경기:${gameId} 상태 업데이트 후 트랜잭션 성공`);
     } catch (error) {
-      await qrRunner.rollbackTransaction();
       this.logger.error(
         `당일 경기:${gameId} 상태 업데이트 후 트랜잭션 실패`,
         error.stack,
       );
-    } finally {
-      await qrRunner.release();
     }
   }
 
