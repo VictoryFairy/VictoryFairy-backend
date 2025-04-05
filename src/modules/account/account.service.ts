@@ -117,6 +117,7 @@ export class AccountService {
     }
   }
 
+  @Transactional()
   async createLocalUser(dto: CreateLocalUserDto): Promise<{ id: number }> {
     const { password, ...userData } = dto;
     const createdUser = await this.userService.saveUser(userData);
