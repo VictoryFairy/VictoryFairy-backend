@@ -163,12 +163,12 @@ export class UserController {
     description: 'primaryProvider가 없는 경우 null',
   })
   @ApiInternalServerErrorResponse({ description: 'DB 문제인 경우' })
-  async getUserInfo(@UserDeco() user: User) {
-    const { id: userId } = user;
-    const record = await this.rankService.userOverallGameStats(userId);
-    const socialAuths =
-      await this.authService.getUserWithSocialAuthList(userId);
-    const foundUser = await this.userService.getUser({ id: userId });
+  async getUserInfo(@UserDeco('id') userId: number) {
+    const [record, socialAuths, foundUser] = await Promise.all([
+      this.rankService.userOverallGameStats(userId),
+      this.authService.getUserWithSocialAuthList(userId),
+      this.userService.getUser({ id: userId }),
+    ]);
 
     const userDto = new UserMeResDto(foundUser, socialAuths);
 
@@ -182,11 +182,11 @@ export class UserController {
   @ApiOperation({ summary: '회원탈퇴' })
   @ApiNoContentResponse({ description: '삭제 성공한 경우 상태코드만 응답' })
   @ApiInternalServerErrorResponse({ description: 'DB 삭제 실패한 경우' })
-  async deleteUser(@UserDeco() user: User, @Res() res: Response) {
+  async deleteUser(@UserDeco('id') userId: number, @Res() res: Response) {
     const domain = this.configService.get('DOMAIN');
     const nodeEnv = this.configService.get('NODE_ENV');
 
-    await this.userService.deleteUser(user);
+    await this.userService.deleteUser(userId);
     res.clearCookie('token', {
       maxAge: 0,
       domain: domain || 'localhost',

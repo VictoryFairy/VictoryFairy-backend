@@ -237,9 +237,7 @@ describe('RankService', () => {
           { user_id: 4 } as IRefinedRankData,
         ]);
 
-      const result = await rankService.getUserRankWithNeighbors({
-        id: 3,
-      } as User);
+      const result = await rankService.getUserRankWithNeighbors(3);
 
       expect(rankService.getRankList).toHaveBeenCalledWith(4, 6, undefined);
       expect(rankingRedisService.getUserRank).toHaveBeenCalledTimes(4);
@@ -254,9 +252,7 @@ describe('RankService', () => {
         .spyOn(rankingRedisService, 'getUserRank')
         .mockResolvedValueOnce(null);
 
-      const result = await rankService.getUserRankWithNeighbors({
-        id: 1,
-      } as User);
+      const result = await rankService.getUserRankWithNeighbors(1);
       expect(result).toEqual([]);
       expect(rankingRedisService.getUserRank).toHaveBeenCalledWith(
         1,

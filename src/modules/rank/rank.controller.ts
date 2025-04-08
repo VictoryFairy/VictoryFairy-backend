@@ -10,7 +10,6 @@ import {
 } from 'src/modules/rank/dto/rank.dto';
 import { UserDeco } from 'src/common/decorators/user.decorator';
 import { plainToInstance } from 'class-transformer';
-import { User } from '../user/entities/user.entity';
 
 @ApiTags('rankings')
 @Controller('rankings')
@@ -47,17 +46,17 @@ export class RankController {
   })
   async getNearByUser(
     @Query() query: QueryTotalRankingListAboutTeamDto,
-    @UserDeco() user: User,
+    @UserDeco('id') userId: number,
   ) {
     const { teamId } = query;
     const [nearBy, userStats] = await Promise.all([
-      this.rankService.getUserRankWithNeighbors(user, teamId),
-      this.rankService.userOverallGameStats(user.id),
+      this.rankService.getUserRankWithNeighbors(userId, teamId),
+      this.rankService.userOverallGameStats(userId),
     ]);
     return plainToInstance(ResNearByDto, {
       nearBy,
       user: {
-        userId: user.id,
+        userId: userId,
         totalGames: userStats.total,
         win: userStats.win,
       },

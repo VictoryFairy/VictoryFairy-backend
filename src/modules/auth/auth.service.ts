@@ -44,16 +44,23 @@ export class AuthService {
     private readonly socialAuthRepository: Repository<SocialAuth>,
   ) {}
 
-  async getUserForAuth(userId: number) {
+  async getUserForAuth(
+    userId: number,
+    select?: FindOptionsSelect<
+      Omit<User, 'id' | 'email' | 'nickname' | 'profile_image'>
+    >,
+    relations?: FindOptionsRelations<User>,
+  ): Promise<User | null> {
     const user = await this.userRepository.findOne({
       where: { id: userId },
-      relations: { support_team: true },
       select: {
         id: true,
         email: true,
         nickname: true,
-        support_team: { id: true, name: true },
+        profile_image: true,
+        ...select,
       },
+      relations,
     });
     if (!user) {
       return null;

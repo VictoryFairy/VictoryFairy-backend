@@ -31,7 +31,6 @@ import {
   RegisteredGameDto,
   UpdateRegisteredGameDto,
 } from './dto/registered-game.dto';
-import { User } from '../user/entities/user.entity';
 
 @ApiTags('RegisteredGame')
 @Controller('registered-games')
@@ -48,11 +47,11 @@ export class RegisteredGameController {
   })
   async create(
     @Body() createRegisteredGameDto: CreateRegisteredGameDto,
-    @UserDeco() user: User,
+    @UserDeco('id') userId: number,
   ): Promise<RegisteredGameDto> {
     const registeredGame = await this.registeredGameService.create(
       createRegisteredGameDto,
-      user,
+      userId,
     );
     return plainToInstance(RegisteredGameDto, registeredGame);
   }
@@ -64,8 +63,8 @@ export class RegisteredGameController {
     type: [RegisteredGameDto],
     description: '유저가 등록한 직관 경기가 없을 경우에는 빈 배열 반환',
   })
-  async findAll(@UserDeco() user: User): Promise<RegisteredGameDto[]> {
-    const registeredGames = await this.registeredGameService.findAll(user);
+  async findAll(@UserDeco('id') userId: number): Promise<RegisteredGameDto[]> {
+    const registeredGames = await this.registeredGameService.findAll(userId);
     return plainToInstance(RegisteredGameDto, registeredGames);
   }
 
@@ -91,13 +90,13 @@ export class RegisteredGameController {
   })
   async findAllMonthly(
     @Query() query: FindAllMonthlyQueryDto,
-    @UserDeco() user: User,
+    @UserDeco('id') userId: number,
   ): Promise<RegisteredGameDto[]> {
     const { year, month } = query;
     const registeredGames = await this.registeredGameService.findAllMonthly(
       year,
       month,
-      user,
+      userId,
     );
     return plainToInstance(RegisteredGameDto, registeredGames);
   }
@@ -119,9 +118,9 @@ export class RegisteredGameController {
   })
   async findOne(
     @Param('id', ParseIntPipe) id: number,
-    @UserDeco() user: User,
+    @UserDeco('id') userId: number,
   ): Promise<RegisteredGameDto> {
-    const registeredGame = await this.registeredGameService.findOne(id, user);
+    const registeredGame = await this.registeredGameService.findOne(id, userId);
     return plainToInstance(RegisteredGameDto, registeredGame);
   }
 
@@ -142,9 +141,13 @@ export class RegisteredGameController {
   async update(
     @Param('id', ParseIntPipe) id: number,
     @Body() updateRegisteredGameDto: UpdateRegisteredGameDto,
-    @UserDeco() user: User,
+    @UserDeco('id') userId: number,
   ): Promise<void> {
-    await this.registeredGameService.update(id, updateRegisteredGameDto, user);
+    await this.registeredGameService.update(
+      id,
+      updateRegisteredGameDto,
+      userId,
+    );
   }
 
   @Delete(':id')
@@ -163,8 +166,8 @@ export class RegisteredGameController {
   })
   async delete(
     @Param('id', ParseIntPipe) id: number,
-    @UserDeco() user: User,
+    @UserDeco('id') userId: number,
   ): Promise<void> {
-    await this.registeredGameService.delete(id, user);
+    await this.registeredGameService.delete(id, userId);
   }
 }

@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { Global, Module } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { redisConfig } from 'src/core/config/redis.config';
 import { RedisConnectionService } from 'src/core/redis/redis-connection.service';
@@ -7,6 +7,7 @@ import { UserRedisService } from 'src/core/redis/user-redis.service';
 import { RankingRedisService } from 'src/core/redis/ranking-redis.service';
 import { TermRedisService } from 'src/core/redis/term-redis.service';
 
+@Global()
 @Module({
   providers: [
     {
