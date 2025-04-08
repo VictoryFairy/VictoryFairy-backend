@@ -164,10 +164,11 @@ export class UserController {
   })
   @ApiInternalServerErrorResponse({ description: 'DB 문제인 경우' })
   async getUserInfo(@UserDeco('id') userId: number) {
-    const record = await this.rankService.userOverallGameStats(userId);
-    const socialAuths =
-      await this.authService.getUserWithSocialAuthList(userId);
-    const foundUser = await this.userService.getUser({ id: userId });
+    const [record, socialAuths, foundUser] = await Promise.all([
+      this.rankService.userOverallGameStats(userId),
+      this.authService.getUserWithSocialAuthList(userId),
+      this.userService.getUser({ id: userId }),
+    ]);
 
     const userDto = new UserMeResDto(foundUser, socialAuths);
 

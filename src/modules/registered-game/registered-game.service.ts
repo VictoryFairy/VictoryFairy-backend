@@ -14,7 +14,6 @@ import { RankService } from '../rank/rank.service';
 import { AwsS3Service } from '../../core/aws-s3/aws-s3.service';
 import { TRegisteredGameStatus } from 'src/modules/registered-game/types/registered-game-status.type';
 import { Transactional } from 'typeorm-transactional';
-import { User } from '../user/entities/user.entity';
 import { Game } from '../game/entities/game.entity';
 import {
   CreateRegisteredGameDto,
