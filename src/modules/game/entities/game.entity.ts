@@ -1,6 +1,7 @@
 import {
   Column,
   Entity,
+  Index,
   JoinColumn,
   ManyToOne,
   OneToMany,
@@ -17,6 +18,7 @@ export class Game {
   @PrimaryColumn()
   id: string;
 
+  @Index()
   @Column('date')
   date: string;
 
