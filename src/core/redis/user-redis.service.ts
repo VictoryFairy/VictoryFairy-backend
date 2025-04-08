@@ -67,4 +67,13 @@ export class UserRedisService {
     });
     return parsedInfo;
   }
+  async getUserInfoById(
+    userId: number,
+  ): Promise<{ id: number; nickname: string; profile_image: string }> {
+    const userInfo = await this.redisClient.hget(
+      RedisKeys.USER_INFO,
+      userId.toString(),
+    );
+    return userInfo ? JSON.parse(userInfo) : null;
+  }
 }

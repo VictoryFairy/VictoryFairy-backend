@@ -119,10 +119,9 @@ export class RankService {
 
   /** @description 랭킹 리스트에서 유저와 근처 유저 1명씩 가져오기 */
   async getUserRankWithNeighbors(
-    user: User,
+    userId: number,
     teamId?: number,
   ): Promise<IRefinedRankData[]> {
-    const { id: userId } = user;
     const userRank = await this.rankingRedisService.getUserRank(userId, teamId);
     if (userRank === null) {
       return [];
