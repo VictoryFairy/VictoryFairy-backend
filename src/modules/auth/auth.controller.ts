@@ -14,7 +14,7 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import { AuthService } from './auth.service';
-import { UserDeco } from 'src/common/decorators/user.decorator';
+import { CurrentUser } from 'src/common/decorators/current-user.decorator';
 import {
   ApiBadRequestResponse,
   ApiBearerAuth,
@@ -47,7 +47,6 @@ import { SocialFlowType } from 'src/modules/auth/types/auth.type';
 import { SocialFlowParamPipe } from 'src/common/pipe/social-flow-param-check.pipe';
 import { SocialAuthGuard } from 'src/common/guard/social-auth.guard';
 import { SocialPostGuard } from 'src/common/guard/social-post.guard';
-import { User } from '../user/entities/user.entity';
 import { AccessTokenGuard } from 'src/common/guard/access-token.guard';
 
 @ApiTags('Auth')
@@ -264,7 +263,7 @@ export class AuthController {
   async handleSocialLink(
     @Param('provider', ProviderParamCheckPipe) provider: SocialProvider,
     @Req() req: Request,
-    @UserDeco('id') userId: number,
+    @CurrentUser('id') userId: number,
     @Body() body: PidReqDto,
   ) {
     if (!req.socialUserInfo) {
@@ -300,7 +299,7 @@ export class AuthController {
   async deleteSocialLink(
     @Param('provider', ProviderParamCheckPipe)
     provider: SocialProvider,
-    @UserDeco('id') userId: number,
+    @CurrentUser('id') userId: number,
   ) {
     await this.accountService.unlinkSocial({
       userId,
@@ -336,7 +335,7 @@ export class AuthController {
       },
     },
   })
-  async checkRefreshToken(@UserDeco('id') userId: number) {
+  async checkRefreshToken(@CurrentUser('id') userId: number) {
     return await this.accountService.checkUserAgreedRequiredTerm(userId);
   }
 
@@ -350,7 +349,7 @@ export class AuthController {
     description: '새로운 엑세스 토큰 발급',
   })
   async reissueAcToken(
-    @UserDeco('id') userId: number,
+    @CurrentUser('id') userId: number,
   ): Promise<AccessTokenResDto> {
     const { email, id, support_team } = await this.authService.getUserForAuth(
       userId,

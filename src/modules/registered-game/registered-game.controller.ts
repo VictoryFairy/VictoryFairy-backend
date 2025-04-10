@@ -23,7 +23,7 @@ import {
 } from '@nestjs/swagger';
 import { plainToInstance } from 'class-transformer';
 import { JwtAuth } from 'src/common/decorators/jwt-token.decorator';
-import { UserDeco } from 'src/common/decorators/user.decorator';
+import { CurrentUser } from 'src/common/decorators/current-user.decorator';
 import { RegisteredGameService } from 'src/modules/registered-game/registered-game.service';
 import {
   CreateRegisteredGameDto,
@@ -47,7 +47,7 @@ export class RegisteredGameController {
   })
   async create(
     @Body() createRegisteredGameDto: CreateRegisteredGameDto,
-    @UserDeco('id') userId: number,
+    @CurrentUser('id') userId: number,
   ): Promise<RegisteredGameDto> {
     const registeredGame = await this.registeredGameService.create(
       createRegisteredGameDto,
@@ -63,7 +63,9 @@ export class RegisteredGameController {
     type: [RegisteredGameDto],
     description: '유저가 등록한 직관 경기가 없을 경우에는 빈 배열 반환',
   })
-  async findAll(@UserDeco('id') userId: number): Promise<RegisteredGameDto[]> {
+  async findAll(
+    @CurrentUser('id') userId: number,
+  ): Promise<RegisteredGameDto[]> {
     const registeredGames = await this.registeredGameService.findAll(userId);
     return plainToInstance(RegisteredGameDto, registeredGames);
   }
@@ -90,7 +92,7 @@ export class RegisteredGameController {
   })
   async findAllMonthly(
     @Query() query: FindAllMonthlyQueryDto,
-    @UserDeco('id') userId: number,
+    @CurrentUser('id') userId: number,
   ): Promise<RegisteredGameDto[]> {
     const { year, month } = query;
     const registeredGames = await this.registeredGameService.findAllMonthly(
@@ -118,7 +120,7 @@ export class RegisteredGameController {
   })
   async findOne(
     @Param('id', ParseIntPipe) id: number,
-    @UserDeco('id') userId: number,
+    @CurrentUser('id') userId: number,
   ): Promise<RegisteredGameDto> {
     const registeredGame = await this.registeredGameService.findOne(id, userId);
     return plainToInstance(RegisteredGameDto, registeredGame);
@@ -141,7 +143,7 @@ export class RegisteredGameController {
   async update(
     @Param('id', ParseIntPipe) id: number,
     @Body() updateRegisteredGameDto: UpdateRegisteredGameDto,
-    @UserDeco('id') userId: number,
+    @CurrentUser('id') userId: number,
   ): Promise<void> {
     await this.registeredGameService.update(
       id,
@@ -166,7 +168,7 @@ export class RegisteredGameController {
   })
   async delete(
     @Param('id', ParseIntPipe) id: number,
-    @UserDeco('id') userId: number,
+    @CurrentUser('id') userId: number,
   ): Promise<void> {
     await this.registeredGameService.delete(id, userId);
   }

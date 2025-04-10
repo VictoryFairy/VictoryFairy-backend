@@ -22,7 +22,7 @@ import {
 } from '@nestjs/swagger';
 import { plainToInstance } from 'class-transformer';
 import { JwtAuth } from 'src/common/decorators/jwt-token.decorator';
-import { UserDeco } from 'src/common/decorators/user.decorator';
+import { CurrentUser } from 'src/common/decorators/current-user.decorator';
 import { CheeringSongDetailedDto } from 'src/modules/cheering-song/dtos/cheering-song.dto';
 import { CheeringSongService } from 'src/modules/cheering-song/cheering-song.service';
 import {
@@ -31,7 +31,6 @@ import {
   CursorPageWithSearchOptionDto,
 } from 'src/shared/dtos/cursor-page.dto';
 import { TCheeringSongType } from 'src/shared/types/seed.type';
-import { User } from '../user/entities/user.entity';
 
 @ApiTags('CheeringSong')
 @Controller('cheering-songs')
@@ -123,13 +122,13 @@ export class CheeringSongController {
   })
   async findBySearchWithInfiniteScroll(
     @Query() cursorPageWithSearchOptionDto: CursorPageWithSearchOptionDto,
-    @UserDeco() user: User,
+    @CurrentUser('id') userId: number,
   ): Promise<CursorPageCheeringSongDto> {
     const { take, cursor, q } = cursorPageWithSearchOptionDto;
 
     const cheeringSongsWithCursorMeta =
       await this.cheeringSongService.findBySearchWithInfiniteScroll(
-        user,
+        userId,
         take,
         cursor,
         q,
@@ -239,14 +238,14 @@ export class CheeringSongController {
   async findByLikedWithInfiniteScroll(
     @Param('type') type: TCheeringSongType,
     @Query() cursorPageOptionDto: CursorPageOptionDto,
-    @UserDeco() user: User,
+    @CurrentUser('id') userId: number,
   ): Promise<CursorPageCheeringSongDto> {
     const { take, cursor } = cursorPageOptionDto;
 
     const cheeringSongsWithCursorMeta =
       await this.cheeringSongService.findByLikedWithInfiniteScroll(
         type,
-        user,
+        userId,
         take,
         cursor,
       );
@@ -269,12 +268,12 @@ export class CheeringSongController {
   @ApiNotFoundResponse()
   async findOne(
     @Param('id', ParseIntPipe) id: number,
-    @UserDeco() user: User,
+    @CurrentUser('id') userId: number,
   ): Promise<CheeringSongDetailedDto> {
     const cheeringSong = await this.cheeringSongService.findOne(id);
     const { isLiked } = await this.cheeringSongService.getCheeringSongIsLiked(
       id,
-      user,
+      userId,
     );
     return plainToInstance(CheeringSongDetailedDto, {
       ...cheeringSong,
@@ -376,7 +375,7 @@ export class CheeringSongController {
     },
   })
   async findByTeamAndNameWithInfiniteScroll(
-    @UserDeco() user: User,
+    @CurrentUser('id') userId: number,
     @Param('teamId', ParseIntPipe) teamId: number,
     @Param('type') type: TCheeringSongType,
     @Query() cursorPageOptionDto: CursorPageOptionDto,
@@ -387,7 +386,7 @@ export class CheeringSongController {
       await this.cheeringSongService.findByTeamIdAndTypeWithInfiniteScroll(
         teamId,
         type,
-        user,
+        userId,
         take,
         cursor,
       );
@@ -416,9 +415,9 @@ export class CheeringSongController {
   })
   async likeCheerSong(
     @Param('id', ParseIntPipe) cheeringSongId: number,
-    @UserDeco() user: User,
+    @CurrentUser('id') userId: number,
   ): Promise<void> {
-    await this.cheeringSongService.likeCheerSong(cheeringSongId, user);
+    await this.cheeringSongService.likeCheerSong(cheeringSongId, userId);
     return;
   }
 
@@ -438,9 +437,9 @@ export class CheeringSongController {
   })
   async unlikeCheerSong(
     @Param('id', ParseIntPipe) cheeringSongId: number,
-    @UserDeco() user: User,
+    @CurrentUser('id') userId: number,
   ): Promise<void> {
-    await this.cheeringSongService.unlikeCheerSong(cheeringSongId, user);
+    await this.cheeringSongService.unlikeCheerSong(cheeringSongId, userId);
     return;
   }
 }
