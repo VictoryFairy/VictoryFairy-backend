@@ -22,7 +22,7 @@ import {
 import { plainToInstance } from 'class-transformer';
 import { AccountService } from 'src/modules/account/account.service';
 import { JwtAuth } from 'src/common/decorators/jwt-token.decorator';
-import { UserDeco } from 'src/common/decorators/user.decorator';
+import { CurrentUser } from 'src/common/decorators/current-user.decorator';
 import { OverallOppTeamDto } from 'src/modules/rank/dto/rank.dto';
 import {
   CreateLocalUserDto,
@@ -40,7 +40,6 @@ import { ConfigService } from '@nestjs/config';
 import { Response } from 'express';
 import { AuthService } from '../auth/auth.service';
 import { UserService } from './user.service';
-import { User } from './entities/user.entity';
 
 @ApiTags('User')
 @Controller('users')
@@ -101,11 +100,11 @@ export class UserController {
     content: { 'application/json': { examples: ResCheckPwDto.getExamples() } },
   })
   async checkPassword(
-    @UserDeco() user: User,
+    @CurrentUser('id') userId: number,
     @Body() body: Pick<LoginLocalUserDto, 'password'>,
   ) {
     const { password } = body;
-    const isCorrect = await this.authService.verifyLocalAuth(user.id, password);
+    const isCorrect = await this.authService.verifyLocalAuth(userId, password);
     return plainToInstance(ResCheckPwDto, { isCorrect });
   }
 
@@ -136,7 +135,7 @@ export class UserController {
   @ApiInternalServerErrorResponse({ description: 'DB 업데이트 실패한 경우' })
   async updateUserProfile(
     @Body() body: PatchUserProfileDto,
-    @UserDeco('id') userId: number,
+    @CurrentUser('id') userId: number,
   ) {
     await this.accountService.profileUpdate(userId, body);
   }
@@ -149,7 +148,7 @@ export class UserController {
     description: 'oppTeam의 key는 팀의 아이디',
   })
   @ApiOperation({ summary: '해당 유저의 상대 팀 전적 및 승리 중 홈 비율 기록' })
-  async getUserStats(@UserDeco('id') userId: number) {
+  async getUserStats(@CurrentUser('id') userId: number) {
     const result = this.rankService.userStatsWithVerseTeam(userId);
     return plainToInstance(OverallOppTeamDto, result);
   }
@@ -163,12 +162,12 @@ export class UserController {
     description: 'primaryProvider가 없는 경우 null',
   })
   @ApiInternalServerErrorResponse({ description: 'DB 문제인 경우' })
-  async getUserInfo(@UserDeco() user: User) {
-    const { id: userId } = user;
-    const record = await this.rankService.userOverallGameStats(userId);
-    const socialAuths =
-      await this.authService.getUserWithSocialAuthList(userId);
-    const foundUser = await this.userService.getUser({ id: userId });
+  async getUserInfo(@CurrentUser('id') userId: number) {
+    const [record, socialAuths, foundUser] = await Promise.all([
+      this.rankService.userOverallGameStats(userId),
+      this.authService.getUserWithSocialAuthList(userId),
+      this.userService.getUser({ id: userId }),
+    ]);
 
     const userDto = new UserMeResDto(foundUser, socialAuths);
 
@@ -182,11 +181,11 @@ export class UserController {
   @ApiOperation({ summary: '회원탈퇴' })
   @ApiNoContentResponse({ description: '삭제 성공한 경우 상태코드만 응답' })
   @ApiInternalServerErrorResponse({ description: 'DB 삭제 실패한 경우' })
-  async deleteUser(@UserDeco() user: User, @Res() res: Response) {
+  async deleteUser(@CurrentUser('id') userId: number, @Res() res: Response) {
     const domain = this.configService.get('DOMAIN');
     const nodeEnv = this.configService.get('NODE_ENV');
 
-    await this.userService.deleteUser(user);
+    await this.userService.deleteUser(userId);
     res.clearCookie('token', {
       maxAge: 0,
       domain: domain || 'localhost',
@@ -204,9 +203,12 @@ export class UserController {
   @ApiBody({ type: TermAgreeDto })
   @ApiNoContentResponse({ description: '성공 시 데이터 없이 상태코드만 응답' })
   @ApiInternalServerErrorResponse({ description: 'DB 업데이트 실패한 경우' })
-  async agreeTerm(@UserDeco() user: User, @Body() body: TermAgreeDto) {
+  async agreeTerm(
+    @CurrentUser('id') userId: number,
+    @Body() body: TermAgreeDto,
+  ) {
     const { termIds } = body;
 
-    await this.userService.agreeTerm(user, termIds);
+    await this.userService.agreeTerm(userId, termIds);
   }
 }

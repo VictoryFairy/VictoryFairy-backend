@@ -17,17 +17,14 @@ export class RefreshTokenGuard implements CanActivate {
       throw new UnauthorizedException('토큰 없음');
     }
 
-    const { user, payload } = await this.jwtStrategy.validateTokenAndGetUser(
-      token,
-      'refresh',
-    );
+    const payload = await this.jwtStrategy.validateToken(token, 'refresh');
+    const user = await this.jwtStrategy.checkUser(payload.id);
 
     if (!user) {
       throw new UnauthorizedException('유저 정보 조회 실패');
     }
 
-    req.user = user;
-    req.token = token;
+    req.user = { id: payload.id, email: payload.email };
     req.tokenType = payload.type;
 
     if (req.tokenType !== 'rf') {

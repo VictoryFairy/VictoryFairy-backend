@@ -144,13 +144,13 @@ describe('AuthService Test', () => {
       expect(result).toEqual(mockUser);
       expect(userRepository.findOne).toHaveBeenCalledWith({
         where: { id: 1 },
-        relations: { support_team: true },
         select: {
           id: true,
           email: true,
           nickname: true,
-          support_team: { id: true, name: true },
+          profile_image: true,
         },
+        relations: undefined,
       });
     });
 

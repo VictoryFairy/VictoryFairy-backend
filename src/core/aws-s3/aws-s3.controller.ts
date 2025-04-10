@@ -1,20 +1,12 @@
 import {
-  Body,
   Controller,
-  Delete,
   HttpStatus,
   Post,
   UploadedFile,
   UseInterceptors,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
-import {
-  ApiNoContentResponse,
-  ApiOperation,
-  ApiResponse,
-  ApiTags,
-} from '@nestjs/swagger';
-import { DeleteImageAwsS3Dto } from 'src/core/aws-s3/aws-s3.dto';
+import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { AwsS3Service } from 'src/core/aws-s3/aws-s3.service';
 
 @Controller('s3-store')

@@ -14,7 +14,7 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import { AuthService } from './auth.service';
-import { UserDeco } from 'src/common/decorators/user.decorator';
+import { CurrentUser } from 'src/common/decorators/current-user.decorator';
 import {
   ApiBadRequestResponse,
   ApiBearerAuth,
@@ -47,7 +47,6 @@ import { SocialFlowType } from 'src/modules/auth/types/auth.type';
 import { SocialFlowParamPipe } from 'src/common/pipe/social-flow-param-check.pipe';
 import { SocialAuthGuard } from 'src/common/guard/social-auth.guard';
 import { SocialPostGuard } from 'src/common/guard/social-post.guard';
-import { User } from '../user/entities/user.entity';
 import { AccessTokenGuard } from 'src/common/guard/access-token.guard';
 
 @ApiTags('Auth')
@@ -264,7 +263,7 @@ export class AuthController {
   async handleSocialLink(
     @Param('provider', ProviderParamCheckPipe) provider: SocialProvider,
     @Req() req: Request,
-    @UserDeco('id') userId: number,
+    @CurrentUser('id') userId: number,
     @Body() body: PidReqDto,
   ) {
     if (!req.socialUserInfo) {
@@ -300,10 +299,10 @@ export class AuthController {
   async deleteSocialLink(
     @Param('provider', ProviderParamCheckPipe)
     provider: SocialProvider,
-    @UserDeco() user: User,
+    @CurrentUser('id') userId: number,
   ) {
     await this.accountService.unlinkSocial({
-      userId: user.id,
+      userId,
       provider,
     });
   }
@@ -336,8 +335,8 @@ export class AuthController {
       },
     },
   })
-  async checkRefreshToken(@UserDeco() user: User) {
-    return await this.accountService.checkUserAgreedRequiredTerm(user.id);
+  async checkRefreshToken(@CurrentUser('id') userId: number) {
+    return await this.accountService.checkUserAgreedRequiredTerm(userId);
   }
 
   /** 엑세스 토큰 재발급 */
@@ -349,8 +348,14 @@ export class AuthController {
     type: AccessTokenResDto,
     description: '새로운 엑세스 토큰 발급',
   })
-  async reissueAcToken(@UserDeco() user: User): Promise<AccessTokenResDto> {
-    const { email, id, support_team } = user;
+  async reissueAcToken(
+    @CurrentUser('id') userId: number,
+  ): Promise<AccessTokenResDto> {
+    const { email, id, support_team } = await this.authService.getUserForAuth(
+      userId,
+      { support_team: { id: true, name: true } },
+      { support_team: true },
+    );
     const acToken = this.authService.issueToken({ email, id }, 'access');
     return { acToken, teamId: support_team.id, teamName: support_team.name };
   }

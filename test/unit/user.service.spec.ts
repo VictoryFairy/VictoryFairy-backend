@@ -414,15 +414,19 @@ describe('userService Test', () => {
       const mockTeams = [{ id: 1 }, { id: 2 }];
 
       jest.spyOn(teamRepo, 'find').mockResolvedValue(mockTeams as Team[]);
+      jest.spyOn(userRepo, 'findOne').mockResolvedValue(mockUser);
       jest.spyOn(userRepo, 'delete').mockResolvedValue(null);
       jest.spyOn(awsS3Service, 'deleteImage').mockResolvedValue(undefined);
       jest
         .spyOn(userRedisService, 'userSynchronizationTransaction')
         .mockResolvedValue(undefined);
 
-      await userService.deleteUser(mockUser);
+      await userService.deleteUser(mockUser.id);
 
       expect(teamRepo.find).toHaveBeenCalledWith({ select: { id: true } });
+      expect(userRepo.findOne).toHaveBeenCalledWith({
+        where: { id: mockUser.id },
+      });
       expect(userRepo.delete).toHaveBeenCalledWith(mockUser.id);
       expect(awsS3Service.deleteImage).toHaveBeenCalledWith({
         fileUrl: mockUser.profile_image,
@@ -440,14 +444,18 @@ describe('userService Test', () => {
       const mockTeams = [{ id: 1 }];
 
       jest.spyOn(teamRepo, 'find').mockResolvedValue(mockTeams as Team[]);
+      jest.spyOn(userRepo, 'findOne').mockResolvedValue(mockUser);
       jest.spyOn(userRepo, 'delete').mockResolvedValue(null);
       jest.spyOn(awsS3Service, 'deleteImage').mockResolvedValue(undefined);
       jest
         .spyOn(userRedisService, 'userSynchronizationTransaction')
         .mockResolvedValue(undefined);
 
-      await userService.deleteUser(mockUser);
+      await userService.deleteUser(mockUser.id);
 
+      expect(userRepo.findOne).toHaveBeenCalledWith({
+        where: { id: mockUser.id },
+      });
       expect(userRepo.delete).toHaveBeenCalledWith(mockUser.id);
       expect(awsS3Service.deleteImage).not.toHaveBeenCalled();
       expect(
@@ -460,13 +468,19 @@ describe('userService Test', () => {
     it('termService.saveUserAgreedTerm을 호출', async () => {
       const user = { id: 1 } as User;
       const termIds = ['term1', 'term2'];
+      const mockTermList = {
+        required: [{ id: 'term1' }, { id: 'term2' }],
+        optional: [{ id: 'term3' }, { id: 'term4' }],
+      };
 
+      jest.spyOn(termService, 'getTermList').mockResolvedValue(mockTermList);
       jest
         .spyOn(termService, 'saveUserAgreedTerm')
         .mockResolvedValue(undefined);
 
-      await userService.agreeTerm(user, termIds);
+      await userService.agreeTerm(user.id, termIds);
 
+      expect(termService.getTermList).toHaveBeenCalled();
       expect(termService.saveUserAgreedTerm).toHaveBeenCalledWith(
         user.id,
         termIds,

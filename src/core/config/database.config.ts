@@ -13,5 +13,8 @@ export const getDatabaseConfig = (
     password: configService.get<string>('DB_PASSWORD'),
     autoLoadEntities: true,
     synchronize: false,
+    extra: {
+      max: configService.get<number>('DB_MAX_CONNECTIONS') || 10,
+    },
   };
 };

@@ -1,4 +1,5 @@
 import {
+  BadRequestException,
   Injectable,
   InternalServerErrorException,
   Logger,
@@ -47,6 +48,7 @@ export class UserService {
         userIds.push(user.id);
         return this.userRedisService.saveUser(user);
       });
+
       await Promise.all(cachingPromises);
       this.eventEmitter.emit(EventName.CACHED_USERS, userIds);
       this.logger.log('유저 정보 레디스 초기 캐싱 완료');
@@ -155,8 +157,9 @@ export class UserService {
   }
 
   @Transactional()
-  async deleteUser(user: User): Promise<void> {
+  async deleteUser(userId: number): Promise<void> {
     const teams = await this.teamRepository.find({ select: { id: true } });
+    const user = await this.userRepository.findOne({ where: { id: userId } });
     const { profile_image, id } = user;
 
     await this.userRepository.delete(id);
@@ -169,8 +172,17 @@ export class UserService {
     });
   }
 
-  async agreeTerm(user: User, termIds: string[]): Promise<void> {
-    await this.termService.saveUserAgreedTerm(user.id, termIds);
+  async agreeTerm(userId: number, termIds: string[]): Promise<void> {
+    const termList = await this.termService.getTermList();
+    const allTermIds = [...termList.required, ...termList.optional].map(
+      (term) => term.id,
+    );
+    const validTermIds = termIds.filter((id) => allTermIds.includes(id));
+
+    if (validTermIds.length !== termIds.length) {
+      throw new BadRequestException('유효하지 않은 약관 아이디');
+    }
+    await this.termService.saveUserAgreedTerm(userId, validTermIds);
   }
 
   async generateRandomNickname(): Promise<string> {

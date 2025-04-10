@@ -14,7 +14,6 @@ import { RankService } from '../rank/rank.service';
 import { AwsS3Service } from '../../core/aws-s3/aws-s3.service';
 import { TRegisteredGameStatus } from 'src/modules/registered-game/types/registered-game-status.type';
 import { Transactional } from 'typeorm-transactional';
-import { User } from '../user/entities/user.entity';
 import { Game } from '../game/entities/game.entity';
 import {
   CreateRegisteredGameDto,
@@ -38,7 +37,7 @@ export class RegisteredGameService {
   @Transactional()
   async create(
     createRegisteredGameDto: CreateRegisteredGameDto,
-    user: User,
+    userId: number,
   ): Promise<RegisteredGame> {
     const game = await this.gameService.findOne(createRegisteredGameDto.gameId);
     const cheeringTeam = await this.teamService.findOne(
@@ -48,7 +47,7 @@ export class RegisteredGameService {
     const duplcate = await this.registeredGameRepository.findOne({
       where: {
         game: game,
-        user: { id: user.id },
+        user: { id: userId },
       },
     });
 
@@ -61,7 +60,7 @@ export class RegisteredGameService {
       ...createRegisteredGameDto,
       game,
       cheering_team: cheeringTeam,
-      user,
+      user: { id: userId },
     });
 
     const registeredGameStatus = this.getStatus(game, registeredGame);
@@ -80,15 +79,15 @@ export class RegisteredGameService {
         true,
       );
 
-      await this.rankService.updateRedisRankings(user.id);
+      await this.rankService.updateRedisRankings(userId);
     }
 
     return registeredGame;
   }
 
-  async findAll(user: User): Promise<RegisteredGame[]> {
+  async findAll(userId: number): Promise<RegisteredGame[]> {
     const registeredGames = await this.registeredGameRepository.find({
-      where: { user: { id: user.id } },
+      where: { user: { id: userId } },
       relations: {
         cheering_team: true,
         game: {
@@ -105,7 +104,7 @@ export class RegisteredGameService {
   async findAllMonthly(
     year: number,
     month: number,
-    user: User,
+    userId: number,
   ): Promise<RegisteredGame[]> {
     const startDate = moment
       .tz(`${year}-${month}-01`, 'Asia/Seoul')
@@ -118,7 +117,7 @@ export class RegisteredGameService {
 
     const registeredGames = await this.registeredGameRepository.find({
       where: {
-        user: { id: user.id },
+        user: { id: userId },
         game: {
           date: Between(startDate, endDate),
         },
@@ -142,9 +141,9 @@ export class RegisteredGameService {
     return registeredGames;
   }
 
-  async findOne(id: number, user: User): Promise<RegisteredGame> {
+  async findOne(id: number, userId: number): Promise<RegisteredGame> {
     const registeredGame = await this.registeredGameRepository.findOne({
-      where: { id, user: { id: user.id } },
+      where: { id, user: { id: userId } },
       relations: {
         cheering_team: true,
         game: {
@@ -165,10 +164,10 @@ export class RegisteredGameService {
   async update(
     id: number,
     updateRegisteredGameDto: UpdateRegisteredGameDto,
-    user: User,
+    userId: number,
   ): Promise<void> {
     const registeredGame = await this.registeredGameRepository.findOne({
-      where: { id, user: { id: user.id } },
+      where: { id, user: { id: userId } },
       relations: {
         cheering_team: true,
         game: {
@@ -217,17 +216,20 @@ export class RegisteredGameService {
   }
 
   @Transactional()
-  async delete(id: number, user: User): Promise<void> {
-    const registeredGame = await this.findOne(id, user);
+  async delete(id: number, userId: number): Promise<void> {
+    const registeredGame = await this.findOne(id, userId);
     const status = registeredGame.status;
     const team_id = registeredGame.cheering_team.id;
-    const user_id = user.id;
+    const user_id = userId;
     const year = moment(registeredGame.game.date).year();
 
     await this.awsS3Service.deleteImage({
       fileUrl: registeredGame.image,
     });
-    const result = await this.registeredGameRepository.delete({ id, user });
+    const result = await this.registeredGameRepository.delete({
+      id,
+      user: { id: userId },
+    });
     if (result.affected === 0) {
       throw new NotFoundException(`Registered game with ID ${id} not found`);
     }
@@ -236,7 +238,7 @@ export class RegisteredGameService {
         { status, team_id, user_id, year },
         false,
       );
-      await this.rankService.updateRedisRankings(user_id);
+      await this.rankService.updateRedisRankings(userId);
     }
   }
 
