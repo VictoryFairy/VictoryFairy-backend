@@ -8,7 +8,7 @@ import {
   ResRankDto,
   ResRankTopThreeDto,
 } from 'src/modules/rank/dto/rank.dto';
-import { UserDeco } from 'src/common/decorators/user.decorator';
+import { CurrentUser } from 'src/common/decorators/current-user.decorator';
 import { plainToInstance } from 'class-transformer';
 
 @ApiTags('rankings')
@@ -46,7 +46,7 @@ export class RankController {
   })
   async getNearByUser(
     @Query() query: QueryTotalRankingListAboutTeamDto,
-    @UserDeco('id') userId: number,
+    @CurrentUser('id') userId: number,
   ) {
     const { teamId } = query;
     const [nearBy, userStats] = await Promise.all([

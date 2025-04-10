@@ -24,7 +24,7 @@ export class RefreshTokenGuard implements CanActivate {
       throw new UnauthorizedException('유저 정보 조회 실패');
     }
 
-    req.user = { ...user, email: payload.email };
+    req.user = { id: payload.id, email: payload.email };
     req.tokenType = payload.type;
 
     if (req.tokenType !== 'rf') {

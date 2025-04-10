@@ -1,4 +1,8 @@
-import { Injectable, InternalServerErrorException } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  InternalServerErrorException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { UserTerm } from 'src/modules/term/entities/user-term.entity';
 import { Repository } from 'typeorm';
@@ -48,8 +52,15 @@ export class TermService {
 
   async saveUserAgreedTerm(userId: number, termId: string | string[]) {
     const termIds = Array.isArray(termId) ? termId : [termId];
+    const existingTerms = await this.getUserAgreedTerms(userId);
+    const newTermIds = termIds.filter((id) => !existingTerms.includes(id));
+
+    if (newTermIds.length === 0) {
+      throw new BadRequestException('이미 동의한 약관');
+    }
+
     try {
-      for (const id of termIds) {
+      for (const id of newTermIds) {
         await this.userTermRepository.insert({
           user_id: userId,
           term_id: id,

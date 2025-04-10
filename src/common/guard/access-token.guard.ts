@@ -24,13 +24,8 @@ export class AccessTokenGuard implements CanActivate {
     }
 
     const payload = await this.jwtStrategy.validateToken(token, 'access');
-    const user = await this.jwtStrategy.checkUser(payload.id);
 
-    if (!user) {
-      throw new UnauthorizedException('유효하지 않은 사용자입니다.');
-    }
-
-    req.user = { ...user, email: payload.email };
+    req.user = { id: payload.id, email: payload.email };
     req.tokenType = payload.type;
 
     if (req.tokenType !== 'ac') {

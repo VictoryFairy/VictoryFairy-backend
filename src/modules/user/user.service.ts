@@ -1,4 +1,5 @@
 import {
+  BadRequestException,
   Injectable,
   InternalServerErrorException,
   Logger,
@@ -171,8 +172,17 @@ export class UserService {
     });
   }
 
-  async agreeTerm(user: User, termIds: string[]): Promise<void> {
-    await this.termService.saveUserAgreedTerm(user.id, termIds);
+  async agreeTerm(userId: number, termIds: string[]): Promise<void> {
+    const termList = await this.termService.getTermList();
+    const allTermIds = [...termList.required, ...termList.optional].map(
+      (term) => term.id,
+    );
+    const validTermIds = termIds.filter((id) => allTermIds.includes(id));
+
+    if (validTermIds.length !== termIds.length) {
+      throw new BadRequestException('유효하지 않은 약관 아이디');
+    }
+    await this.termService.saveUserAgreedTerm(userId, validTermIds);
   }
 
   async generateRandomNickname(): Promise<string> {

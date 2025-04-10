@@ -23,7 +23,7 @@ export class CheeringSongService {
   ) {}
 
   async findBySearchWithInfiniteScroll(
-    user: User,
+    userId: number,
     take: number,
     cursor?: number,
     q?: string,
@@ -65,7 +65,7 @@ export class CheeringSongService {
     const newCursor = data.length > 0 ? data[data.length - 1].id : null;
 
     for (const datum of data) {
-      const { isLiked } = await this.getCheeringSongIsLiked(datum.id, user);
+      const { isLiked } = await this.getCheeringSongIsLiked(datum.id, userId);
       datum['isLiked'] = isLiked;
     }
 
@@ -93,7 +93,7 @@ export class CheeringSongService {
   async findByTeamIdAndTypeWithInfiniteScroll(
     teamId: number,
     type: TCheeringSongType,
-    user: User,
+    userId: number,
     take: number,
     cursor?: number,
   ): Promise<
@@ -123,7 +123,7 @@ export class CheeringSongService {
     const newCursor = data.length > 0 ? data[data.length - 1].id : null;
 
     for (const datum of data) {
-      const { isLiked } = await this.getCheeringSongIsLiked(datum.id, user);
+      const { isLiked } = await this.getCheeringSongIsLiked(datum.id, userId);
       datum['isLiked'] = isLiked;
     }
 
@@ -139,14 +139,14 @@ export class CheeringSongService {
 
   async likeCheerSong(
     cheeringSongId: number,
-    user: User,
+    userId: number,
   ): Promise<LikeCheeringSong> {
     const cheeringSong = await this.findOne(cheeringSongId);
 
     const duplicate = await this.likeCheeringSongRepository.findOne({
       where: {
         cheeringSong,
-        user: { id: user.id },
+        user: { id: userId },
       },
     });
 
@@ -156,33 +156,33 @@ export class CheeringSongService {
 
     const like = new LikeCheeringSong();
     like.cheeringSong = cheeringSong;
-    like.user = user;
+    like.user = { id: userId } as User;
     this.likeCheeringSongRepository.save(like);
     return like;
   }
 
-  async unlikeCheerSong(cheeringSongId: number, user: User): Promise<void> {
+  async unlikeCheerSong(cheeringSongId: number, userId: number): Promise<void> {
     const cheeringSong = await this.findOne(cheeringSongId);
     const result = await this.likeCheeringSongRepository.delete({
       cheeringSong,
-      user: { id: user.id },
+      user: { id: userId },
     });
     if (result.affected === 0) {
       throw new NotFoundException(
-        `Like relationship with cheering song ${cheeringSongId} and user ${user.id} not found.`,
+        `Like relationship with cheering song ${cheeringSongId} and user ${userId} not found.`,
       );
     }
   }
 
   async getCheeringSongIsLiked(
     cheeringSongId: number,
-    user: User,
+    userId: number,
   ): Promise<{ isLiked: boolean }> {
     const cheeringSong = await this.findOne(cheeringSongId);
     const result = await this.likeCheeringSongRepository.findOne({
       where: {
         cheeringSong,
-        user: { id: user.id },
+        user: { id: userId },
       },
     });
 
@@ -204,7 +204,7 @@ export class CheeringSongService {
 
   async findByLikedWithInfiniteScroll(
     type: TCheeringSongType,
-    user: User,
+    userId: number,
     take: number,
     cursor?: number,
   ): Promise<unknown> {
@@ -215,7 +215,7 @@ export class CheeringSongService {
         'like_cheering_song',
         'like_cheering_song.cheering_song_id = cheering_song.id',
       )
-      .where('like_cheering_song.user_id = :user_id', { user_id: user.id })
+      .where('like_cheering_song.user_id = :user_id', { user_id: userId })
       .andWhere('cheering_song.type = :type', { type })
       .orderBy('cheering_song.id', 'ASC')
       .leftJoinAndSelect('cheering_song.player', 'player')
@@ -235,7 +235,7 @@ export class CheeringSongService {
 
     // 유저가 이 응원가를 좋아요 표시 했는지 여부 확인 로직 추가
     for (const datum of data) {
-      const { isLiked } = await this.getCheeringSongIsLiked(datum.id, user);
+      const { isLiked } = await this.getCheeringSongIsLiked(datum.id, userId);
       datum['isLiked'] = isLiked; // isLiked 필드 추가
     }
 
