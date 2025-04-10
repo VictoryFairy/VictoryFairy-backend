@@ -14,7 +14,7 @@ export const getDatabaseConfig = (
     autoLoadEntities: true,
     synchronize: false,
     extra: {
-      max: 25,
+      max: configService.get<number>('DB_MAX_CONNECTIONS') || 10,
     },
   };
 };
