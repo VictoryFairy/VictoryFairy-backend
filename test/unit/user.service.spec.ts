@@ -468,13 +468,19 @@ describe('userService Test', () => {
     it('termService.saveUserAgreedTerm을 호출', async () => {
       const user = { id: 1 } as User;
       const termIds = ['term1', 'term2'];
+      const mockTermList = {
+        required: [{ id: 'term1' }, { id: 'term2' }],
+        optional: [{ id: 'term3' }, { id: 'term4' }],
+      };
 
+      jest.spyOn(termService, 'getTermList').mockResolvedValue(mockTermList);
       jest
         .spyOn(termService, 'saveUserAgreedTerm')
         .mockResolvedValue(undefined);
 
-      await userService.agreeTerm(user, termIds);
+      await userService.agreeTerm(user.id, termIds);
 
+      expect(termService.getTermList).toHaveBeenCalled();
       expect(termService.saveUserAgreedTerm).toHaveBeenCalledWith(
         user.id,
         termIds,
