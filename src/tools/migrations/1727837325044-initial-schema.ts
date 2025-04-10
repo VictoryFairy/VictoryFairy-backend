@@ -79,6 +79,7 @@ export class InitialSchema1727837325044 implements MigrationInterface {
     await queryRunner.query(
       `ALTER TABLE "parking_info" ADD CONSTRAINT "FK_90ec7b46af3880a171edc3eb20d" FOREIGN KEY ("stadiumId") REFERENCES "stadium"("id") ON DELETE NO ACTION ON UPDATE NO ACTION`,
     );
+    await queryRunner.query(`CREATE INDEX "idx_game_date" ON "game" ("date") `);
   }
 
   public async down(queryRunner: QueryRunner): Promise<void> {}
