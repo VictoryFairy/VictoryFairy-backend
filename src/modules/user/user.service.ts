@@ -1,5 +1,6 @@
 import {
   BadRequestException,
+  ConflictException,
   Injectable,
   InternalServerErrorException,
   Logger,
@@ -127,33 +128,33 @@ export class UserService {
 
   async changeUserProfile(
     updateInput: { field: 'teamId' | 'image' | 'nickname'; value: any },
-    user: User,
+    prevUserData: User,
   ): Promise<User> {
-    const { profile_image } = user;
     const { field, value } = updateInput;
-
-    if (field === 'teamId') {
-      user.support_team = { id: value } as Team;
-    } else if (field === 'image') {
-      user.profile_image = value;
-    } else {
-      user[field] = value;
+    switch (field) {
+      case 'teamId':
+        prevUserData.support_team = { id: value } as Team;
+        break;
+      case 'nickname':
+        const isExistNickname = await this.isExistNickname(value);
+        if (isExistNickname) {
+          throw new ConflictException('이미 존재하는 닉네임 입니다.');
+        }
+        prevUserData.nickname = value;
+        break;
+      case 'image':
+        prevUserData.profile_image = value;
+        break;
+      default:
+        throw new BadRequestException('유효하지 않은 필드입니다.');
     }
 
-    const updatedUser = await this.userRepository.save(user);
-
-    if (field === 'image' || field === 'nickname') {
-      await this.userRedisService.saveUser(updatedUser);
-      if (
-        field === 'image' &&
-        profile_image !== value &&
-        profile_image !== DEFAULT_PROFILE_IMAGE
-      ) {
-        await this.awsS3Service.deleteImage({ fileUrl: profile_image });
-      }
+    try {
+      const updatedUser = await this.userRepository.save(prevUserData);
+      return updatedUser;
+    } catch (error) {
+      throw new InternalServerErrorException('유저 DB 업데이트 실패');
     }
-
-    return updatedUser;
   }
 
   @Transactional()

@@ -24,6 +24,9 @@ import { TermService } from '../term/term.service';
 import { UserService } from '../user/user.service';
 import { AuthService } from '../auth/auth.service';
 import { CreateSocialAuthDto, CreateUserDto } from './account.dto';
+import { DEFAULT_PROFILE_IMAGE } from '../user/const/user.const';
+import { AwsS3Service } from 'src/core/aws-s3/aws-s3.service';
+
 @Injectable()
 export class AccountService {
   private readonly logger = new Logger(AccountService.name);
@@ -34,6 +37,7 @@ export class AccountService {
     private readonly userService: UserService,
     private readonly authService: AuthService,
     private readonly termRedisService: TermRedisService,
+    private readonly awsS3Service: AwsS3Service,
   ) {}
 
   async loginLocalUser(dto: LoginLocalUserDto) {
@@ -274,6 +278,8 @@ export class AccountService {
     userId: number,
     updateInput: { field: 'teamId' | 'image' | 'nickname'; value: any },
   ) {
+    const { field, value } = updateInput;
+
     const prevUserData = await this.userService.getUser(
       { id: userId },
       { support_team: true },
@@ -284,8 +290,25 @@ export class AccountService {
         support_team: { id: true },
       },
     );
-    await this.userService.changeUserProfile(updateInput, prevUserData);
+    const oldImage = prevUserData?.profile_image || null;
+    // 유저 업데이트
+    const updatedUser = await this.userService.changeUserProfile(
+      updateInput,
+      prevUserData,
+    );
 
+    if (field === 'image' || field === 'nickname') {
+      await this.userRedisService.saveUser(updatedUser);
+    }
+
+    // 유저 프로필 업데이트 후 추가 작업 로직
+    if (
+      field === 'image' &&
+      prevUserData.profile_image !== value &&
+      oldImage !== DEFAULT_PROFILE_IMAGE
+    ) {
+      await this.awsS3Service.deleteImage({ fileUrl: oldImage });
+    }
     if (updateInput.field === 'teamId') {
       await this.rankService.insertRankIfAbsent({
         team_id: updateInput.value,

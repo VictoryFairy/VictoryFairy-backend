@@ -132,6 +132,9 @@ export class UserController {
     examples: PatchUserProfileDto.getExample(),
   })
   @ApiNoContentResponse({ description: '성공 시 데이터 없이 상태코드만 응답' })
+  @ApiConflictResponse({
+    description: '이미 존재하는 닉네임으로 수정하려는 경우',
+  })
   @ApiInternalServerErrorResponse({ description: 'DB 업데이트 실패한 경우' })
   async updateUserProfile(
     @Body() body: PatchUserProfileDto,
