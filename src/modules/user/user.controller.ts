@@ -12,6 +12,7 @@ import {
 import {
   ApiBadRequestResponse,
   ApiBody,
+  ApiConflictResponse,
   ApiCreatedResponse,
   ApiForbiddenResponse,
   ApiInternalServerErrorResponse,
@@ -67,14 +68,20 @@ export class UserController {
   @Post('existed-email')
   @ApiOperation({ summary: '이메일 중복 확인' })
   @ApiOkResponse({
-    schema: { properties: { isExist: { type: 'boolean' } } },
-    description: '없는 경우 false',
+    schema: {
+      properties: {
+        isExist: { type: 'boolean' },
+        initialSignUpType: { type: 'string', enum: ['social', 'local'] },
+      },
+    },
+    description:
+      '없는 경우 false, initialSignUpType의 경우 최초 가입 유형. 소셜 플랫폼 최초 가입된 계정과 같은 이메일로 로컬 회원가입은 안되는 점 확인해주세요',
   })
   @ApiInternalServerErrorResponse({ description: 'DB 문제인 경우' })
   async checkUserEmail(@Body() body: EmailDto) {
     const { email } = body;
-    const isExist = await this.userService.isExistEmail(email);
-    return { isExist };
+    const result = await this.userService.isExistEmail(email);
+    return result;
   }
 
   /** 닉네임 중복 확인 */

@@ -264,14 +264,12 @@ export class AccountService {
 
   async changePassword(email: string, password: string): Promise<void> {
     const user = await this.userService.getUser({ email });
+
     if (!user) {
       throw new BadRequestException('해당 이메일로 가입된 계정 없음');
     }
-    try {
-      await this.authService.changePassword(user.id, password);
-    } catch (error) {
-      throw new InternalServerErrorException('비밀번호 업데이트 실패');
-    }
+
+    await this.authService.changePassword(user.id, password);
   }
 
   async profileUpdate(

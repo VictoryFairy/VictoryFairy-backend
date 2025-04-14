@@ -113,7 +113,7 @@ export class AuthService {
   }
 
   async changePassword(userId: number, newPassword: string): Promise<boolean> {
-      const hashPw = await bcrypt.hash(newPassword, HASH_ROUND);
+    const hashPw = await bcrypt.hash(newPassword, HASH_ROUND);
     const isLocalAuth = await this.localAuthRepository.exists({
       where: { user_id: userId },
     });

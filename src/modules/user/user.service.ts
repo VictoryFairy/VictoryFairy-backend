@@ -59,9 +59,17 @@ export class UserService {
     }
   }
 
-  async isExistEmail(email: string): Promise<boolean> {
+  async isExistEmail(email: string) {
     try {
-      return this.userRepository.exists({ where: { email } });
+      const user = await this.userRepository.findOne({
+        where: { email },
+        relations: { local_auth: true },
+        select: { id: true, email: true, local_auth: { user_id: true } },
+      });
+      const isExist = user ? true : false;
+      const initialSignUpType = !user.local_auth ? 'social' : 'local';
+
+      return { isExist, initialSignUpType };
     } catch (error) {
       throw new InternalServerErrorException('DB 조회 실패');
     }
