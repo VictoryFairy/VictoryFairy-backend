@@ -13,6 +13,7 @@ import {
   ApiBadRequestResponse,
   ApiBody,
   ApiCreatedResponse,
+  ApiForbiddenResponse,
   ApiInternalServerErrorResponse,
   ApiNoContentResponse,
   ApiOkResponse,
@@ -113,6 +114,9 @@ export class UserController {
   @HttpCode(HttpStatus.NO_CONTENT)
   @ApiOperation({ summary: '비밀번호 변경' })
   @ApiNoContentResponse({ description: '성공 시 데이터 없이 상태코드만 응답' })
+  @ApiForbiddenResponse({
+    description: '소셜플랫폼으로 최초 가입한 계정이 비밀번호 변경하려는 경우',
+  })
   @ApiBadRequestResponse({
     description: '해당 이메일로 가입된 계정이 없는 경우',
   })
