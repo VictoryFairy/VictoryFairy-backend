@@ -1,4 +1,5 @@
 import {
+  ForbiddenException,
   Injectable,
   InternalServerErrorException,
   UnauthorizedException,
@@ -112,8 +113,15 @@ export class AuthService {
   }
 
   async changePassword(userId: number, newPassword: string): Promise<boolean> {
+    const hashPw = await bcrypt.hash(newPassword, HASH_ROUND);
+    const isLocalAuth = await this.localAuthRepository.exists({
+      where: { user_id: userId },
+    });
+    if (!isLocalAuth) {
+      throw new ForbiddenException('로컬 계정이 아닙니다.');
+    }
+
     try {
-      const hashPw = await bcrypt.hash(newPassword, HASH_ROUND);
       await this.localAuthRepository.update(
         { user_id: userId },
         { password: hashPw },

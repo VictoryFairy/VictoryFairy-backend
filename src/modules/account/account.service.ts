@@ -24,6 +24,9 @@ import { TermService } from '../term/term.service';
 import { UserService } from '../user/user.service';
 import { AuthService } from '../auth/auth.service';
 import { CreateSocialAuthDto, CreateUserDto } from './account.dto';
+import { DEFAULT_PROFILE_IMAGE } from '../user/const/user.const';
+import { AwsS3Service } from 'src/core/aws-s3/aws-s3.service';
+
 @Injectable()
 export class AccountService {
   private readonly logger = new Logger(AccountService.name);
@@ -34,6 +37,7 @@ export class AccountService {
     private readonly userService: UserService,
     private readonly authService: AuthService,
     private readonly termRedisService: TermRedisService,
+    private readonly awsS3Service: AwsS3Service,
   ) {}
 
   async loginLocalUser(dto: LoginLocalUserDto) {
@@ -226,10 +230,14 @@ export class AccountService {
     return;
   }
 
-  /** User생성 및 약관 동의까지 같이 저장*/
+  /** 필수 약관 동의 처리 */
   async agreeUserRequireTerm(userId: number): Promise<boolean> {
     try {
       const requireTerm = await this.termService.getTermList();
+      if (!requireTerm?.required?.length) {
+        return true;
+      }
+
       const requireTermIds = requireTerm.required.map((term) => term.id);
       await this.termService.saveUserAgreedTerm(userId, requireTermIds);
 
@@ -256,20 +264,20 @@ export class AccountService {
 
   async changePassword(email: string, password: string): Promise<void> {
     const user = await this.userService.getUser({ email });
+
     if (!user) {
       throw new BadRequestException('해당 이메일로 가입된 계정 없음');
     }
-    try {
-      await this.authService.changePassword(user.id, password);
-    } catch (error) {
-      throw new InternalServerErrorException('비밀번호 업데이트 실패');
-    }
+
+    await this.authService.changePassword(user.id, password);
   }
 
   async profileUpdate(
     userId: number,
     updateInput: { field: 'teamId' | 'image' | 'nickname'; value: any },
   ) {
+    const { field, value } = updateInput;
+
     const prevUserData = await this.userService.getUser(
       { id: userId },
       { support_team: true },
@@ -280,8 +288,25 @@ export class AccountService {
         support_team: { id: true },
       },
     );
-    await this.userService.changeUserProfile(updateInput, prevUserData);
+    const oldImage = prevUserData?.profile_image || null;
+    // 유저 업데이트
+    const updatedUser = await this.userService.changeUserProfile(
+      updateInput,
+      prevUserData,
+    );
 
+    if (field === 'image' || field === 'nickname') {
+      await this.userRedisService.saveUser(updatedUser);
+    }
+
+    // 유저 프로필 업데이트 후 추가 작업 로직
+    if (
+      field === 'image' &&
+      prevUserData.profile_image !== value &&
+      oldImage !== DEFAULT_PROFILE_IMAGE
+    ) {
+      await this.awsS3Service.deleteImage({ fileUrl: oldImage });
+    }
     if (updateInput.field === 'teamId') {
       await this.rankService.insertRankIfAbsent({
         team_id: updateInput.value,

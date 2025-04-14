@@ -12,7 +12,9 @@ import {
 import {
   ApiBadRequestResponse,
   ApiBody,
+  ApiConflictResponse,
   ApiCreatedResponse,
+  ApiForbiddenResponse,
   ApiInternalServerErrorResponse,
   ApiNoContentResponse,
   ApiOkResponse,
@@ -66,14 +68,20 @@ export class UserController {
   @Post('existed-email')
   @ApiOperation({ summary: '이메일 중복 확인' })
   @ApiOkResponse({
-    schema: { properties: { isExist: { type: 'boolean' } } },
-    description: '없는 경우 false',
+    schema: {
+      properties: {
+        isExist: { type: 'boolean' },
+        initialSignUpType: { type: 'string', enum: ['social', 'local'] },
+      },
+    },
+    description:
+      '없는 경우 false, initialSignUpType의 경우 최초 가입 유형. 소셜 플랫폼 최초 가입된 계정과 같은 이메일로 로컬 회원가입은 안되는 점 확인해주세요',
   })
   @ApiInternalServerErrorResponse({ description: 'DB 문제인 경우' })
   async checkUserEmail(@Body() body: EmailDto) {
     const { email } = body;
-    const isExist = await this.userService.isExistEmail(email);
-    return { isExist };
+    const result = await this.userService.isExistEmail(email);
+    return result;
   }
 
   /** 닉네임 중복 확인 */
@@ -113,6 +121,9 @@ export class UserController {
   @HttpCode(HttpStatus.NO_CONTENT)
   @ApiOperation({ summary: '비밀번호 변경' })
   @ApiNoContentResponse({ description: '성공 시 데이터 없이 상태코드만 응답' })
+  @ApiForbiddenResponse({
+    description: '소셜플랫폼으로 최초 가입한 계정이 비밀번호 변경하려는 경우',
+  })
   @ApiBadRequestResponse({
     description: '해당 이메일로 가입된 계정이 없는 경우',
   })
@@ -132,6 +143,9 @@ export class UserController {
     examples: PatchUserProfileDto.getExample(),
   })
   @ApiNoContentResponse({ description: '성공 시 데이터 없이 상태코드만 응답' })
+  @ApiConflictResponse({
+    description: '이미 존재하는 닉네임으로 수정하려는 경우',
+  })
   @ApiInternalServerErrorResponse({ description: 'DB 업데이트 실패한 경우' })
   async updateUserProfile(
     @Body() body: PatchUserProfileDto,
