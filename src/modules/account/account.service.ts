@@ -226,10 +226,14 @@ export class AccountService {
     return;
   }
 
-  /** User생성 및 약관 동의까지 같이 저장*/
+  /** 필수 약관 동의 처리 */
   async agreeUserRequireTerm(userId: number): Promise<boolean> {
     try {
       const requireTerm = await this.termService.getTermList();
+      if (!requireTerm?.required?.length) {
+        return true;
+      }
+
       const requireTermIds = requireTerm.required.map((term) => term.id);
       await this.termService.saveUserAgreedTerm(userId, requireTermIds);
 
