@@ -7,6 +7,7 @@ import { UserModule } from 'src/modules/user/user.module';
 import { AccountService } from './account.service';
 import { RankModule } from '../rank/rank.module';
 import { AuthController } from '../auth/auth.controller';
+import { AwsS3Module } from 'src/core/aws-s3/aws-s3.module';
 @Module({
   imports: [
     JwtModule.register({}),
@@ -14,6 +15,7 @@ import { AuthController } from '../auth/auth.controller';
     TermModule,
     RankModule,
     UserModule,
+    AwsS3Module,
   ],
   controllers: [AuthController, UserController],
   providers: [AccountService],
