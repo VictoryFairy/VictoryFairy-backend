@@ -18,6 +18,7 @@ export class MailService {
         from: `승리요정 <${fromAddress}>`,
         to: email,
         subject: '승리요정 인증 코드 번호입니다.',
+        text: `안녕하세요. 요청하신 인증 코드는 ${code}입니다. 3분간 유효합니다.`,
         html: this.generateHtmlTemplate(code),
       });
       return true;
