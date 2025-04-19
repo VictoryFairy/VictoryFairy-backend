@@ -67,7 +67,11 @@ export class UserService {
         select: { id: true, email: true, local_auth: { user_id: true } },
       });
       const isExist = user ? true : false;
-      const initialSignUpType = !user.local_auth ? 'social' : 'local';
+      let initialSignUpType: 'local' | 'social' | null = null;
+
+      if (isExist) {
+        initialSignUpType = user.local_auth ? 'local' : 'social';
+      }
 
       return { isExist, initialSignUpType };
     } catch (error) {
