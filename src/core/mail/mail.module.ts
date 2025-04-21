@@ -8,7 +8,8 @@ import { MailService } from 'src/core/mail/mail.service';
     MailService,
     {
       provide: 'MAIL_TRANSPORTER',
-      useFactory: nodeMailerConfig,
+      useFactory: (configService: ConfigService) =>
+        nodeMailerConfig(configService),
       inject: [ConfigService],
     },
   ],
