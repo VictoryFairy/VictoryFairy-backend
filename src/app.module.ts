@@ -15,7 +15,7 @@ import { SeederService } from './core/seeder/seeder.service';
 import { SchedulingModule } from './modules/scheduling/scheduling.module';
 import { CheeringSongModule } from './modules/cheering-song/cheering-song.module';
 import { EventEmitterModule } from '@nestjs/event-emitter';
-import { APP_FILTER } from '@nestjs/core';
+import { APP_FILTER, APP_GUARD } from '@nestjs/core';
 import { CustomExceptionFilter } from './common/filters/cutstom-execption.filter';
 import { addTransactionalDataSource } from 'typeorm-transactional';
 import { DataSource } from 'typeorm';
@@ -24,6 +24,9 @@ import { RequestMetaMiddleware } from './common/middleware/request-meta.middlewa
 import { GameModule } from './modules/game/game.module';
 import { RankModule } from './modules/rank/rank.module';
 import { SlackModule } from './core/slack/slack.module';
+import { ThrottlerModule } from '@nestjs/throttler';
+import { RedisThrottlerStorageService } from './core/redis/redis-throttler-storage.service';
+import { CustomThrottlerGuard } from './common/guard/cutstom-throttler.guard';
 
 @Module({
   imports: [
@@ -40,6 +43,18 @@ import { SlackModule } from './core/slack/slack.module';
         return addTransactionalDataSource(dataSource);
       },
       inject: [ConfigService],
+    }),
+    ThrottlerModule.forRootAsync({
+      inject: [RedisThrottlerStorageService],
+      useFactory: (redisThrottlerStorage: RedisThrottlerStorageService) => ({
+        throttlers: [
+          {
+            ttl: 60,
+            limit: 120,
+          },
+        ],
+        storage: redisThrottlerStorage,
+      }),
     }),
     EventEmitterModule.forRoot({}),
     RedisModule,
@@ -61,6 +76,7 @@ import { SlackModule } from './core/slack/slack.module';
     AppService,
     SeederService,
     { provide: APP_FILTER, useClass: CustomExceptionFilter },
+    { provide: APP_GUARD, useClass: CustomThrottlerGuard },
   ],
 })
 export class AppModule implements NestModule {

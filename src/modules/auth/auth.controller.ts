@@ -48,6 +48,7 @@ import { SocialFlowParamPipe } from 'src/common/pipe/social-flow-param-check.pip
 import { SocialAuthGuard } from 'src/common/guard/social-auth.guard';
 import { SocialPostGuard } from 'src/common/guard/social-post.guard';
 import { AccessTokenGuard } from 'src/common/guard/access-token.guard';
+import { Throttle } from '@nestjs/throttler';
 
 @ApiTags('Auth')
 @Controller('auth')
@@ -361,6 +362,7 @@ export class AuthController {
   }
 
   /** 인증 코드 메일 전송 */
+  @Throttle({ default: { limit: 1, ttl: 30 } }) // 30초에 1번만 요청 가능
   @Post('email-code')
   @HttpCode(HttpStatus.NO_CONTENT)
   @ApiOperation({ summary: '인증 번호 이메일 요청' })
