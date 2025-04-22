@@ -6,6 +6,7 @@ import { AuthRedisService } from 'src/core/redis/auth-redis.service';
 import { UserRedisService } from 'src/core/redis/user-redis.service';
 import { RankingRedisService } from 'src/core/redis/ranking-redis.service';
 import { TermRedisService } from 'src/core/redis/term-redis.service';
+import { RedisThrottlerStorageService } from './redis-throttler-storage.service';
 
 @Global()
 @Module({
@@ -20,6 +21,7 @@ import { TermRedisService } from 'src/core/redis/term-redis.service';
     UserRedisService,
     RankingRedisService,
     TermRedisService,
+    RedisThrottlerStorageService,
   ],
   exports: [
     RedisConnectionService,
@@ -27,6 +29,7 @@ import { TermRedisService } from 'src/core/redis/term-redis.service';
     UserRedisService,
     RankingRedisService,
     TermRedisService,
+    RedisThrottlerStorageService,
   ],
 })
 export class RedisModule {}

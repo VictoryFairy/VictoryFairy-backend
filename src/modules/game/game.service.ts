@@ -59,21 +59,16 @@ export class GameService {
     return game;
   }
 
-  async getGameTime(gameId: string): Promise<string> {
-    const game = await this.gameRepository.findOne({
+  async findGamesByDate(date: string) {
+    const games = await this.gameRepository.find({
       where: {
-        id: gameId,
+        date,
       },
-      select: ['time'],
     });
-
-    if (!game) {
-      throw new NotFoundException(`Game with id ${gameId} not found.`);
-    }
-
-    return game.time;
+    return games;
   }
 
+  /** 추후 레디스에 캐싱하는 방식으로 리팩토링 필요 */
   async updateStatusRepeatedly(
     gameId: string,
     currentStatus: BatchUpdateGameDto,
@@ -88,7 +83,9 @@ export class GameService {
         game.status = currentStatus.status;
       }
       await manager.update(Game, { id: gameId }, game);
-      this.logger.log(`Score for Game ${gameId} updated.`);
+      this.logger.log(
+        `Score for Game ${gameId} updated. homeScore: ${currentStatus.homeScore}, awayScore: ${currentStatus.awayScore}, status: ${currentStatus.status}`,
+      );
     });
   }
 
@@ -109,19 +106,6 @@ export class GameService {
 
       await manager.update(Game, { id: gameId }, game);
     });
-  }
-
-  async getTodayGameIds(): Promise<string[]> {
-    const today = moment.tz('Asia/Seoul').startOf('day').format('YYYY-MM-DD');
-
-    const todayGames = await this.gameRepository.find({
-      where: {
-        date: today,
-      },
-      select: ['id'],
-    });
-
-    return todayGames.map((game) => game.id);
   }
 
   getCurrentGameStatus(
@@ -208,9 +192,9 @@ export class GameService {
           awayScore: scores.awayScore,
           status: status.status,
         };
-        this.logger.log(
-          `Scrapped data for game ${gameId} -> homeScore: ${data.homeScore}, awayScore: ${data.awayScore}, status: ${data.status}`,
-        );
+        // this.logger.log(
+        //   `Scrapped data for game ${gameId} -> homeScore: ${data.homeScore}, awayScore: ${data.awayScore}, status: ${data.status}`,
+        // );
         return data;
       }),
     );

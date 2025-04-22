@@ -9,6 +9,8 @@ import { DataSource } from 'typeorm';
 import { GameService } from 'src/modules/game/game.service';
 import { RegisteredGameService } from 'src/modules/registered-game/registered-game.service';
 import { upsertSchedules } from './game-crawling.util';
+import { Game } from '../game/entities/game.entity';
+import { SCHEDULER_NAME } from './type/schedule-job-name.type';
 
 @Injectable()
 export class SchedulingService {
@@ -21,20 +23,33 @@ export class SchedulingService {
     private readonly configService: ConfigService,
     private readonly dataSource: DataSource,
   ) {}
-
+  /**
+   * @description
+   * 새벽 1시에 실행되는 크론잡
+   * 이번 달과 다음 달 경기 데이터 크롤링 & 오늘의 경기 점수 크롤링 트리거 크론잡 설정
+   * 앱 첫 시작시에도 실행
+   */
   @Cron(CronExpression.EVERY_DAY_AT_1AM, {
-    name: 'batchUpdateGames',
+    name: SCHEDULER_NAME.CRAWLING_JOB_1AM,
     timeZone: 'Asia/Seoul',
   })
-  async batchUpdateGames() {
-    // 이번 달과 다음 달의 모든 경기 일정을 가져오고, 오늘의 경기에 대한 업데이트 스케줄을 설정합니다.
-    const date = new Date();
-    const currentYear = date.getFullYear();
-    const currentMonth = date.getMonth() + 1;
+  async setupThisAndNextMonthGameDataAndTodayGameTrigger() {
+    const todayDate = this.getTodayDate();
+    const todayGames = await this.gameService.findGamesByDate(todayDate);
 
-    const { nextYear, nextMonth } = getNextMonth(currentYear, currentMonth);
+    await this.getThisAndNextMonthGameData(todayDate);
+    await this.setupTriggerForGameScoreCrawlingJob(todayGames);
+  }
 
+  /**
+   * @description
+   * 이번달 경기와 다음달 경기 데이터를 크롤링
+   */
+  async getThisAndNextMonthGameData(date: string): Promise<void> {
     try {
+      const fullDate = date.split('-').map(Number);
+      const [currentYear, currentMonth] = [fullDate[0], fullDate[1]];
+      const { nextYear, nextMonth } = getNextMonth(currentYear, currentMonth);
       // 현재 달 데이터 업데이트
       await upsertSchedules({
         year: currentYear,
@@ -47,100 +62,151 @@ export class SchedulingService {
         month: nextMonth,
         dataSource: this.dataSource,
       });
-
-      this.logger.log('Game Data for both months saved successfully.');
-      await this.batchUpdateTodayGames(); // 오늘의 경기 업데이트 스케줄 작성
     } catch (error) {
-      this.logger.error('Error in batchUpdateGames', error.stack);
+      this.logger.error('Error in getThisAndNextMonthGameData', error.stack);
       throw error;
     }
   }
 
-  private async batchUpdateTodayGames() {
-    // 기존의 batchUpdate{gameId} 형식의 CronJob을 중지하고 삭제합니다.
-    const allCronJobs = this.schedulerRegistry.getCronJobs();
-    allCronJobs.forEach((job, jobName) => {
-      if (jobName === 'batchUpdateGames') return;
-      if (/^batchUpdate.*$/.test(jobName)) {
-        job.stop();
-        this.schedulerRegistry.deleteCronJob(jobName);
-        this.logger.log(`Stopped and removed existing job ${jobName}.`);
+  /**
+   * @description
+   * 점수 크롤링 트리거 크론잡 설정 -> 1분 간격 점수 크롤링 크론잡을 가져와 실행
+   **/
+  async setupTriggerForGameScoreCrawlingJob(games: Game[]): Promise<void> {
+    for (const game of games) {
+      const [hour, minute, second] = game.time?.split(':').map(Number);
+      const [year, month, day] = game.date?.split('-').map(Number);
+      const tzDate = {
+        year,
+        month: month - 1,
+        day,
+        hour,
+        minute,
+        second,
+      };
+
+      // 기존 중복된 trigger 크론잡 있으면 삭제
+      this.deleteExistingCronJob(`${SCHEDULER_NAME.GAME_TRIGGER}-${game.id}`);
+
+      const triggerTime = moment.tz(tzDate, 'Asia/Seoul').toDate(); // 2025-05-22T09:30:00.000Z
+      const now = moment().tz('Asia/Seoul').toDate();
+      // 현재 시간이 트리거 시간보다 이전이면 바로 시작
+      if (triggerTime < now) {
+        this.logger.log(
+          `Trigger time already passed for game ${game.id}, starting score job immediately.`,
+        );
+        await this.handleGameTriggerJob(game); // 바로 시작
+      } else {
+        const triggerForGameScore = new CronJob(
+          triggerTime,
+          async () => {
+            await this.handleGameTriggerJob(game);
+            // 트리거 실행 완료 후 해당 트리거 크론잡 삭제
+            const triggerJobName = `${SCHEDULER_NAME.GAME_TRIGGER}-${game.id}`;
+            this.deleteExistingCronJob(triggerJobName);
+          },
+          null,
+          false,
+          'Asia/Seoul',
+        );
+        this.schedulerRegistry.addCronJob(
+          `${SCHEDULER_NAME.GAME_TRIGGER}-${game.id}`,
+          triggerForGameScore,
+        );
+
+        triggerForGameScore.start();
       }
-    });
-
-    // 오늘의 경기 ID를 가져옵니다.
-    const todayGameIds = await this.gameService.getTodayGameIds();
-
-    await Promise.all(
-      todayGameIds.map(async (gameId) => {
-        const startTime = await this.gameService.getGameTime(gameId); // HH:MM
-        this.setupGameUpdateScheduler(gameId, startTime);
-      }),
-    );
+    }
   }
 
-  private setupGameUpdateScheduler(gameId: string, startTime: string) {
+  /**
+   * @description
+   * 게임 트리거 크론잡이 수행할 일 : 1분마다 게임 점수 크롤링 작업을 생성하고 등록
+   */
+  private async handleGameTriggerJob(game: Game): Promise<void> {
+    // 기존 중복된 update-game-score 크론잡 있으면 삭제
+    this.deleteExistingCronJob(
+      `${SCHEDULER_NAME.UPDATE_GAME_SCORE}-${game.id}`,
+    );
+    const gameJob = await this.createGameScoreJobForOneMinute(game.id);
+    this.schedulerRegistry.addCronJob(
+      `${SCHEDULER_NAME.UPDATE_GAME_SCORE}-${game.id}`,
+      gameJob,
+    );
+    gameJob.start();
+  }
+
+  /**
+   * @description
+   * 점수 크롤링을 1분마다 실행할 크론잡 생성
+   * @return
+   * CronJob
+   **/
+  private async createGameScoreJobForOneMinute(
+    gameId: string,
+  ): Promise<CronJob> {
     const seriesId = this.configService.get<number>('SERIES_ID');
-    const [startHour, startMinute] = startTime.split(':').map(Number);
-    const now = moment(); // 현재 시간을 가져옵니다.
-    const startDateTime = moment.tz(
-      {
-        year: now.year(),
-        month: now.month(), // month는 0부터 시작합니다. (0: January, 11: December)
-        day: now.date(),
-        hour: startHour,
-        minute: startMinute,
-      },
-      'Asia/Seoul', // 원하는 타임존을 설정합니다.
-    );
-
-    // 현재 시간과 시작 시간 사이의 차이를 계산합니다.
-    const timeUntilStart = startDateTime.diff(now);
-
-    // 시작 시간에 도달하면 설정된 작업을 수행합니다.
-    setTimeout(() => {
-      this.logger.log(
-        `Starting updates for game ${gameId} at ${startDateTime}`,
-      );
-
-      const intervalJob = new CronJob(
-        CronExpression.EVERY_MINUTE,
-        async () => {
-          const currentStatus = await firstValueFrom(
-            this.gameService.getCurrentGameStatus(
-              1,
-              seriesId,
-              gameId,
-              new Date().getFullYear(),
-            ),
+    const intervalJob = new CronJob(
+      CronExpression.EVERY_MINUTE,
+      async () => {
+        const currentStatus = await firstValueFrom(
+          this.gameService.getCurrentGameStatus(
+            1,
+            seriesId,
+            gameId,
+            new Date().getFullYear(),
+          ),
+        );
+        await this.gameService.updateStatusRepeatedly(gameId, currentStatus);
+        if (
+          currentStatus.status === '경기종료' ||
+          /.*취소$/.test(currentStatus.status)
+        ) {
+          const isCanceled = /.*취소$/.test(currentStatus.status);
+          this.logger.log(
+            `Game ${gameId} ended. Stopping updates. ${isCanceled ? 'Canceled' : 'Ended'}`,
           );
-
-          this.logger.log(`Current game status is ${currentStatus.status}.`);
-          await this.gameService.updateStatusRepeatedly(gameId, currentStatus);
-          if (currentStatus.status === '경기종료') {
-            this.logger.log(`Game ${gameId} ended. Stopping updates.`);
+          const jobName = `${SCHEDULER_NAME.UPDATE_GAME_SCORE}-${gameId}`;
+          try {
+            intervalJob.stop();
             await this.gameService.updateStatusFinally(gameId, currentStatus);
-            intervalJob.stop(); // Updates stopped
-          } else if (/.*취소$/.test(currentStatus.status)) {
-            this.logger.log(`Game ${gameId} canceled. Stopping updates.`);
-            await this.gameService.updateStatusFinally(gameId, currentStatus);
-            intervalJob.stop(); // Updates stopped
+            // 완료 시 경기결과 나오기전 직관 등록 데이터들 업데이트 및 랭킹 업데이트
+            await this.registeredGameService.batchBulkUpdateByGameId(gameId);
+          } catch (error) {
+            throw error;
+          } finally {
+            // 멈춘 크론잡 삭제
+            this.deleteExistingCronJob(jobName);
           }
-        },
-        async () => {
-          // Cronjob 종료 시
-          await this.registeredGameService.batchBulkUpdateByGameId(gameId);
-        },
-        true,
-        'Asia/Seoul',
-      );
-
-      this.schedulerRegistry.addCronJob(`batchUpdate${gameId}`, intervalJob);
-      intervalJob.start();
-    }, timeUntilStart);
-
-    this.logger.log(
-      `Scheduled initial job for game ${gameId} at ${startDateTime}`,
+          return;
+        }
+      },
+      null,
+      true,
+      'Asia/Seoul',
     );
+    return intervalJob;
+  }
+
+  /**
+   * @description
+   * 기존 크론잡 삭제
+   * @param jobName string
+   **/
+  private deleteExistingCronJob(jobName: string) {
+    if (this.schedulerRegistry.doesExist('cron', jobName)) {
+      this.logger.log(`${jobName} already exists. Deleting...`);
+      this.schedulerRegistry.deleteCronJob(jobName);
+    }
+  }
+
+  /**
+   * @description
+   * 오늘의 날짜를 반환
+   * @return
+   * string
+   **/
+  private getTodayDate(): string {
+    return moment().tz('Asia/Seoul').format('YYYY-MM-DD');
   }
 }
