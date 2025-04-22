@@ -10,12 +10,19 @@ export const nodeMailerConfig = (
   const port = isProduction ? 465 : 587;
   //  운영 환경에서는 aws ses 사용
   if (isProduction) {
-    const ses = new aws.SES({
-      apiVersion: '2010-12-01',
-      region: 'ap-northeast-2',
+    const accessKeyId = configService.get('AWS_SES_ACCESS_KEY');
+    const secretAccessKey = configService.get('AWS_SES_SECRET_ACCESS_KEY');
+    const region = 'ap-northeast-2';
+
+    if (!accessKeyId || !secretAccessKey) {
+      throw new Error('Missing AWS SES credentials in environment variables');
+    }
+
+    const ses = new aws.SESClient({
+      region,
       credentials: {
-        accessKeyId: configService.get('AWS_SES_ACCESS_KEY'),
-        secretAccessKey: configService.get('AWS_SES_SECRET_ACCESS_KEY'),
+        accessKeyId,
+        secretAccessKey,
       },
     });
     return nodemailer.createTransport({
