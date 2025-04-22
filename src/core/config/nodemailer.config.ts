@@ -14,10 +14,6 @@ export const nodeMailerConfig = (
     const secretAccessKey = configService.get('AWS_SES_SECRET_ACCESS_KEY');
     const region = 'ap-northeast-2';
 
-    if (!accessKeyId || !secretAccessKey) {
-      throw new Error('Missing AWS SES credentials in environment variables');
-    }
-
     const ses = new aws.SESClient({
       region,
       credentials: {
