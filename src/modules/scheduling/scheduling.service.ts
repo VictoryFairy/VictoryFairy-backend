@@ -158,25 +158,30 @@ export class SchedulingService {
           ),
         );
         await this.gameService.updateStatusRepeatedly(gameId, currentStatus);
-        if (currentStatus.status === '경기종료') {
-          this.logger.log(`Game ${gameId} ended. Stopping updates.`);
-          await this.gameService.updateStatusFinally(gameId, currentStatus);
-          intervalJob.stop(); // Updates stopped
-          return;
-        } else if (/.*취소$/.test(currentStatus.status)) {
-          this.logger.log(`Game ${gameId} canceled. Stopping updates.`);
-          await this.gameService.updateStatusFinally(gameId, currentStatus);
-          intervalJob.stop(); // Updates stopped
+        if (
+          currentStatus.status === '경기종료' ||
+          /.*취소$/.test(currentStatus.status)
+        ) {
+          const isCanceled = /.*취소$/.test(currentStatus.status);
+          this.logger.log(
+            `Game ${gameId} ended. Stopping updates. ${isCanceled ? 'Canceled' : 'Ended'}`,
+          );
+          const jobName = `${SCHEDULER_NAME.UPDATE_GAME_SCORE}-${gameId}`;
+          try {
+            intervalJob.stop();
+            await this.gameService.updateStatusFinally(gameId, currentStatus);
+            // 완료 시 경기결과 나오기전 직관 등록 데이터들 업데이트 및 랭킹 업데이트
+            await this.registeredGameService.batchBulkUpdateByGameId(gameId);
+          } catch (error) {
+            throw error;
+          } finally {
+            // 멈춘 크론잡 삭제
+            this.deleteExistingCronJob(jobName);
+          }
           return;
         }
       },
-      async () => {
-        // 완료 시 경기결과 나오기전 직관 등록 데이터들 업데이트 및 랭킹 업데이트
-        await this.registeredGameService.batchBulkUpdateByGameId(gameId);
-        // 멈춘 크론잡 삭제
-        const jobName = `${SCHEDULER_NAME.UPDATE_GAME_SCORE}-${gameId}`;
-        this.deleteExistingCronJob(jobName);
-      },
+      null,
       true,
       'Asia/Seoul',
     );

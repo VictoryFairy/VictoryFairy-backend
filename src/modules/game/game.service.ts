@@ -68,7 +68,6 @@ export class GameService {
     return games;
   }
 
-
   /** 추후 레디스에 캐싱하는 방식으로 리팩토링 필요 */
   async updateStatusRepeatedly(
     gameId: string,
@@ -108,7 +107,6 @@ export class GameService {
       await manager.update(Game, { id: gameId }, game);
     });
   }
-
 
   getCurrentGameStatus(
     leagueId: number,
