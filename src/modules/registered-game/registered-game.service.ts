@@ -248,7 +248,7 @@ export class RegisteredGameService {
       const game = await this.gameService.findOne(gameId);
       const registeredGames = await this.registeredGameRepository.find({
         where: {
-          game,
+          game: { id: gameId },
           status: null,
         },
         relations: { cheering_team: true, game: true, user: true },
