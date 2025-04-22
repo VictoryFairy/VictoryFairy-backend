@@ -5,7 +5,7 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Between, DataSource, Repository } from 'typeorm';
+import { Between, DataSource, IsNull, Repository } from 'typeorm';
 import { RegisteredGame } from 'src/modules/registered-game/entities/registered-game.entity';
 import { TeamService } from '../team/team.service';
 import { GameService } from '../game/game.service';
@@ -249,7 +249,7 @@ export class RegisteredGameService {
       const registeredGames = await this.registeredGameRepository.find({
         where: {
           game: { id: gameId },
-          status: null,
+          status: IsNull(),
         },
         relations: { cheering_team: true, game: true, user: true },
       });
