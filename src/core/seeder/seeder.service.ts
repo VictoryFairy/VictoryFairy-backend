@@ -10,7 +10,7 @@ export class SeederService implements OnApplicationBootstrap {
   ) {}
 
   async onApplicationBootstrap() {
-    await this.schedulingService.batchUpdateGames();
+    await this.schedulingService.setupThisAndNextMonthGameDataAndTodayGameTrigger();
     await this.customRedisService.initializeCacheOnRedisReady();
   }
 }
