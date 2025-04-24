@@ -3,6 +3,7 @@ import {
   ConflictException,
   ForbiddenException,
   HttpException,
+  Inject,
   Injectable,
   InternalServerErrorException,
   Logger,
@@ -23,9 +24,13 @@ import { TermRedisService } from 'src/core/redis/term-redis.service';
 import { TermService } from '../term/term.service';
 import { UserService } from '../user/user.service';
 import { AuthService } from '../auth/auth.service';
-import { CreateSocialAuthDto, CreateUserDto } from './account.dto';
+import { CreateUserDto } from './account.dto';
+import { CreateSocialAuthDto } from '../auth/dto/internal/social-auth/create-social-auth.dto';
 import { DEFAULT_PROFILE_IMAGE } from '../user/const/user.const';
 import { AwsS3Service } from 'src/core/aws-s3/aws-s3.service';
+import { DeleteSocialAuthDto } from '../auth/dto/internal/social-auth/delete-social-auth.dto';
+import { SocialAuthRepository } from '../auth/repository/social-auth.respository';
+import { SOCIAL_AUTH_REPOSITORY } from '../auth/repository/social-auth.repository.interface';
 
 @Injectable()
 export class AccountService {
@@ -38,6 +43,8 @@ export class AccountService {
     private readonly authService: AuthService,
     private readonly termRedisService: TermRedisService,
     private readonly awsS3Service: AwsS3Service,
+    @Inject(SOCIAL_AUTH_REPOSITORY)
+    private readonly socialAuthRepo: SocialAuthRepository,
   ) {}
 
   async loginLocalUser(dto: LoginLocalUserDto) {
@@ -71,15 +78,14 @@ export class AccountService {
     let isNewUser = false;
     try {
       //해당 플랫폼으로 가입된 유저 조회
-      const socialAuth = await this.authService.getSocialAuth(
-        { sub, provider },
-        {},
-        { user_id: true },
-      );
+      const socialAuth = await this.socialAuthRepo.findOne({
+        sub,
+        provider,
+      });
 
       if (socialAuth) {
         const user = await this.userService.getUserWithSupportTeamWithId(
-          socialAuth.user_id,
+          socialAuth.userId,
         );
         return { user, isNewUser };
       }
@@ -156,9 +162,13 @@ export class AccountService {
     socialAuthData: Omit<CreateSocialAuthDto, 'userId'>,
   ) {
     const createdUser = await this.userService.saveUser(userData);
+    const createSocialAuthDto = await CreateSocialAuthDto.create({
+      ...socialAuthData,
+      userId: createdUser.id,
+    });
 
     await Promise.all([
-      this.authService.createSocialAuth(socialAuthData, createdUser.id),
+      this.authService.createSocialAuth(createSocialAuthDto),
       this.rankService.insertRankIfAbsent({
         team_id: createdUser.support_team.id,
         user_id: createdUser.id,
@@ -172,8 +182,8 @@ export class AccountService {
 
   /** SocialAuth 연결 */
   async linkSocial(data: CreateSocialAuthDto) {
-    const { userId, sub, provider } = data;
-    const socialAuth = await this.authService.getSocialAuth({
+    const { sub, provider } = data;
+    const socialAuth = await this.socialAuthRepo.findOne({
       sub,
       provider,
     });
@@ -182,7 +192,7 @@ export class AccountService {
       throw new ConflictException('이미 연동했거나 가입하였습니다.');
     }
     try {
-      await this.authService.createSocialAuth(data, userId);
+      await this.authService.createSocialAuth(data);
     } catch (error) {
       if (error instanceof HttpException) {
         throw error;
@@ -201,7 +211,7 @@ export class AccountService {
 
     // 로컬 회원가입이면 연동 해제 후 종료
     if (isExistLocalAuth) {
-      await this.authService.deleteSocialAuth(userId, provider);
+      await this.authService.deleteSocialAuth({ userId, provider });
       return;
     }
 
@@ -226,7 +236,11 @@ export class AccountService {
       );
     }
 
-    await this.authService.deleteSocialAuth(userId, provider);
+    const deleteSocialAuthDto = await DeleteSocialAuthDto.create({
+      userId,
+      provider,
+    });
+    await this.authService.deleteSocialAuth(deleteSocialAuthDto);
     return;
   }
 

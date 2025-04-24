@@ -1,5 +1,6 @@
 import {
   ForbiddenException,
+  Inject,
   Injectable,
   InternalServerErrorException,
   UnauthorizedException,
@@ -12,14 +13,8 @@ import { CODE_LENGTH, SocialProvider } from 'src/modules/auth/const/auth.const';
 import { EmailWithCodeDto } from 'src/modules/user/dto/user.dto';
 import { v7 as uuidv7 } from 'uuid';
 import * as bcrypt from 'bcrypt';
-import { CreateSocialAuthDto } from 'src/modules/account/account.dto';
 import { InjectRepository } from '@nestjs/typeorm';
-import {
-  FindOptionsRelations,
-  FindOptionsSelect,
-  FindOptionsWhere,
-  Repository,
-} from 'typeorm';
+import { FindOptionsRelations, FindOptionsSelect, Repository } from 'typeorm';
 import { HASH_ROUND } from 'src/modules/user/const/user.const';
 import { AuthRedisService } from 'src/core/redis/auth-redis.service';
 import { User } from '../user/entities/user.entity';
@@ -29,6 +24,14 @@ import {
 } from 'src/modules/auth/types/auth.type';
 import { LocalAuth } from './entities/local-auth.entity';
 import { SocialAuth } from './entities/social-auth.entity';
+import { SOCIAL_AUTH_REPOSITORY } from './repository/social-auth.repository.interface';
+import { SocialAuthRepository } from './repository/social-auth.respository';
+import { DeleteSocialAuthDto } from './dto/internal/social-auth/delete-social-auth.dto';
+import { CreateSocialAuthDto } from './dto/internal/social-auth/create-social-auth.dto';
+import { LOCAL_AUTH_REPOSITORY } from './repository/local-auth.repository.interface';
+import { LocalAuthRepository } from './repository/local-auth.repository';
+import { CreateLocalAuthDto } from './dto/local-auth/create-local-auth.dto';
+import { UpdateLocalAuthDto } from './dto/local-auth/update-local-auth.dto';
 
 @Injectable()
 export class AuthService {
@@ -39,10 +42,10 @@ export class AuthService {
     private readonly authRedisService: AuthRedisService,
     @InjectRepository(User)
     private readonly userRepository: Repository<User>,
-    @InjectRepository(LocalAuth)
-    private readonly localAuthRepository: Repository<LocalAuth>,
-    @InjectRepository(SocialAuth)
-    private readonly socialAuthRepository: Repository<SocialAuth>,
+    @Inject(SOCIAL_AUTH_REPOSITORY)
+    private readonly socialAuthRepo: SocialAuthRepository,
+    @Inject(LOCAL_AUTH_REPOSITORY)
+    private readonly localAuthRepo: LocalAuthRepository,
   ) {}
 
   async getUserForAuth(
@@ -114,18 +117,17 @@ export class AuthService {
 
   async changePassword(userId: number, newPassword: string): Promise<boolean> {
     const hashPw = await bcrypt.hash(newPassword, HASH_ROUND);
-    const isLocalAuth = await this.localAuthRepository.exists({
-      where: { user_id: userId },
-    });
+    const isLocalAuth = await this.localAuthRepo.isExist(userId);
     if (!isLocalAuth) {
       throw new ForbiddenException('로컬 계정이 아닙니다.');
     }
 
     try {
-      await this.localAuthRepository.update(
-        { user_id: userId },
-        { password: hashPw },
-      );
+      const updateLocalAuthDto = await UpdateLocalAuthDto.create({
+        userId,
+        password: hashPw,
+      });
+      await this.localAuthRepo.updateOne(updateLocalAuthDto);
       return true;
     } catch (error) {
       throw new InternalServerErrorException('비밀번호 업데이트 실패');
@@ -133,9 +135,7 @@ export class AuthService {
   }
 
   async verifyLocalAuth(userId: number, password: string): Promise<boolean> {
-    const localAuth = await this.localAuthRepository.findOne({
-      where: { user_id: userId },
-    });
+    const localAuth = await this.localAuthRepo.findOne({ user_id: userId });
     if (!localAuth?.password) return false;
     return bcrypt.compare(password, localAuth.password);
   }
@@ -144,50 +144,29 @@ export class AuthService {
     try {
       const hashPw = await bcrypt.hash(password, HASH_ROUND);
 
-      await this.localAuthRepository.insert({
-        user_id: userId,
+      const createLocalAuthDto = await CreateLocalAuthDto.create({
+        userId,
         password: hashPw,
       });
+      await this.localAuthRepo.insertOne(createLocalAuthDto);
       return true;
     } catch (error) {
       throw new InternalServerErrorException('LocalAuth 생성 실패');
     }
   }
 
-  async getLocalAuth(
-    userId: number,
-    select?: FindOptionsSelect<LocalAuth>,
-  ): Promise<LocalAuth | null> {
-    const localAuth = await this.localAuthRepository.findOne({
-      where: { user_id: userId },
-      select,
-    });
+  async getLocalAuth(userId: number): Promise<LocalAuth | null> {
+    const localAuth = await this.localAuthRepo.findOne({ user_id: userId });
     return localAuth;
   }
 
   async getUserWithSocialAuthList(userId: number): Promise<SocialAuth[]> {
-    const socialAuths = await this.socialAuthRepository.find({
-      where: { user_id: userId },
-    });
+    const socialAuths = await this.socialAuthRepo.find({ user_id: userId });
     return socialAuths;
   }
 
-  async getSocialAuth(
-    where: FindOptionsWhere<SocialAuth>,
-    relations?: FindOptionsRelations<SocialAuth>,
-    select?: FindOptionsSelect<SocialAuth>,
-  ): Promise<SocialAuth | null> {
-    const found = await this.socialAuthRepository.findOne({
-      where,
-      relations,
-      select,
-    });
-
-    return found;
-  }
-
-  async deleteSocialAuth(userId: number, provider: SocialProvider) {
-    await this.socialAuthRepository.delete({ user_id: userId, provider });
+  async deleteSocialAuth(data: DeleteSocialAuthDto): Promise<boolean> {
+    return await this.socialAuthRepo.deleteOne(data);
   }
 
   async saveOAuthStateWithUser(data: {
@@ -201,24 +180,9 @@ export class AuthService {
 
   /** @returns 정상가입 - true | 소셜로그인 없으나 기존 이메일 있는 경우 - false | 그 외 DB저장 실패 - Throw Error */
   async createSocialAuth(
-    socialAuthData: Omit<CreateSocialAuthDto, 'userId'>,
-    userId: number,
+    socialAuthData: CreateSocialAuthDto,
   ): Promise<boolean> {
-    const { sub, provider, providerEmail, isPrimary } = socialAuthData;
-
-    try {
-      await this.socialAuthRepository.insert({
-        sub,
-        provider,
-        user_id: userId,
-        provider_email: providerEmail,
-        is_primary: isPrimary,
-      });
-
-      return true;
-    } catch (error) {
-      throw new InternalServerErrorException('소셜 유저 생성 실패');
-    }
+    return await this.socialAuthRepo.insertOne(socialAuthData);
   }
 
   async getOAuthStateData(state: string): Promise<IOAuthStateCachingData> {

@@ -35,7 +35,6 @@ import { CookieOptions, Request, Response } from 'express';
 import { ConfigService } from '@nestjs/config';
 import { JwtAuth } from 'src/common/decorators/jwt-token.decorator';
 import { OAuthStatus, SocialProvider } from 'src/modules/auth/const/auth.const';
-import { AccessTokenResDto, PidReqDto } from 'src/modules/auth/dto/auth.dto';
 import {
   EmailDto,
   EmailWithCodeDto,
@@ -49,6 +48,9 @@ import { SocialAuthGuard } from 'src/common/guard/social-auth.guard';
 import { SocialPostGuard } from 'src/common/guard/social-post.guard';
 import { AccessTokenGuard } from 'src/common/guard/access-token.guard';
 import { Throttle } from '@nestjs/throttler';
+import { AccessTokenResDto } from './dto/internal/response/res-aceess-token.dto';
+import { PidReqDto } from './dto/request/req-pid.dto';
+import { CreateSocialAuthDto } from './dto/internal/social-auth/create-social-auth.dto';
 
 @ApiTags('Auth')
 @Controller('auth')
@@ -271,13 +273,14 @@ export class AuthController {
       throw new BadRequestException('소셜 유저 정보 없음');
     }
     const { sub, email: providerEmail } = req.socialUserInfo;
-    await this.accountService.linkSocial({
-      userId,
+    const socialAuthData = await CreateSocialAuthDto.create({
       sub,
       provider,
+      userId,
       providerEmail,
       isPrimary: false,
     });
+    await this.accountService.linkSocial(socialAuthData);
   }
 
   /** 소셜 계정 연동 해제*/
