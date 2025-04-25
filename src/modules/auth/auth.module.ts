@@ -21,6 +21,8 @@ import { SOCIAL_AUTH_REPOSITORY } from './repository/social-auth.repository.inte
 import { SocialAuthRepository } from './repository/social-auth.respository';
 import { LOCAL_AUTH_REPOSITORY } from './repository/local-auth.repository.interface';
 import { LocalAuthRepository } from './repository/local-auth.repository';
+import { UserModule } from 'src/modules/user/user.module';
+import { forwardRef } from '@nestjs/common';
 
 @Global()
 @Module({
@@ -29,6 +31,7 @@ import { LocalAuthRepository } from './repository/local-auth.repository';
     JwtModule.register({}),
     MailModule,
     RedisModule,
+    forwardRef(() => UserModule),
   ],
   providers: [
     AuthService,

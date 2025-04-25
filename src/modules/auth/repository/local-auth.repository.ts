@@ -2,9 +2,9 @@ import { Injectable, InternalServerErrorException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { LocalAuth } from '../entities/local-auth.entity';
 import { Repository, FindOptionsWhere } from 'typeorm';
-import { CreateLocalAuthDto } from '../dto/local-auth/create-local-auth.dto';
+import { CreateLocalAuthDto } from '../dto/internal/local-auth/create-local-auth.dto';
 import { ILocalAuthRepository } from './local-auth.repository.interface';
-import { UpdateLocalAuthDto } from '../dto/local-auth/update-local-auth.dto';
+import { UpdateLocalAuthDto } from '../dto/internal/local-auth/update-local-auth.dto';
 
 @Injectable()
 export class LocalAuthRepository implements ILocalAuthRepository {

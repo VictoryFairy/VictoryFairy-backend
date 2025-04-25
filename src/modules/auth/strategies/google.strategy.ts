@@ -5,7 +5,7 @@ import { BaseOAuthStrategy } from './base-oauth.strategy';
 import {
   IGoogleOAuthUserInfo,
   ISocialUserInfo,
-} from 'src/modules/auth/types/auth.type';
+} from 'src/modules/auth/strategies/interface/oauth.interface';
 
 @Injectable()
 export class GoogleOAuthStrategy extends BaseOAuthStrategy {

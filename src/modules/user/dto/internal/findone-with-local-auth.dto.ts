@@ -1,4 +1,4 @@
-import { Expose, Type } from 'class-transformer';
+import { Type } from 'class-transformer';
 import {
   IsEmail,
   IsNotEmpty,
@@ -7,8 +7,8 @@ import {
   IsString,
   ValidateNested,
 } from 'class-validator';
-import { BaseInternalDto } from 'src/common/dto/base-internal-dto';
-import { CheckLocalAuthDto } from 'src/modules/auth/dto/local-auth/check-local-auth.dto';
+import { BaseInternalDto } from 'src/shared/dtos/base-internal-dto';
+import { CheckLocalAuthDto } from 'src/modules/auth/dto/internal/local-auth/check-local-auth.dto';
 
 export class FindOneWithLocalAuthDto extends BaseInternalDto {
   @IsNotEmpty()
@@ -22,7 +22,6 @@ export class FindOneWithLocalAuthDto extends BaseInternalDto {
 
   @IsOptional()
   @ValidateNested()
-  @Expose({ name: 'local_auth' })
   @Type(() => CheckLocalAuthDto)
-  localAuth: CheckLocalAuthDto | null;
+  local_auth: CheckLocalAuthDto | null;
 }

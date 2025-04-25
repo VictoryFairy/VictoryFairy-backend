@@ -13,25 +13,26 @@ import { CODE_LENGTH, SocialProvider } from 'src/modules/auth/const/auth.const';
 import { EmailWithCodeDto } from 'src/modules/user/dto/user.dto';
 import { v7 as uuidv7 } from 'uuid';
 import * as bcrypt from 'bcrypt';
-import { InjectRepository } from '@nestjs/typeorm';
-import { FindOptionsRelations, FindOptionsSelect, Repository } from 'typeorm';
 import { HASH_ROUND } from 'src/modules/user/const/user.const';
 import { AuthRedisService } from 'src/core/redis/auth-redis.service';
-import { User } from '../user/entities/user.entity';
-import {
-  IJwtPayload,
-  IOAuthStateCachingData,
-} from 'src/modules/auth/types/auth.type';
+import { IOAuthStateCachingData } from 'src/modules/auth/strategies/interface/oauth.interface';
 import { LocalAuth } from './entities/local-auth.entity';
 import { SocialAuth } from './entities/social-auth.entity';
-import { SOCIAL_AUTH_REPOSITORY } from './repository/social-auth.repository.interface';
-import { SocialAuthRepository } from './repository/social-auth.respository';
+import {
+  ISocialAuthRepository,
+  SOCIAL_AUTH_REPOSITORY,
+} from './repository/social-auth.repository.interface';
 import { DeleteSocialAuthDto } from './dto/internal/social-auth/delete-social-auth.dto';
 import { CreateSocialAuthDto } from './dto/internal/social-auth/create-social-auth.dto';
-import { LOCAL_AUTH_REPOSITORY } from './repository/local-auth.repository.interface';
-import { LocalAuthRepository } from './repository/local-auth.repository';
-import { CreateLocalAuthDto } from './dto/local-auth/create-local-auth.dto';
-import { UpdateLocalAuthDto } from './dto/local-auth/update-local-auth.dto';
+import {
+  ILocalAuthRepository,
+  LOCAL_AUTH_REPOSITORY,
+} from './repository/local-auth.repository.interface';
+import { CreateLocalAuthDto } from './dto/internal/local-auth/create-local-auth.dto';
+import { UpdateLocalAuthDto } from './dto/internal/local-auth/update-local-auth.dto';
+import { FindOptionsWhere } from 'typeorm';
+import { FindOneResultSocialAuthDto } from './dto/internal/social-auth/findone-social-auth.dto';
+import { IJwtPayload } from './types/auth.type';
 
 @Injectable()
 export class AuthService {
@@ -40,36 +41,17 @@ export class AuthService {
     private readonly configService: ConfigService,
     private readonly mailService: MailService,
     private readonly authRedisService: AuthRedisService,
-    @InjectRepository(User)
-    private readonly userRepository: Repository<User>,
     @Inject(SOCIAL_AUTH_REPOSITORY)
-    private readonly socialAuthRepo: SocialAuthRepository,
+    private readonly socialAuthRepo: ISocialAuthRepository,
     @Inject(LOCAL_AUTH_REPOSITORY)
-    private readonly localAuthRepo: LocalAuthRepository,
+    private readonly localAuthRepo: ILocalAuthRepository,
   ) {}
 
-  async getUserForAuth(
-    userId: number,
-    select?: FindOptionsSelect<
-      Omit<User, 'id' | 'email' | 'nickname' | 'profile_image'>
-    >,
-    relations?: FindOptionsRelations<User>,
-  ): Promise<User | null> {
-    const user = await this.userRepository.findOne({
-      where: { id: userId },
-      select: {
-        id: true,
-        email: true,
-        nickname: true,
-        profile_image: true,
-        ...select,
-      },
-      relations,
-    });
-    if (!user) {
-      return null;
-    }
-    return user;
+  async getSocialAuth(
+    where: FindOptionsWhere<SocialAuth>,
+  ): Promise<FindOneResultSocialAuthDto | null> {
+    const socialAuth = await this.socialAuthRepo.findOne(where);
+    return socialAuth;
   }
 
   async makeCodeAndSendMail(email: string) {
@@ -122,16 +104,12 @@ export class AuthService {
       throw new ForbiddenException('로컬 계정이 아닙니다.');
     }
 
-    try {
-      const updateLocalAuthDto = await UpdateLocalAuthDto.createAndValidate({
-        userId,
-        password: hashPw,
-      });
-      await this.localAuthRepo.updateOne(updateLocalAuthDto);
-      return true;
-    } catch (error) {
-      throw new InternalServerErrorException('비밀번호 업데이트 실패');
-    }
+    const updateLocalAuthDto = await UpdateLocalAuthDto.createAndValidate({
+      userId,
+      password: hashPw,
+    });
+    await this.localAuthRepo.updateOne(updateLocalAuthDto);
+    return true;
   }
 
   async verifyLocalAuth(userId: number, password: string): Promise<boolean> {
@@ -141,18 +119,14 @@ export class AuthService {
   }
 
   async createLocalAuth(userId: number, password: string) {
-    try {
-      const hashPw = await bcrypt.hash(password, HASH_ROUND);
+    const hashPw = await bcrypt.hash(password, HASH_ROUND);
 
-      const createLocalAuthDto = await CreateLocalAuthDto.createAndValidate({
-        userId,
-        password: hashPw,
-      });
-      await this.localAuthRepo.insertOne(createLocalAuthDto);
-      return true;
-    } catch (error) {
-      throw new InternalServerErrorException('LocalAuth 생성 실패');
-    }
+    const createLocalAuthDto = await CreateLocalAuthDto.createAndValidate({
+      userId,
+      password: hashPw,
+    });
+    await this.localAuthRepo.insertOne(createLocalAuthDto);
+    return true;
   }
 
   async getLocalAuth(userId: number): Promise<LocalAuth | null> {

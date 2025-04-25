@@ -2,8 +2,6 @@ import {
   BadRequestException,
   ConflictException,
   ForbiddenException,
-  HttpException,
-  Inject,
   Injectable,
   InternalServerErrorException,
   Logger,
@@ -24,13 +22,12 @@ import { TermRedisService } from 'src/core/redis/term-redis.service';
 import { TermService } from '../term/term.service';
 import { UserService } from '../user/user.service';
 import { AuthService } from '../auth/auth.service';
-import { CreateUserDto } from './account.dto';
 import { CreateSocialAuthDto } from '../auth/dto/internal/social-auth/create-social-auth.dto';
 import { DEFAULT_PROFILE_IMAGE } from '../user/const/user.const';
 import { AwsS3Service } from 'src/core/aws-s3/aws-s3.service';
 import { DeleteSocialAuthDto } from '../auth/dto/internal/social-auth/delete-social-auth.dto';
-import { SocialAuthRepository } from '../auth/repository/social-auth.respository';
-import { SOCIAL_AUTH_REPOSITORY } from '../auth/repository/social-auth.repository.interface';
+import { FindOneUserWithTeamDto } from '../user/dto/internal/findone-user-with-team.dto';
+import { CreateUserDto } from '../user/dto/internal/create-user.dto';
 
 @Injectable()
 export class AccountService {
@@ -43,20 +40,13 @@ export class AccountService {
     private readonly authService: AuthService,
     private readonly termRedisService: TermRedisService,
     private readonly awsS3Service: AwsS3Service,
-    @Inject(SOCIAL_AUTH_REPOSITORY)
-    private readonly socialAuthRepo: SocialAuthRepository,
   ) {}
 
-  async loginLocalUser(dto: LoginLocalUserDto) {
+  async loginLocalUser(
+    dto: LoginLocalUserDto,
+  ): Promise<FindOneUserWithTeamDto> {
     const { email, password } = dto;
-    const user = await this.userService.getUser(
-      { email },
-      { support_team: true },
-    );
-
-    if (!user) {
-      throw new UnauthorizedException('이메일 또는 비밀번호가 틀렸습니다.');
-    }
+    const user = await this.userService.getUserWithSupportTeam({ email });
 
     const isVerified = await this.authService.verifyLocalAuth(
       user.id,
@@ -66,7 +56,7 @@ export class AccountService {
       throw new UnauthorizedException('이메일 또는 비밀번호가 틀렸습니다.');
     }
 
-    return { user };
+    return user;
   }
 
   @Transactional()
@@ -78,23 +68,19 @@ export class AccountService {
     let isNewUser = false;
     try {
       //해당 플랫폼으로 가입된 유저 조회
-      const socialAuth = await this.socialAuthRepo.findOne({
+      const socialAuth = await this.authService.getSocialAuth({
         sub,
         provider,
       });
 
       if (socialAuth) {
-        const user = await this.userService.getUserWithSupportTeamWithId(
-          socialAuth.userId,
-        );
+        const user = await this.userService.getUserWithSupportTeam({
+          id: socialAuth.userId,
+        });
         return { user, isNewUser };
       }
 
-      const isExistUser = await this.userService.getUser(
-        { email: providerEmail },
-        {},
-        { id: true, email: true },
-      );
+      const isExistUser = await this.userService.isExistEmail(providerEmail);
 
       // 동일 이메일이 이미 가입된 경우
       if (isExistUser) {
@@ -105,9 +91,9 @@ export class AccountService {
         { email: providerEmail },
         { sub, provider, providerEmail, isPrimary: true },
       );
-      const user = await this.userService.getUserWithSupportTeamWithId(
-        createdUser.id,
-      );
+      const user = await this.userService.getUserWithSupportTeam({
+        id: createdUser.id,
+      });
       isNewUser = true;
       runOnTransactionCommit(async () => {
         try {
@@ -120,9 +106,6 @@ export class AccountService {
 
       return { user, isNewUser };
     } catch (error) {
-      if (error instanceof HttpException) {
-        throw error;
-      }
       throw new InternalServerErrorException('소셜 로그인 실패');
     }
   }
@@ -158,7 +141,7 @@ export class AccountService {
    * @description 소셜 로그인 함수 내부에서 처리
    * User생성 및 SocialAuth 생성 */
   async createSocialUser(
-    userData: Pick<CreateUserDto, 'email'>,
+    userData: CreateUserDto,
     socialAuthData: Omit<CreateSocialAuthDto, 'userId'>,
   ) {
     const createdUser = await this.userService.saveUser(userData);
@@ -181,9 +164,9 @@ export class AccountService {
   }
 
   /** SocialAuth 연결 */
-  async linkSocial(data: CreateSocialAuthDto) {
+  async linkSocial(data: CreateSocialAuthDto): Promise<void> {
     const { sub, provider } = data;
-    const socialAuth = await this.socialAuthRepo.findOne({
+    const socialAuth = await this.authService.getSocialAuth({
       sub,
       provider,
     });
@@ -191,14 +174,7 @@ export class AccountService {
     if (socialAuth) {
       throw new ConflictException('이미 연동했거나 가입하였습니다.');
     }
-    try {
-      await this.authService.createSocialAuth(data);
-    } catch (error) {
-      if (error instanceof HttpException) {
-        throw error;
-      }
-      throw new InternalServerErrorException('계정 연동 실패');
-    }
+    await this.authService.createSocialAuth(data);
   }
 
   @Transactional()
@@ -292,16 +268,9 @@ export class AccountService {
   ) {
     const { field, value } = updateInput;
 
-    const prevUserData = await this.userService.getUser(
-      { id: userId },
-      { support_team: true },
-      {
-        id: true,
-        nickname: true,
-        profile_image: true,
-        support_team: { id: true },
-      },
-    );
+    const prevUserData = await this.userService.getUserWithSupportTeam({
+      id: userId,
+    });
     const oldImage = prevUserData?.profile_image || null;
     // 유저 업데이트
     const updatedUser = await this.userService.changeUserProfile(

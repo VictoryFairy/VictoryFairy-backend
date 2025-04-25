@@ -1,6 +1,9 @@
 import { Injectable } from '@nestjs/common';
 import { SocialProvider, TFlowType } from 'src/modules/auth/const/auth.const';
-import { IKakaoOAuthUserInfo, ISocialUserInfo } from 'src/modules/auth/types/auth.type';
+import {
+  IKakaoOAuthUserInfo,
+  ISocialUserInfo,
+} from 'src/modules/auth/strategies/interface/oauth.interface';
 import { ConfigService } from '@nestjs/config';
 import { BaseOAuthStrategy } from './base-oauth.strategy';
 

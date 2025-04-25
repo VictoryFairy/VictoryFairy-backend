@@ -1,6 +1,6 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { SocialProvider } from 'src/modules/auth/const/auth.const';
-import { IOAuthStrategy } from 'src/modules/auth/types/auth.type';
+import { IOAuthStrategy } from 'src/modules/auth/strategies/interface/oauth.interface';
 import { GoogleOAuthStrategy } from './google.strategy';
 import { KakaoOAuthStrategy } from './kakao.strategy';
 import { AppleOAuthStrategy } from './apple.strategy';

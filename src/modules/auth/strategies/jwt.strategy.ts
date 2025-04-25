@@ -1,17 +1,17 @@
 import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
-import { AuthService } from '../auth.service';
 import { ConfigService } from '@nestjs/config';
 import { IJwtPayload } from 'src/modules/auth/types/auth.type';
 import { UserRedisService } from 'src/core/redis/user-redis.service';
+import { UserService } from 'src/modules/user/user.service';
 
 @Injectable()
 export class JwtStrategy {
   constructor(
-    private readonly authService: AuthService,
     private readonly jwtService: JwtService,
     private readonly configService: ConfigService,
     private readonly userRedisService: UserRedisService,
+    private readonly userService: UserService,
   ) {}
 
   async validateToken(token: string, type: 'refresh' | 'access') {
@@ -32,7 +32,7 @@ export class JwtStrategy {
   async checkUser(userId: number) {
     let user = await this.userRedisService.getUserInfoById(userId);
     if (!user) {
-      const dbUser = await this.authService.getUserForAuth(userId);
+      const dbUser = await this.userService.getUser({ id: userId });
       user = {
         id: dbUser.id,
         nickname: dbUser.nickname,
@@ -40,15 +40,5 @@ export class JwtStrategy {
       };
     }
     return user;
-  }
-
-  async validateTokenAndGetUser(token: string, type: 'refresh' | 'access') {
-    const payload = await this.validateToken(token, type);
-    const user = await this.authService.getUserForAuth(payload.id);
-    if (!user) {
-      throw new UnauthorizedException('유효하지 않은 사용자입니다.');
-    }
-
-    return { user, payload };
   }
 }

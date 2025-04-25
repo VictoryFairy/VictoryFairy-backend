@@ -8,7 +8,7 @@ import {
 } from 'class-validator';
 import { TRegisteredGameStatus } from 'src/modules/registered-game/types/registered-game-status.type';
 import { GameDto } from '../../game/dto/game.dto';
-import { TeamDto } from '../../team/dto/team.dto';
+import { TeamDto } from '../../team/dto/response/team.dto';
 
 @Exclude()
 export class RegisteredGameDto {

@@ -11,7 +11,7 @@ import {
   SocialProvider,
   TFlowType,
 } from 'src/modules/auth/const/auth.const';
-import { IOAuthStrategy } from 'src/modules/auth/types/auth.type';
+import { IOAuthStrategy } from 'src/modules/auth/strategies/interface/oauth.interface';
 import { URL } from 'url';
 import { Request, Response } from 'express';
 import { AuthService } from 'src/modules/auth/auth.service';

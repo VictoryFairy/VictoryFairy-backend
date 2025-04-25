@@ -4,9 +4,11 @@ import {
   Body,
   Controller,
   Delete,
+  forwardRef,
   Get,
   HttpCode,
   HttpStatus,
+  Inject,
   Param,
   Post,
   Req,
@@ -48,9 +50,10 @@ import { SocialAuthGuard } from 'src/common/guard/social-auth.guard';
 import { SocialPostGuard } from 'src/common/guard/social-post.guard';
 import { AccessTokenGuard } from 'src/common/guard/access-token.guard';
 import { Throttle } from '@nestjs/throttler';
-import { AccessTokenResDto } from './dto/internal/response/res-aceess-token.dto';
 import { PidReqDto } from './dto/request/req-pid.dto';
 import { CreateSocialAuthDto } from './dto/internal/social-auth/create-social-auth.dto';
+import { UserService } from '../user/user.service';
+import { AccessTokenResDto } from './dto/response/res-aceess-token.dto';
 
 @ApiTags('Auth')
 @Controller('auth')
@@ -59,6 +62,8 @@ export class AuthController {
     private readonly accountService: AccountService,
     private readonly authService: AuthService,
     private readonly configService: ConfigService,
+    @Inject(forwardRef(() => UserService))
+    private readonly userService: UserService,
   ) {}
 
   /** 유저 로그인 */
@@ -75,23 +80,17 @@ export class AuthController {
   })
   @ApiUnauthorizedResponse({ description: '아이디 또는 비밀번호가 틀린 경우' })
   async localLogin(@Body() body: LoginLocalUserDto, @Res() res: Response) {
-    const { user } = await this.accountService.loginLocalUser(body);
+    const { email, id, support_team } =
+      await this.accountService.loginLocalUser(body);
 
     const [rfToken, acToken] = [
-      this.authService.issueToken(
-        { email: user.email, id: user.id },
-        'refresh',
-      ),
-      this.authService.issueToken({ email: user.email, id: user.id }, 'access'),
+      this.authService.issueToken({ email, id }, 'refresh'),
+      this.authService.issueToken({ email, id }, 'access'),
     ];
 
     const rfExTime = this.configService.get('REFRESH_EXPIRE_TIME');
     res.cookie('token', rfToken, this.getCookieOptions(parseInt(rfExTime)));
-    res.json({
-      acToken,
-      teamId: user.support_team.id,
-      teamName: user.support_team.name,
-    });
+    res.json({ acToken, teamId: support_team.id, teamName: support_team.name });
   }
 
   /** 소셜 로그인 진입점 */
@@ -355,11 +354,8 @@ export class AuthController {
   async reissueAcToken(
     @CurrentUser('id') userId: number,
   ): Promise<AccessTokenResDto> {
-    const { email, id, support_team } = await this.authService.getUserForAuth(
-      userId,
-      { support_team: { id: true, name: true } },
-      { support_team: true },
-    );
+    const { email, id, support_team } =
+      await this.userService.getUserWithSupportTeam({ id: userId });
     const acToken = this.authService.issueToken({ email, id }, 'access');
     return { acToken, teamId: support_team.id, teamName: support_team.name };
   }

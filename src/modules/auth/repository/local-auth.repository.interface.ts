@@ -1,7 +1,7 @@
 import { FindOptionsWhere } from 'typeorm';
 import { LocalAuth } from '../entities/local-auth.entity';
-import { CreateLocalAuthDto } from '../dto/local-auth/create-local-auth.dto';
-import { UpdateLocalAuthDto } from '../dto/local-auth/update-local-auth.dto';
+import { CreateLocalAuthDto } from '../dto/internal/local-auth/create-local-auth.dto';
+import { UpdateLocalAuthDto } from '../dto/internal/local-auth/update-local-auth.dto';
 
 export const LOCAL_AUTH_REPOSITORY = Symbol('LOCAL_AUTH_REPOSITORY');
 

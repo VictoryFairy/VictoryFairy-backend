@@ -1,7 +1,7 @@
 import { Type } from 'class-transformer';
 import { IsEmail, IsNotEmpty, IsNumber, IsString } from 'class-validator';
-import { BaseInternalDto } from 'src/common/dto/base-internal-dto';
-import { TeamDto } from 'src/modules/team/dto/respose/team.dto';
+import { BaseInternalDto } from 'src/shared/dtos/base-internal-dto';
+import { TeamDto } from 'src/modules/team/dto/response/team.dto';
 
 export class FindOneUserWithTeamDto extends BaseInternalDto {
   @IsNotEmpty()
