@@ -3,7 +3,7 @@ import { ClassConstructor, plainToInstance } from 'class-transformer';
 import { validateOrReject } from 'class-validator';
 
 export abstract class BaseInternalDto {
-  static async create<T extends object>(
+  static async createAndValidate<T extends object>(
     this: ClassConstructor<T>,
     input: unknown,
   ): Promise<T> {

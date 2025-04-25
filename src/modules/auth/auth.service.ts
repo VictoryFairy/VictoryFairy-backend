@@ -123,7 +123,7 @@ export class AuthService {
     }
 
     try {
-      const updateLocalAuthDto = await UpdateLocalAuthDto.create({
+      const updateLocalAuthDto = await UpdateLocalAuthDto.createAndValidate({
         userId,
         password: hashPw,
       });
@@ -144,7 +144,7 @@ export class AuthService {
     try {
       const hashPw = await bcrypt.hash(password, HASH_ROUND);
 
-      const createLocalAuthDto = await CreateLocalAuthDto.create({
+      const createLocalAuthDto = await CreateLocalAuthDto.createAndValidate({
         userId,
         password: hashPw,
       });

@@ -162,7 +162,7 @@ export class AccountService {
     socialAuthData: Omit<CreateSocialAuthDto, 'userId'>,
   ) {
     const createdUser = await this.userService.saveUser(userData);
-    const createSocialAuthDto = await CreateSocialAuthDto.create({
+    const createSocialAuthDto = await CreateSocialAuthDto.createAndValidate({
       ...socialAuthData,
       userId: createdUser.id,
     });
@@ -236,7 +236,7 @@ export class AccountService {
       );
     }
 
-    const deleteSocialAuthDto = await DeleteSocialAuthDto.create({
+    const deleteSocialAuthDto = await DeleteSocialAuthDto.createAndValidate({
       userId,
       provider,
     });

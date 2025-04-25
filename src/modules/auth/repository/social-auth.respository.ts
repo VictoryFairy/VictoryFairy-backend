@@ -33,7 +33,9 @@ export class SocialAuthRepository implements ISocialAuthRepository {
     } catch (error) {
       throw new InternalServerErrorException('social auth findOne error');
     }
-    return result ? await FindOneResultSocialAuthDto.create(result) : null;
+    return result
+      ? await FindOneResultSocialAuthDto.createAndValidate(result)
+      : null;
   }
 
   async insertOne(data: CreateSocialAuthDto): Promise<boolean> {

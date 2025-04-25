@@ -273,7 +273,7 @@ export class AuthController {
       throw new BadRequestException('소셜 유저 정보 없음');
     }
     const { sub, email: providerEmail } = req.socialUserInfo;
-    const socialAuthData = await CreateSocialAuthDto.create({
+    const socialAuthData = await CreateSocialAuthDto.createAndValidate({
       sub,
       provider,
       userId,
