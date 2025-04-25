@@ -100,6 +100,7 @@ function refineGamesData(rawData: string[][], year: number): TGameSchedule {
 
     if (currentDate) {
       const { homeTeam, awayTeam } = getTeamAndScore(game);
+
       const gameData: IGameData = {
         id:
           currentDate.replaceAll('-', '') +
@@ -108,8 +109,8 @@ function refineGamesData(rawData: string[][], year: number): TGameSchedule {
           '0',
         date: currentDate,
         time,
-        homeTeam: homeTeam.name,
-        awayTeam: awayTeam.name,
+        homeTeam: TTeam[homeTeam.name],
+        awayTeam: TTeam[awayTeam.name],
         stadium,
         status,
       };

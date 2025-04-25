@@ -1,16 +1,19 @@
-export type TTeam =
-  | '롯데'
-  | '두산'
-  | 'KIA'
-  | '삼성'
-  | 'SSG'
-  | 'NC'
-  | 'LG'
-  | '키움'
-  | 'KT'
-  | '한화'
-  | '나눔'
-  | '드림';
+export const TTeam = {
+  롯데: '롯데 자이언츠',
+  두산: '두산 베어스',
+  KIA: 'KIA 타이거즈',
+  삼성: '삼성 라이온즈',
+  SSG: 'SSG 랜더스',
+  NC: 'NC 다이노스',
+  LG: 'LG 트윈스',
+  키움: '키움 히어로즈',
+  KT: 'KT 위즈',
+  한화: '한화 이글스',
+  나눔: '나눔',
+  드림: '드림',
+} as const;
+
+export type TTeam = (typeof TTeam)[keyof typeof TTeam];
 
 export type TStadium =
   | '잠실'
