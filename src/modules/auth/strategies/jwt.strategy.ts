@@ -29,7 +29,9 @@ export class JwtStrategy {
     }
   }
 
-  async checkUser(userId: number) {
+  async checkUser(
+    userId: number,
+  ): Promise<{ id: number; nickname: string; profile_image: string }> {
     let user = await this.userRedisService.getUserInfoById(userId);
     if (!user) {
       const dbUser = await this.userService.getUser({ id: userId });

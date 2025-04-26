@@ -1,5 +1,5 @@
 import { IsEmail, IsNotEmpty, IsNumber, IsString } from 'class-validator';
-import { BaseInternalDto } from 'src/shared/dtos/base-internal-dto';
+import { BaseInternalDto } from 'src/shared/dtos/base-internal.dto';
 
 export class RequiredCreateUserDto extends BaseInternalDto {
   @IsNotEmpty()

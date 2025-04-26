@@ -3,7 +3,6 @@ import {
   ConflictException,
   Inject,
   Injectable,
-  InternalServerErrorException,
   Logger,
 } from '@nestjs/common';
 import { DEFAULT_PROFILE_IMAGE } from 'src/modules/user/const/user.const';
@@ -22,8 +21,8 @@ import {
 } from './repository/user.repository.interface';
 import { CreateUserDto } from './dto/internal/create-user.dto';
 import { RequiredCreateUserDto } from './dto/internal/required-create-user.dto';
-import { FindOneUserWithTeamDto } from './dto/internal/findone-user-with-team.dto';
-import { FindOneWithLocalAuthDto } from './dto/internal/findone-with-local-auth.dto';
+import { UserWithTeamDto } from './dto/internal/user-with-team.dto';
+import { UserWithLocalAuthDto } from './dto/internal/user-with-local-auth.dto';
 import { DeleteUserDto } from './dto/internal/deleteone-user.dto';
 import { TeamService } from '../team/team.service';
 
@@ -62,27 +61,19 @@ export class UserService {
   }
 
   async isExistEmail(email: string) {
-    try {
-      const user = await this.userRepo.findOneWithLocalAuth({ email });
-      const isExist = user ? true : false;
-      let initialSignUpType: 'local' | 'social' | null = null;
+    const user = await this.userRepo.findOneWithLocalAuth({ email });
+    const isExist = user ? true : false;
+    let initialSignUpType: 'local' | 'social' | null = null;
 
-      if (isExist) {
-        initialSignUpType = user.local_auth ? 'local' : 'social';
-      }
-
-      return { isExist, initialSignUpType };
-    } catch (error) {
-      throw new InternalServerErrorException('DB 조회 실패');
+    if (isExist) {
+      initialSignUpType = user.local_auth ? 'local' : 'social';
     }
+
+    return { isExist, initialSignUpType };
   }
 
   async isExistNickname(nickname: string): Promise<boolean> {
-    try {
-      return this.userRepo.isExist({ nickname });
-    } catch (error) {
-      throw new InternalServerErrorException('DB 조회 실패');
-    }
+    return this.userRepo.isExist({ nickname });
   }
 
   async saveUser(dto: CreateUserDto): Promise<User> {
@@ -108,7 +99,7 @@ export class UserService {
 
   async getUserWithSupportTeam(
     where: FindOptionsWhere<User>,
-  ): Promise<FindOneUserWithTeamDto> {
+  ): Promise<UserWithTeamDto> {
     const user = await this.userRepo.findOneWithSupportTeam(where);
     if (!user) throw new BadRequestException('존재하지 않는 유저입니다.');
     return user;
@@ -116,15 +107,15 @@ export class UserService {
 
   async getUserWithLocalAuth(
     where: FindOptionsWhere<User>,
-  ): Promise<FindOneWithLocalAuthDto> {
+  ): Promise<UserWithLocalAuthDto> {
     const user = await this.userRepo.findOneWithLocalAuth(where);
     if (!user) throw new BadRequestException('존재하지 않는 유저입니다.');
     return user;
   }
   async changeUserProfile(
     updateInput: { field: 'teamId' | 'image' | 'nickname'; value: any },
-    prevUserData: FindOneUserWithTeamDto,
-  ): Promise<FindOneUserWithTeamDto> {
+    prevUserData: UserWithTeamDto,
+  ): Promise<UserWithTeamDto> {
     const { field, value } = updateInput;
     switch (field) {
       case 'teamId':

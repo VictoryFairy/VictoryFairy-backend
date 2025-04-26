@@ -11,7 +11,7 @@ import { ApiOperation, ApiParam, ApiQuery, ApiTags } from '@nestjs/swagger';
 import { ApiOkResponse, ApiNotFoundResponse } from '@nestjs/swagger';
 import { plainToInstance } from 'class-transformer';
 import { JwtAuth } from 'src/common/decorators/jwt-token.decorator';
-import { TeamDto } from 'src/modules/team/dto/response/team.dto';
+import { TeamDto } from 'src/modules/team/dto/response/res-team.dto';
 import { TeamService } from 'src/modules/team/team.service';
 
 @ApiTags('Team')

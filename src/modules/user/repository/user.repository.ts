@@ -2,10 +2,10 @@ import { Injectable, InternalServerErrorException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { FindOptionsWhere, Repository } from 'typeorm';
 import { User } from '../entities/user.entity';
-import { FindOneWithLocalAuthDto } from '../dto/internal/findone-with-local-auth.dto';
+import { UserWithLocalAuthDto } from '../dto/internal/user-with-local-auth.dto';
 import { Team } from 'src/modules/team/entities/team.entity';
 import { RequiredCreateUserDto } from '../dto/internal/required-create-user.dto';
-import { FindOneUserWithTeamDto } from '../dto/internal/findone-user-with-team.dto';
+import { UserWithTeamDto } from '../dto/internal/user-with-team.dto';
 import { DeleteUserDto } from '../dto/internal/deleteone-user.dto';
 import { IUserRepository } from './user.repository.interface';
 
@@ -26,27 +26,25 @@ export class UserRepository implements IUserRepository {
 
   async findWithSupportTeam(
     where?: FindOptionsWhere<User>,
-  ): Promise<FindOneUserWithTeamDto[]> {
+  ): Promise<UserWithTeamDto[]> {
     const result = await this.userRepo.find({
       relations: { support_team: true },
       where,
     });
     return await Promise.all(
-      result.map(
-        async (user) => await FindOneUserWithTeamDto.createAndValidate(user),
-      ),
+      result.map(async (user) => await UserWithTeamDto.createAndValidate(user)),
     );
   }
 
   async findOneWithSupportTeam(
     where: FindOptionsWhere<User>,
-  ): Promise<FindOneUserWithTeamDto | null> {
+  ): Promise<UserWithTeamDto | null> {
     try {
       const result = await this.userRepo.findOne({
         where,
         relations: { support_team: true },
       });
-      return await FindOneUserWithTeamDto.createAndValidate(result);
+      return await UserWithTeamDto.createAndValidate(result);
     } catch (error) {
       throw new InternalServerErrorException('User DB 조회 실패');
     }
@@ -63,7 +61,7 @@ export class UserRepository implements IUserRepository {
 
   async findOneWithLocalAuth(
     where: FindOptionsWhere<User>,
-  ): Promise<FindOneWithLocalAuthDto | null> {
+  ): Promise<UserWithLocalAuthDto | null> {
     try {
       const result = await this.userRepo.findOne({
         where,
@@ -71,7 +69,7 @@ export class UserRepository implements IUserRepository {
       });
 
       return result
-        ? await FindOneWithLocalAuthDto.createAndValidate(result)
+        ? await UserWithLocalAuthDto.createAndValidate(result)
         : null;
     } catch (error) {
       throw new InternalServerErrorException('User DB 조회 실패');

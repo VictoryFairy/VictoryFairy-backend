@@ -37,11 +37,6 @@ import { CookieOptions, Request, Response } from 'express';
 import { ConfigService } from '@nestjs/config';
 import { JwtAuth } from 'src/common/decorators/jwt-token.decorator';
 import { OAuthStatus, SocialProvider } from 'src/modules/auth/const/auth.const';
-import {
-  EmailDto,
-  EmailWithCodeDto,
-  LoginLocalUserDto,
-} from 'src/modules/user/dto/user.dto';
 import { AccountService } from 'src/modules/account/account.service';
 import { ProviderParamCheckPipe } from 'src/common/pipe/provider-param-check.pipe';
 import { SocialFlowType } from 'src/modules/auth/types/auth.type';
@@ -54,6 +49,8 @@ import { PidReqDto } from './dto/request/req-pid.dto';
 import { CreateSocialAuthDto } from './dto/internal/social-auth/create-social-auth.dto';
 import { UserService } from '../user/user.service';
 import { AccessTokenResDto } from './dto/response/res-aceess-token.dto';
+import { LoginLocalUserDto } from '../user/dto/request/req-login-local-user.dto';
+import { EmailDto, EmailWithCodeDto } from '../user/dto/request/req-email-user.dto';
 
 @ApiTags('Auth')
 @Controller('auth')

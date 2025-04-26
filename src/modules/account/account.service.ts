@@ -7,11 +7,6 @@ import {
   Logger,
   UnauthorizedException,
 } from '@nestjs/common';
-import {
-  CreateLocalUserDto,
-  LoginLocalUserDto,
-  UserWithSupportTeamDto,
-} from 'src/modules/user/dto/user.dto';
 import { UserRedisService } from 'src/core/redis/user-redis.service';
 import { RankService } from 'src/modules/rank/rank.service';
 import { Transactional, runOnTransactionCommit } from 'typeorm-transactional';
@@ -26,8 +21,10 @@ import { CreateSocialAuthDto } from '../auth/dto/internal/social-auth/create-soc
 import { DEFAULT_PROFILE_IMAGE } from '../user/const/user.const';
 import { AwsS3Service } from 'src/core/aws-s3/aws-s3.service';
 import { DeleteSocialAuthDto } from '../auth/dto/internal/social-auth/delete-social-auth.dto';
-import { FindOneUserWithTeamDto } from '../user/dto/internal/findone-user-with-team.dto';
+import { UserWithTeamDto } from '../user/dto/internal/user-with-team.dto';
 import { CreateUserDto } from '../user/dto/internal/create-user.dto';
+import { CreateLocalUserDto } from '../user/dto/request/req-create-local-user.dto';
+import { LoginLocalUserDto } from '../user/dto/request/req-login-local-user.dto';
 
 @Injectable()
 export class AccountService {
@@ -42,9 +39,7 @@ export class AccountService {
     private readonly awsS3Service: AwsS3Service,
   ) {}
 
-  async loginLocalUser(
-    dto: LoginLocalUserDto,
-  ): Promise<FindOneUserWithTeamDto> {
+  async loginLocalUser(dto: LoginLocalUserDto): Promise<UserWithTeamDto> {
     const { email, password } = dto;
     const user = await this.userService.getUserWithSupportTeam({ email });
 
@@ -64,7 +59,7 @@ export class AccountService {
     sub: string,
     providerEmail: string,
     provider: SocialProvider,
-  ): Promise<{ user: UserWithSupportTeamDto; isNewUser: boolean }> {
+  ): Promise<{ user: UserWithTeamDto; isNewUser: boolean }> {
     let isNewUser = false;
     try {
       //해당 플랫폼으로 가입된 유저 조회

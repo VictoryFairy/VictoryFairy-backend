@@ -10,7 +10,6 @@ import { JwtService } from '@nestjs/jwt';
 import { MailService } from 'src/core/mail/mail.service';
 import { createRandomCode } from 'src/common/utils/random-code.util';
 import { CODE_LENGTH, SocialProvider } from 'src/modules/auth/const/auth.const';
-import { EmailWithCodeDto } from 'src/modules/user/dto/user.dto';
 import { v7 as uuidv7 } from 'uuid';
 import * as bcrypt from 'bcrypt';
 import { HASH_ROUND } from 'src/modules/user/const/user.const';
@@ -33,6 +32,7 @@ import { UpdateLocalAuthDto } from './dto/internal/local-auth/update-local-auth.
 import { FindOptionsWhere } from 'typeorm';
 import { FindOneResultSocialAuthDto } from './dto/internal/social-auth/findone-social-auth.dto';
 import { IJwtPayload } from './types/auth.type';
+import { EmailWithCodeDto } from '../user/dto/request/req-email-user.dto';
 
 @Injectable()
 export class AuthService {

@@ -26,22 +26,20 @@ import { AccountService } from 'src/modules/account/account.service';
 import { JwtAuth } from 'src/common/decorators/jwt-token.decorator';
 import { CurrentUser } from 'src/common/decorators/current-user.decorator';
 import { OverallOppTeamDto } from 'src/modules/rank/dto/rank.dto';
-import {
-  CreateLocalUserDto,
-  EmailDto,
-  LoginLocalUserDto,
-  NicknameDto,
-  PatchUserProfileDto,
-  ResCheckPwDto,
-  TermAgreeDto,
-  UserMyPageDto,
-  UserMeResDto,
-} from 'src/modules/user/dto/user.dto';
 import { RankService } from 'src/modules/rank/rank.service';
 import { ConfigService } from '@nestjs/config';
 import { Response } from 'express';
 import { AuthService } from '../auth/auth.service';
 import { UserService } from './user.service';
+import { CreateLocalUserDto } from './dto/request/req-create-local-user.dto';
+import { LoginLocalUserDto } from './dto/request/req-login-local-user.dto';
+import { EmailDto } from './dto/request/req-email-user.dto';
+import { NicknameDto } from './dto/request/req-nickname-user-dto';
+import { PatchUserProfileDto } from './dto/request/req-patch-user-profile.dto';
+import { UserMeResDto } from './dto/response/res-user-me.dto';
+import { UserMyPageDto } from './dto/response/res-user-mypage.dto';
+import { ResCheckPwDto } from './dto/response/res-check-pw-dto';
+import { TermAgreementDto } from '../term/dto/request/term-argreement.dto';
 
 @ApiTags('User')
 @Controller('users')
@@ -214,12 +212,12 @@ export class UserController {
   @JwtAuth('access')
   @HttpCode(HttpStatus.NO_CONTENT)
   @ApiOperation({ summary: '약관 동의' })
-  @ApiBody({ type: TermAgreeDto })
+  @ApiBody({ type: TermAgreementDto })
   @ApiNoContentResponse({ description: '성공 시 데이터 없이 상태코드만 응답' })
   @ApiInternalServerErrorResponse({ description: 'DB 업데이트 실패한 경우' })
   async agreeTerm(
     @CurrentUser('id') userId: number,
-    @Body() body: TermAgreeDto,
+    @Body() body: TermAgreementDto,
   ) {
     const { termIds } = body;
 
