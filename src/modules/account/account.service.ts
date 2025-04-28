@@ -25,6 +25,7 @@ import { UserWithTeamDto } from '../user/dto/internal/user-with-team.dto';
 import { CreateUserDto } from '../user/dto/internal/create-user.dto';
 import { CreateLocalUserDto } from '../user/dto/request/req-create-local-user.dto';
 import { LoginLocalUserDto } from '../user/dto/request/req-login-local-user.dto';
+import { InsertRankDto } from '../rank/dto/internal/insert-rank.dto';
 
 @Injectable()
 export class AccountService {
@@ -109,14 +110,15 @@ export class AccountService {
   async createLocalUser(dto: CreateLocalUserDto): Promise<{ id: number }> {
     const { password, ...userData } = dto;
     const createdUser = await this.userService.saveUser(userData);
+    const insertRankDto = await InsertRankDto.createAndValidate({
+      team_id: dto.teamId,
+      user_id: createdUser.id,
+      active_year: moment().utc().year(),
+    });
 
     await Promise.all([
       this.authService.createLocalAuth(createdUser.id, password),
-      this.rankService.insertRankIfAbsent({
-        team_id: dto.teamId,
-        year: moment().utc().year(),
-        user_id: createdUser.id,
-      }),
+      this.rankService.insertRankIfAbsent(insertRankDto),
       this.agreeUserRequireTerm(createdUser.id),
     ]);
 
@@ -144,14 +146,15 @@ export class AccountService {
       ...socialAuthData,
       userId: createdUser.id,
     });
+    const insertRankDto = await InsertRankDto.createAndValidate({
+      team_id: createdUser.support_team.id,
+      user_id: createdUser.id,
+      active_year: moment().utc().year(),
+    });
 
     await Promise.all([
       this.authService.createSocialAuth(createSocialAuthDto),
-      this.rankService.insertRankIfAbsent({
-        team_id: createdUser.support_team.id,
-        user_id: createdUser.id,
-        year: moment().utc().year(),
-      }),
+      this.rankService.insertRankIfAbsent(insertRankDto),
       this.agreeUserRequireTerm(createdUser.id),
     ]);
 
@@ -286,11 +289,12 @@ export class AccountService {
       await this.awsS3Service.deleteImage({ fileUrl: oldImage });
     }
     if (updateInput.field === 'teamId') {
-      await this.rankService.insertRankIfAbsent({
+      const insertRankDto = await InsertRankDto.createAndValidate({
         team_id: updateInput.value,
         user_id: userId,
-        year: moment().utc().year(),
+        active_year: moment().utc().year(),
       });
+      await this.rankService.insertRankIfAbsent(insertRankDto);
       await this.rankService.updateRedisRankings(userId);
     }
   }

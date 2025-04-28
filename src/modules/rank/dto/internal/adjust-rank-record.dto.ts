@@ -1,8 +1,8 @@
 import { IsNotEmpty, IsNumber } from 'class-validator';
 import { BaseInternalDto } from 'src/shared/dto/base-internal.dto';
 
-export class DeleteUserDto extends BaseInternalDto {
+export class AdjustRankRecordDto extends BaseInternalDto {
   @IsNotEmpty()
   @IsNumber()
-  userId: number;
+  team_id: number;
 }

@@ -1,21 +1,27 @@
 import {
   BadRequestException,
+  Inject,
   Injectable,
   InternalServerErrorException,
   Logger,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Rank } from 'src/modules/rank/entities/rank.entity';
 import { RegisteredGame } from 'src/modules/registered-game/entities/registered-game.entity';
 import { Repository } from 'typeorm';
-import { CreateRankDto, UserRecordDto } from 'src/modules/rank/dto/rank.dto';
 import { OnEvent } from '@nestjs/event-emitter';
 import { EventName } from 'src/shared/const/event.const';
-import { TRegisteredGameStatus } from 'src/modules/registered-game/types/registered-game-status.type';
 import { RankingRedisService } from '../../core/redis/ranking-redis.service';
 import { IRefinedRankData } from 'src/modules/rank/types/rank.type';
 import { UserRedisService } from '../../core/redis/user-redis.service';
-import { User } from '../user/entities/user.entity';
+import {
+  IRankRepository,
+  RANK_REPOSITORY,
+} from './repository/rank.repository.interface';
+import { InsertRankDto } from './dto/internal/insert-rank.dto';
+import { GameResultColumnMap } from './types/game-result-column-map.type';
+import { ResRankRecordDto } from './dto/response/res-rank-record.dto';
+import { RegisteredGameStatus } from '../registered-game/types/registered-game-status.type';
+import { WatchedGameSummaryDto } from '../registered-game/dto/internal/watched-game-summary.dto';
 
 @Injectable()
 export class RankService {
@@ -23,8 +29,8 @@ export class RankService {
   constructor(
     @InjectRepository(RegisteredGame)
     private readonly registeredGameRepository: Repository<RegisteredGame>,
-    @InjectRepository(Rank)
-    private readonly rankRepository: Repository<Rank>,
+    @Inject(RANK_REPOSITORY)
+    private readonly rankRepo: IRankRepository,
     private readonly rankingRedisService: RankingRedisService,
     private readonly userRedisService: UserRedisService,
   ) {}
@@ -36,82 +42,71 @@ export class RankService {
       this.logger.log('빈 페이로드로 랭킹 레디스 초기 캐싱 스킵');
       return;
     }
-    try {
-      const warmingPromises = userIdsArr.map((userId) =>
-        this.updateRedisRankings(userId),
-      );
-      await Promise.all(warmingPromises);
-      this.logger.log(`랭킹 레디스 초기 캐싱 완료`);
-    } catch (error) {
-      this.logger.error('랭킹 레디스 초기 캐싱 실패', error.stack);
-      throw new InternalServerErrorException('랭킹 레디스 초기 캐싱 실패');
-    }
+    const warmingPromises = userIdsArr.map((userId) =>
+      this.updateRedisRankings(userId),
+    );
+    await Promise.all(warmingPromises);
+    this.logger.log(`랭킹 레디스 초기 캐싱 완료`);
   }
 
   /** @description rank entity에 없으면 저장*/
-  async insertRankIfAbsent(
-    watchedGame: Omit<CreateRankDto, 'status'>,
-  ): Promise<void> {
-    const { team_id, user_id, year } = watchedGame;
+  async insertRankIfAbsent(dto: InsertRankDto): Promise<void> {
+    const { team_id, user_id, active_year } = dto;
 
-    const foundRankData = await this.rankRepository.exists({
-      where: { user: { id: user_id }, active_year: year, team_id },
+    const foundRankData = await this.rankRepo.isExist({
+      user: { id: user_id },
+      active_year,
+      team_id,
     });
 
+    const insertRankDto = await InsertRankDto.createAndValidate(dto);
+
     if (!foundRankData) {
-      await this.rankRepository.insert({
-        team_id,
-        active_year: year,
-        user: { id: user_id },
-      });
+      await this.rankRepo.insert(insertRankDto);
+      return;
     }
+    return;
   }
 
   /** @description rank entity에 업데이트
    * @param isAdd 직관 경기 추가 / 제거에 대한 플래그
    */
   async updateRankEntity(
-    watchedGame: CreateRankDto,
+    watchedGame: WatchedGameSummaryDto,
     isAdd: boolean,
   ): Promise<void> {
     const { status, team_id, user_id, year } = watchedGame;
 
-    const columnToUpdate = {
-      Win: 'win',
-      Lose: 'lose',
-      Tie: 'tie',
-      'No game': 'cancel',
-    };
-
-    const foundRankData = await this.rankRepository.findOne({
+    const column = GameResultColumnMap[status];
+    const foundRankData = await this.rankRepo.findOne({
       where: { user: { id: user_id }, active_year: year, team_id },
     });
 
     // 직관 경기 등록한 경우
     if (isAdd) {
       if (!foundRankData) {
-        const rankData = new Rank();
-        rankData.team_id = team_id;
-        rankData.user = { id: user_id } as User;
-        rankData.active_year = year;
-        rankData[columnToUpdate[status]] = 1;
-        await this.rankRepository.insert(rankData);
+        const insertRankDto = await InsertRankDto.createAndValidate({
+          team_id,
+          user_id,
+          active_year: year,
+        });
+        await this.rankRepo.insert(insertRankDto);
       } else {
         //테이블에 해당 팀과 유저의 조합으로 데이터가 없다면 추가
-        await this.rankRepository.increment(
+        await this.rankRepo.adjustRecord(
           { team_id, user: { id: user_id }, active_year: year },
-          columnToUpdate[status],
-          1,
+          column,
+          true,
         );
       }
     } else {
       // 직관 경기 삭제한 경우
       // 테이블에 기존 데이터가 있는 경우만 감소
       if (foundRankData) {
-        await this.rankRepository.decrement(
+        await this.rankRepo.adjustRecord(
           { team_id, user: { id: user_id }, active_year: year },
-          columnToUpdate[status],
-          1,
+          column,
+          false,
         );
       }
     }
@@ -213,13 +208,12 @@ export class RankService {
   /** @description 해당 유저의 랭킹 전체 & 팀별 점수 계산 */
   private async calculateUserRankings(
     userId: number,
-  ): Promise<Record<string, Omit<UserRecordDto, 'total'>> | undefined> {
-    const foundUserStats = await this.rankRepository.find({
-      where: { user: { id: userId } },
-    });
+  ): Promise<Record<string, Omit<ResRankRecordDto, 'total'>> | undefined> {
+    const foundUserStats = await this.rankRepo.find({ user: { id: userId } });
     if (!foundUserStats) return {};
 
-    const data: Record<string, Omit<UserRecordDto, 'total'>> | undefined = {};
+    const data: Record<string, Omit<ResRankRecordDto, 'total'>> | undefined =
+      {};
     const totals = { win: 0, lose: 0, tie: 0, cancel: 0 };
 
     for (const stat of foundUserStats) {
@@ -239,29 +233,23 @@ export class RankService {
   }
 
   /** @description 유저의 직관 경기 전체 기록 */
-  async userOverallGameStats(userId: number): Promise<UserRecordDto> {
-    try {
-      const userRecord = await this.rankRepository.find({
-        where: { user: { id: userId } },
-      });
+  async userOverallGameStats(userId: number): Promise<ResRankRecordDto> {
+    const userRecord = await this.rankRepo.find({ user: { id: userId } });
 
-      const sum = userRecord.reduce(
-        (acc, cur) => {
-          return {
-            win: acc.win + cur.win,
-            lose: acc.lose + cur.lose,
-            tie: acc.tie + cur.tie,
-            cancel: acc.cancel + cur.cancel,
-            total: acc.total + cur.win + cur.lose + cur.tie + cur.cancel,
-          };
-        },
-        { win: 0, lose: 0, tie: 0, cancel: 0, total: 0 },
-      );
-      const score = Math.floor(this.calculateScore(sum));
-      return { ...sum, score };
-    } catch (error) {
-      throw new InternalServerErrorException('Rank Entity DB 조회 실패');
-    }
+    const sum = userRecord.reduce(
+      (acc, cur) => {
+        return {
+          win: acc.win + cur.win,
+          lose: acc.lose + cur.lose,
+          tie: acc.tie + cur.tie,
+          cancel: acc.cancel + cur.cancel,
+          total: acc.total + cur.win + cur.lose + cur.tie + cur.cancel,
+        };
+      },
+      { win: 0, lose: 0, tie: 0, cancel: 0, total: 0 },
+    );
+    const score = Math.floor(this.calculateScore(sum));
+    return { ...sum, score };
   }
 
   /** @description 직관 홈 승리 & 상대팀 전적 불러오기 */
@@ -272,7 +260,7 @@ export class RankService {
         home_id: number;
         away_id: number;
         sup_id: number;
-        status: TRegisteredGameStatus;
+        status: RegisteredGameStatus;
       }[] = await this.registeredGameRepository
         .createQueryBuilder('registered_game')
         .innerJoin('registered_game.game', 'game')

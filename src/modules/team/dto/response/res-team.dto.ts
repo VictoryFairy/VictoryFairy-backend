@@ -1,7 +1,7 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { Exclude, Expose } from 'class-transformer';
 import { IsNotEmpty, IsNumber, IsString } from 'class-validator';
-import { BaseInternalDto } from 'src/shared/dtos/base-internal.dto';
+import { BaseInternalDto } from 'src/shared/dto/base-internal.dto';
 
 @Exclude()
 export class TeamDto extends BaseInternalDto {

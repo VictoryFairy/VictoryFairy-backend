@@ -7,7 +7,7 @@ import {
   IsString,
 } from 'class-validator';
 import { SocialProvider } from 'src/modules/auth/const/auth.const';
-import { BaseInternalDto } from 'src/shared/dtos/base-internal.dto';
+import { BaseInternalDto } from 'src/shared/dto/base-internal.dto';
 
 export class CreateSocialAuthDto extends BaseInternalDto {
   @IsNotEmpty()

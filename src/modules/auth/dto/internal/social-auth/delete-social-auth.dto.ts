@@ -1,5 +1,5 @@
 import { IsEnum, IsNotEmpty, IsNumber } from 'class-validator';
-import { BaseInternalDto } from 'src/shared/dtos/base-internal.dto';
+import { BaseInternalDto } from 'src/shared/dto/base-internal.dto';
 import { SocialProvider } from 'src/modules/auth/const/auth.const';
 
 export class DeleteSocialAuthDto extends BaseInternalDto {

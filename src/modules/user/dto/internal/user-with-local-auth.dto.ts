@@ -7,7 +7,7 @@ import {
   IsString,
   ValidateNested,
 } from 'class-validator';
-import { BaseInternalDto } from 'src/shared/dtos/base-internal.dto';
+import { BaseInternalDto } from 'src/shared/dto/base-internal.dto';
 import { CheckLocalAuthDto } from 'src/modules/auth/dto/internal/local-auth/check-local-auth.dto';
 
 export class UserWithLocalAuthDto extends BaseInternalDto {

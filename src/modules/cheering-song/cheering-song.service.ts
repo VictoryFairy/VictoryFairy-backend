@@ -9,7 +9,7 @@ import { Brackets, FindOptionsWhere, MoreThan, Repository } from 'typeorm';
 import { TeamService } from '../team/team.service';
 import { LikeCheeringSong } from 'src/modules/cheering-song/entities/like-cheering-song.entity';
 import { User } from '../user/entities/user.entity';
-import { CursorPageCheeringSongDto } from 'src/shared/dtos/cursor-page.dto';
+import { CursorPageCheeringSongDto } from 'src/shared/dto/cursor-page.dto';
 import { CheeringSong } from './entities/cheering-song.entity';
 
 @Injectable()

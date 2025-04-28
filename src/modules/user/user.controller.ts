@@ -25,7 +25,6 @@ import { plainToInstance } from 'class-transformer';
 import { AccountService } from 'src/modules/account/account.service';
 import { JwtAuth } from 'src/common/decorators/jwt-token.decorator';
 import { CurrentUser } from 'src/common/decorators/current-user.decorator';
-import { OverallOppTeamDto } from 'src/modules/rank/dto/rank.dto';
 import { RankService } from 'src/modules/rank/rank.service';
 import { ConfigService } from '@nestjs/config';
 import { Response } from 'express';
@@ -40,6 +39,7 @@ import { UserMeResDto } from './dto/response/res-user-me.dto';
 import { UserMyPageDto } from './dto/response/res-user-mypage.dto';
 import { ResCheckPwDto } from './dto/response/res-check-pw-dto';
 import { TermAgreementDto } from '../term/dto/request/term-argreement.dto';
+import { ResOverallOppTeamDto } from '../rank/dto/response/res-overall-opp-team.dto';
 
 @ApiTags('User')
 @Controller('users')
@@ -156,13 +156,13 @@ export class UserController {
   @Get('me/versus-record')
   @JwtAuth('access')
   @ApiOkResponse({
-    type: OverallOppTeamDto,
+    type: ResOverallOppTeamDto,
     description: 'oppTeam의 key는 팀의 아이디',
   })
   @ApiOperation({ summary: '해당 유저의 상대 팀 전적 및 승리 중 홈 비율 기록' })
   async getUserStats(@CurrentUser('id') userId: number) {
     const result = this.rankService.userStatsWithVerseTeam(userId);
-    return plainToInstance(OverallOppTeamDto, result);
+    return plainToInstance(ResOverallOppTeamDto, result);
   }
 
   /** 해당 유저의 간단한 정보와 직관 전적 가져오기 */
