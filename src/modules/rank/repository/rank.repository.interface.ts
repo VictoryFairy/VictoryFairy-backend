@@ -9,7 +9,7 @@ export interface IRankRepository {
   find(where: FindOptionsWhere<Rank>): Promise<Rank[]>;
   findOne(where: FindOneOptions<Rank>): Promise<Rank | null>;
   isExist(where: FindOptionsWhere<Rank>): Promise<boolean>;
-  insert(dto: InsertRankDto): Promise<boolean>;
+  insert(dto: InsertRankDto): Promise<{ insertedId: number }>;
   adjustRecord(
     where: FindOptionsWhere<Rank>,
     column: GameResultColumnMap,

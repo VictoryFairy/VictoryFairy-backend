@@ -1,7 +1,7 @@
 import { IsIn, IsNotEmpty, IsNumber } from 'class-validator';
 import { RegisteredGameStatus } from '../../types/registered-game-status.type';
 
-export class WatchedGameSummaryDto {
+export class RegisteredGameSummaryDto {
   @IsNotEmpty()
   @IsNumber()
   team_id: number;

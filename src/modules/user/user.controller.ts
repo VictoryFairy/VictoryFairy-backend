@@ -131,7 +131,7 @@ export class UserController {
   }
 
   /** 유저 프로필 변경 */
-  @Patch('/profile')
+  @Patch('profile')
   @HttpCode(HttpStatus.NO_CONTENT)
   @JwtAuth('access')
   @ApiOperation({ summary: '프로필 변경' })

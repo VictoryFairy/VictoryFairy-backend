@@ -44,7 +44,8 @@ export class UserRepository implements IUserRepository {
         where,
         relations: { support_team: true },
       });
-      return await UserWithTeamDto.createAndValidate(result);
+
+      return result ? await UserWithTeamDto.createAndValidate(result) : null;
     } catch (error) {
       throw new InternalServerErrorException('User DB 조회 실패');
     }
@@ -99,13 +100,9 @@ export class UserRepository implements IUserRepository {
     }
   }
 
-  async updateOne(
-    data: { field: string; value: any },
-    userId: number,
-  ): Promise<boolean> {
-    const { field, value } = data;
+  async updateOne(data: any, userId: number): Promise<boolean> {
     try {
-      const result = await this.userRepo.update(userId, { [field]: value });
+      const result = await this.userRepo.update(userId, data);
       return result.affected > 0;
     } catch (error) {
       throw new InternalServerErrorException('User DB 업데이트 실패');

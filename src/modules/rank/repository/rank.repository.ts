@@ -45,10 +45,15 @@ export class RankRepository implements IRankRepository {
     }
   }
 
-  async insert(dto: InsertRankDto): Promise<boolean> {
+  async insert(dto: InsertRankDto): Promise<{ insertedId: number }> {
     try {
-      const result = await this.rankRepository.insert(dto);
-      return result.raw.affectedRows > 0;
+      const { team_id, user_id, active_year } = dto;
+      const result = await this.rankRepository.insert({
+        team_id,
+        user: { id: user_id },
+        active_year,
+      });
+      return { insertedId: result.identifiers[0].id };
     } catch (error) {
       throw new InternalServerErrorException('DB Rank 인서트 실패');
     }

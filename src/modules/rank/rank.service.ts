@@ -21,8 +21,7 @@ import { InsertRankDto } from './dto/internal/insert-rank.dto';
 import { GameResultColumnMap } from './types/game-result-column-map.type';
 import { ResRankRecordDto } from './dto/response/res-rank-record.dto';
 import { RegisteredGameStatus } from '../registered-game/types/registered-game-status.type';
-import { WatchedGameSummaryDto } from '../registered-game/dto/internal/watched-game-summary.dto';
-
+import { RegisteredGameSummaryDto } from '../registered-game/dto/internal/registered-game-summary.dto';
 @Injectable()
 export class RankService {
   private readonly logger = new Logger(RankService.name);
@@ -72,7 +71,7 @@ export class RankService {
    * @param isAdd 직관 경기 추가 / 제거에 대한 플래그
    */
   async updateRankEntity(
-    watchedGame: WatchedGameSummaryDto,
+    watchedGame: RegisteredGameSummaryDto,
     isAdd: boolean,
   ): Promise<void> {
     const { status, team_id, user_id, year } = watchedGame;
@@ -85,20 +84,19 @@ export class RankService {
     // 직관 경기 등록한 경우
     if (isAdd) {
       if (!foundRankData) {
+        //테이블에 해당 팀과 유저의 조합으로 데이터가 없다면 추가
         const insertRankDto = await InsertRankDto.createAndValidate({
           team_id,
           user_id,
           active_year: year,
         });
         await this.rankRepo.insert(insertRankDto);
-      } else {
-        //테이블에 해당 팀과 유저의 조합으로 데이터가 없다면 추가
-        await this.rankRepo.adjustRecord(
-          { team_id, user: { id: user_id }, active_year: year },
-          column,
-          true,
-        );
       }
+      await this.rankRepo.adjustRecord(
+        { team_id, user: { id: user_id }, active_year: year },
+        column,
+        true,
+      );
     } else {
       // 직관 경기 삭제한 경우
       // 테이블에 기존 데이터가 있는 경우만 감소

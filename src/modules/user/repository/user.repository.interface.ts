@@ -20,9 +20,6 @@ export interface IUserRepository {
   ): Promise<UserWithLocalAuthDto | null>;
   isExist(where: FindOptionsWhere<User>): Promise<boolean>;
   create(dto: RequiredCreateUserDto): Promise<User>;
-  updateOne(
-    data: { field: string; value: any },
-    userId: number,
-  ): Promise<boolean>;
+  updateOne(data: any, userId: number): Promise<boolean>;
   deleteOne(dto: DeleteUserDto): Promise<boolean>;
 }

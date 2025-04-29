@@ -112,30 +112,32 @@ export class UserService {
     if (!user) throw new BadRequestException('존재하지 않는 유저입니다.');
     return user;
   }
+
   async changeUserProfile(
     updateInput: { field: 'teamId' | 'image' | 'nickname'; value: any },
     prevUserData: UserWithTeamDto,
   ): Promise<UserWithTeamDto> {
     const { field, value } = updateInput;
+    const updateData = {};
     switch (field) {
       case 'teamId':
-        prevUserData.support_team = { id: value } as Team;
+        updateData['support_team'] = { id: value } as Team;
         break;
       case 'nickname':
         const isExistNickname = await this.isExistNickname(value);
         if (isExistNickname) {
           throw new ConflictException('이미 존재하는 닉네임 입니다.');
         }
-        prevUserData.nickname = value;
+        updateData['nickname'] = value;
         break;
       case 'image':
-        prevUserData.profile_image = value;
+        updateData['profile_image'] = value;
         break;
       default:
         throw new BadRequestException('유효하지 않은 필드입니다.');
     }
 
-    await this.userRepo.updateOne({ field, value }, prevUserData.id);
+    await this.userRepo.updateOne(updateData, prevUserData.id);
     const updatedUser = await this.getUserWithSupportTeam({
       id: prevUserData.id,
     });
