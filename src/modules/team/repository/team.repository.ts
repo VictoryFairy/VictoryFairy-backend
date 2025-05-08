@@ -2,7 +2,7 @@ import { Injectable, InternalServerErrorException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Between, FindOptionsWhere, Repository } from 'typeorm';
 import { Team } from '../entities/team.entity';
-import { TeamSelectIdDto } from '../dto/internal/Team-select-id.dto';
+import { TeamSelectIdDto } from '../dto/internal/team-select-id.dto';
 import { ITeamRepository } from './team.repository.interface';
 
 @Injectable()
