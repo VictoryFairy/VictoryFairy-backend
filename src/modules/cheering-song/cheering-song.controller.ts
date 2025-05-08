@@ -29,7 +29,7 @@ import {
   CursorPageCheeringSongDto,
   CursorPageOptionDto,
   CursorPageWithSearchOptionDto,
-} from 'src/shared/dtos/cursor-page.dto';
+} from 'src/shared/dto/cursor-page.dto';
 import { TCheeringSongType } from 'src/shared/types/seed.type';
 
 @ApiTags('CheeringSong')

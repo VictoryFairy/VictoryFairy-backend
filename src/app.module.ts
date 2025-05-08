@@ -16,7 +16,7 @@ import { SchedulingModule } from './modules/scheduling/scheduling.module';
 import { CheeringSongModule } from './modules/cheering-song/cheering-song.module';
 import { EventEmitterModule } from '@nestjs/event-emitter';
 import { APP_FILTER, APP_GUARD } from '@nestjs/core';
-import { CustomExceptionFilter } from './common/filters/cutstom-execption.filter';
+import { CustomExceptionFilter } from './common/filters/custom-exception.filter';
 import { addTransactionalDataSource } from 'typeorm-transactional';
 import { DataSource } from 'typeorm';
 import { AccountModule } from './modules/account/account.module';
@@ -26,7 +26,7 @@ import { RankModule } from './modules/rank/rank.module';
 import { SlackModule } from './core/slack/slack.module';
 import { ThrottlerModule } from '@nestjs/throttler';
 import { RedisThrottlerStorageService } from './core/redis/redis-throttler-storage.service';
-import { CustomThrottlerGuard } from './common/guard/cutstom-throttler.guard';
+import { CustomThrottlerGuard } from './common/guard/custom-throttler.guard';
 
 @Module({
   imports: [

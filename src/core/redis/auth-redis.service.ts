@@ -6,7 +6,7 @@ import Redis from 'ioredis';
 import { CODE_LIMIT_TIME } from 'src/modules/auth/const/auth.const';
 import { RedisKeys } from 'src/core/redis/const/redis.const';
 import { InjectRedisClient } from 'src/common/decorators/redis-inject.decorator';
-import { IOAuthStateCachingData } from 'src/modules/auth/types/auth.type';
+import { IOAuthStateCachingData } from 'src/modules/auth/strategies/interface/oauth.interface';
 
 export class AuthRedisService {
   constructor(
@@ -63,7 +63,11 @@ export class AuthRedisService {
   }
 
   async deleteOAuthState(state: string) {
-    await this.redisClient.del(`${RedisKeys.OAUTH_STATE}:${state}`);
+    try {
+      await this.redisClient.del(`${RedisKeys.OAUTH_STATE}:${state}`);
+    } catch (error) {
+      throw new InternalServerErrorException('레디스 OAuthState 삭제 실패');
+    }
   }
 
   async saveOAuthCode(
@@ -71,15 +75,19 @@ export class AuthRedisService {
     uuid: string,
     ip: string,
   ): Promise<string | null> {
-    const data = { code, ip };
-    const stringifiedCode = JSON.stringify(data);
-    const result = await this.redisClient.set(
-      `${RedisKeys.OAUTH_CODE}:${uuid}`,
-      stringifiedCode,
-      'EX',
-      30,
-    );
-    return result === 'OK' ? uuid : null;
+    try {
+      const data = { code, ip };
+      const stringifiedCode = JSON.stringify(data);
+      const result = await this.redisClient.set(
+        `${RedisKeys.OAUTH_CODE}:${uuid}`,
+        stringifiedCode,
+        'EX',
+        30,
+      );
+      return result === 'OK' ? uuid : null;
+    } catch (error) {
+      throw new InternalServerErrorException('레디스 OAuthCode 저장 실패');
+    }
   }
 
   async getOAuthCode(uuid: string): Promise<{ code: string; ip: string }> {
@@ -92,6 +100,10 @@ export class AuthRedisService {
   }
 
   async deleteOAuthCode(uuid: string): Promise<void> {
-    await this.redisClient.del(`${RedisKeys.OAUTH_CODE}:${uuid}`);
+    try {
+      await this.redisClient.del(`${RedisKeys.OAUTH_CODE}:${uuid}`);
+    } catch (error) {
+      throw new InternalServerErrorException('레디스 OAuthCode 삭제 실패');
+    }
   }
 }

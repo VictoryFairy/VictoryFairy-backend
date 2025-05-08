@@ -1,5 +1,8 @@
 import { SocialProvider, TFlowType } from 'src/modules/auth/const/auth.const';
-import { IOAuthStrategy, ISocialUserInfo } from 'src/modules/auth/types/auth.type';
+import {
+  IOAuthStrategy,
+  ISocialUserInfo,
+} from 'src/modules/auth/strategies/interface/oauth.interface';
 import { ConfigService } from '@nestjs/config';
 
 export abstract class BaseOAuthStrategy implements IOAuthStrategy {

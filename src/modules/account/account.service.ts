@@ -2,17 +2,11 @@ import {
   BadRequestException,
   ConflictException,
   ForbiddenException,
-  HttpException,
   Injectable,
   InternalServerErrorException,
   Logger,
   UnauthorizedException,
 } from '@nestjs/common';
-import {
-  CreateLocalUserDto,
-  LoginLocalUserDto,
-  UserWithSupportTeamDto,
-} from 'src/modules/user/dto/user.dto';
 import { UserRedisService } from 'src/core/redis/user-redis.service';
 import { RankService } from 'src/modules/rank/rank.service';
 import { Transactional, runOnTransactionCommit } from 'typeorm-transactional';
@@ -23,9 +17,15 @@ import { TermRedisService } from 'src/core/redis/term-redis.service';
 import { TermService } from '../term/term.service';
 import { UserService } from '../user/user.service';
 import { AuthService } from '../auth/auth.service';
-import { CreateSocialAuthDto, CreateUserDto } from './account.dto';
+import { CreateSocialAuthDto } from '../auth/dto/internal/social-auth/create-social-auth.dto';
 import { DEFAULT_PROFILE_IMAGE } from '../user/const/user.const';
 import { AwsS3Service } from 'src/core/aws-s3/aws-s3.service';
+import { DeleteSocialAuthDto } from '../auth/dto/internal/social-auth/delete-social-auth.dto';
+import { UserWithTeamDto } from '../user/dto/internal/user-with-team.dto';
+import { CreateUserDto } from '../user/dto/internal/create-user.dto';
+import { CreateLocalUserDto } from '../user/dto/request/req-create-local-user.dto';
+import { LoginLocalUserDto } from '../user/dto/request/req-login-local-user.dto';
+import { InsertRankDto } from '../rank/dto/internal/insert-rank.dto';
 
 @Injectable()
 export class AccountService {
@@ -40,16 +40,9 @@ export class AccountService {
     private readonly awsS3Service: AwsS3Service,
   ) {}
 
-  async loginLocalUser(dto: LoginLocalUserDto) {
+  async loginLocalUser(dto: LoginLocalUserDto): Promise<UserWithTeamDto> {
     const { email, password } = dto;
-    const user = await this.userService.getUser(
-      { email },
-      { support_team: true },
-    );
-
-    if (!user) {
-      throw new UnauthorizedException('이메일 또는 비밀번호가 틀렸습니다.');
-    }
+    const user = await this.userService.getUserWithSupportTeam({ email });
 
     const isVerified = await this.authService.verifyLocalAuth(
       user.id,
@@ -59,7 +52,7 @@ export class AccountService {
       throw new UnauthorizedException('이메일 또는 비밀번호가 틀렸습니다.');
     }
 
-    return { user };
+    return user;
   }
 
   @Transactional()
@@ -67,31 +60,26 @@ export class AccountService {
     sub: string,
     providerEmail: string,
     provider: SocialProvider,
-  ): Promise<{ user: UserWithSupportTeamDto; isNewUser: boolean }> {
+  ): Promise<{ user: UserWithTeamDto; isNewUser: boolean }> {
     let isNewUser = false;
     try {
       //해당 플랫폼으로 가입된 유저 조회
-      const socialAuth = await this.authService.getSocialAuth(
-        { sub, provider },
-        {},
-        { user_id: true },
-      );
+      const socialAuth = await this.authService.getSocialAuth({
+        sub,
+        provider,
+      });
 
       if (socialAuth) {
-        const user = await this.userService.getUserWithSupportTeamWithId(
-          socialAuth.user_id,
-        );
+        const user = await this.userService.getUserWithSupportTeam({
+          id: socialAuth.userId,
+        });
         return { user, isNewUser };
       }
 
-      const isExistUser = await this.userService.getUser(
-        { email: providerEmail },
-        {},
-        { id: true, email: true },
-      );
+      const isExistUser = await this.userService.isExistEmail(providerEmail);
 
       // 동일 이메일이 이미 가입된 경우
-      if (isExistUser) {
+      if (isExistUser.isExist) {
         throw new ConflictException('이미 가입된 이메일입니다.');
       }
       //없는 경우
@@ -99,9 +87,9 @@ export class AccountService {
         { email: providerEmail },
         { sub, provider, providerEmail, isPrimary: true },
       );
-      const user = await this.userService.getUserWithSupportTeamWithId(
-        createdUser.id,
-      );
+      const user = await this.userService.getUserWithSupportTeam({
+        id: createdUser.id,
+      });
       isNewUser = true;
       runOnTransactionCommit(async () => {
         try {
@@ -114,9 +102,6 @@ export class AccountService {
 
       return { user, isNewUser };
     } catch (error) {
-      if (error instanceof HttpException) {
-        throw error;
-      }
       throw new InternalServerErrorException('소셜 로그인 실패');
     }
   }
@@ -125,14 +110,15 @@ export class AccountService {
   async createLocalUser(dto: CreateLocalUserDto): Promise<{ id: number }> {
     const { password, ...userData } = dto;
     const createdUser = await this.userService.saveUser(userData);
+    const insertRankDto = await InsertRankDto.createAndValidate({
+      team_id: dto.teamId,
+      user_id: createdUser.id,
+      active_year: moment().utc().year(),
+    });
 
     await Promise.all([
       this.authService.createLocalAuth(createdUser.id, password),
-      this.rankService.insertRankIfAbsent({
-        team_id: dto.teamId,
-        year: moment().utc().year(),
-        user_id: createdUser.id,
-      }),
+      this.rankService.insertRankIfAbsent(insertRankDto),
       this.agreeUserRequireTerm(createdUser.id),
     ]);
 
@@ -152,18 +138,23 @@ export class AccountService {
    * @description 소셜 로그인 함수 내부에서 처리
    * User생성 및 SocialAuth 생성 */
   async createSocialUser(
-    userData: Pick<CreateUserDto, 'email'>,
+    userData: CreateUserDto,
     socialAuthData: Omit<CreateSocialAuthDto, 'userId'>,
   ) {
     const createdUser = await this.userService.saveUser(userData);
+    const createSocialAuthDto = await CreateSocialAuthDto.createAndValidate({
+      ...socialAuthData,
+      userId: createdUser.id,
+    });
+    const insertRankDto = await InsertRankDto.createAndValidate({
+      team_id: createdUser.support_team.id,
+      user_id: createdUser.id,
+      active_year: moment().utc().year(),
+    });
 
     await Promise.all([
-      this.authService.createSocialAuth(socialAuthData, createdUser.id),
-      this.rankService.insertRankIfAbsent({
-        team_id: createdUser.support_team.id,
-        user_id: createdUser.id,
-        year: moment().utc().year(),
-      }),
+      this.authService.createSocialAuth(createSocialAuthDto),
+      this.rankService.insertRankIfAbsent(insertRankDto),
       this.agreeUserRequireTerm(createdUser.id),
     ]);
 
@@ -171,8 +162,8 @@ export class AccountService {
   }
 
   /** SocialAuth 연결 */
-  async linkSocial(data: CreateSocialAuthDto) {
-    const { userId, sub, provider } = data;
+  async linkSocial(data: CreateSocialAuthDto): Promise<void> {
+    const { sub, provider } = data;
     const socialAuth = await this.authService.getSocialAuth({
       sub,
       provider,
@@ -181,14 +172,7 @@ export class AccountService {
     if (socialAuth) {
       throw new ConflictException('이미 연동했거나 가입하였습니다.');
     }
-    try {
-      await this.authService.createSocialAuth(data, userId);
-    } catch (error) {
-      if (error instanceof HttpException) {
-        throw error;
-      }
-      throw new InternalServerErrorException('계정 연동 실패');
-    }
+    await this.authService.createSocialAuth(data);
   }
 
   @Transactional()
@@ -201,7 +185,7 @@ export class AccountService {
 
     // 로컬 회원가입이면 연동 해제 후 종료
     if (isExistLocalAuth) {
-      await this.authService.deleteSocialAuth(userId, provider);
+      await this.authService.deleteSocialAuth({ userId, provider });
       return;
     }
 
@@ -226,7 +210,11 @@ export class AccountService {
       );
     }
 
-    await this.authService.deleteSocialAuth(userId, provider);
+    const deleteSocialAuthDto = await DeleteSocialAuthDto.createAndValidate({
+      userId,
+      provider,
+    });
+    await this.authService.deleteSocialAuth(deleteSocialAuthDto);
     return;
   }
 
@@ -278,16 +266,9 @@ export class AccountService {
   ) {
     const { field, value } = updateInput;
 
-    const prevUserData = await this.userService.getUser(
-      { id: userId },
-      { support_team: true },
-      {
-        id: true,
-        nickname: true,
-        profile_image: true,
-        support_team: { id: true },
-      },
-    );
+    const prevUserData = await this.userService.getUserWithSupportTeam({
+      id: userId,
+    });
     const oldImage = prevUserData?.profile_image || null;
     // 유저 업데이트
     const updatedUser = await this.userService.changeUserProfile(
@@ -308,11 +289,12 @@ export class AccountService {
       await this.awsS3Service.deleteImage({ fileUrl: oldImage });
     }
     if (updateInput.field === 'teamId') {
-      await this.rankService.insertRankIfAbsent({
+      const insertRankDto = await InsertRankDto.createAndValidate({
         team_id: updateInput.value,
         user_id: userId,
-        year: moment().utc().year(),
+        active_year: moment().utc().year(),
       });
+      await this.rankService.insertRankIfAbsent(insertRankDto);
       await this.rankService.updateRedisRankings(userId);
     }
   }

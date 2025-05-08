@@ -7,7 +7,7 @@ import {
   IsUrl,
   ValidateNested,
 } from 'class-validator';
-import { TeamDto } from '../../team/dto/team.dto';
+import { TeamDto } from '../../team/dto/response/res-team.dto';
 import { PlayerDto } from './player.dto';
 import { CheeringSong } from '../entities/cheering-song.entity';
 

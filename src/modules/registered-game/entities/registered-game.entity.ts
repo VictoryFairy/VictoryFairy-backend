@@ -9,7 +9,7 @@ import {
   UpdateDateColumn,
 } from 'typeorm';
 import { Team } from '../../team/entities/team.entity';
-import { TRegisteredGameStatus } from 'src/modules/registered-game/types/registered-game-status.type';
+import { RegisteredGameStatus } from 'src/modules/registered-game/types/registered-game-status.type';
 import { Game } from '../../game/entities/game.entity';
 import { User } from '../../user/entities/user.entity';
 
@@ -29,7 +29,7 @@ export class RegisteredGame {
   review: string;
 
   @Column({ nullable: true })
-  status?: TRegisteredGameStatus;
+  status?: RegisteredGameStatus;
 
   @CreateDateColumn({ type: 'timestamptz' })
   created_at: Date;

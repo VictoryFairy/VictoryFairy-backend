@@ -3,7 +3,7 @@ import Redis from 'ioredis';
 import { RedisKeys } from 'src/core/redis/const/redis.const';
 import { InjectRedisClient } from 'src/common/decorators/redis-inject.decorator';
 import { Team } from 'src/modules/team/entities/team.entity';
-import { User } from 'src/modules/user/entities/user.entity';
+import { UserWithTeamDto } from 'src/modules/user/dto/internal/user-with-team.dto';
 
 export class UserRedisService {
   constructor(
@@ -11,7 +11,7 @@ export class UserRedisService {
     private readonly redisClient: Redis,
   ) {}
 
-  async saveUser(user: User) {
+  async saveUser(user: UserWithTeamDto) {
     const { id, nickname, profile_image } = user;
     const userInfo = { id, nickname, profile_image };
     try {

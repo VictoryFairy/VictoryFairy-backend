@@ -7,6 +7,8 @@ import { TeamModule } from '../team/team.module';
 import { AwsS3Module } from '../../core/aws-s3/aws-s3.module';
 import { GameModule } from '../game/game.module';
 import { RankModule } from '../rank/rank.module';
+import { RegisteredGameRepository } from './repository/registered-game.repository';
+import { REGISTERED_GAME_REPOSITORY } from './repository/registered-game.repository.interface';
 
 @Module({
   imports: [
@@ -17,7 +19,10 @@ import { RankModule } from '../rank/rank.module';
     AwsS3Module,
   ],
   controllers: [RegisteredGameController],
-  providers: [RegisteredGameService],
+  providers: [
+    RegisteredGameService,
+    { provide: REGISTERED_GAME_REPOSITORY, useClass: RegisteredGameRepository },
+  ],
   exports: [RegisteredGameService],
 })
 export class RegisteredGameModule {}

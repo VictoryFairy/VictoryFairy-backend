@@ -10,6 +10,7 @@ export default class TeamSeeder implements Seeder {
         await manager.getRepository(Team).upsert(
           {
             name: seed.name,
+            id: seed.id,
           },
           ['name'],
         );

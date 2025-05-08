@@ -25,23 +25,21 @@ import { plainToInstance } from 'class-transformer';
 import { AccountService } from 'src/modules/account/account.service';
 import { JwtAuth } from 'src/common/decorators/jwt-token.decorator';
 import { CurrentUser } from 'src/common/decorators/current-user.decorator';
-import { OverallOppTeamDto } from 'src/modules/rank/dto/rank.dto';
-import {
-  CreateLocalUserDto,
-  EmailDto,
-  LoginLocalUserDto,
-  NicknameDto,
-  PatchUserProfileDto,
-  ResCheckPwDto,
-  TermAgreeDto,
-  UserMyPageDto,
-  UserMeResDto,
-} from 'src/modules/user/dto/user.dto';
 import { RankService } from 'src/modules/rank/rank.service';
 import { ConfigService } from '@nestjs/config';
 import { Response } from 'express';
 import { AuthService } from '../auth/auth.service';
 import { UserService } from './user.service';
+import { CreateLocalUserDto } from './dto/request/req-create-local-user.dto';
+import { LoginLocalUserDto } from './dto/request/req-login-local-user.dto';
+import { EmailDto } from './dto/request/req-email-user.dto';
+import { NicknameDto } from './dto/request/req-nickname-user-dto';
+import { PatchUserProfileDto } from './dto/request/req-patch-user-profile.dto';
+import { UserMeResDto } from './dto/response/res-user-me.dto';
+import { UserMyPageDto } from './dto/response/res-user-mypage.dto';
+import { ResCheckPwDto } from './dto/response/res-check-pw-dto';
+import { TermAgreementDto } from '../term/dto/request/term-argreement.dto';
+import { ResOverallOppTeamDto } from '../rank/dto/response/res-overall-opp-team.dto';
 
 @ApiTags('User')
 @Controller('users')
@@ -133,7 +131,7 @@ export class UserController {
   }
 
   /** 유저 프로필 변경 */
-  @Patch('/profile')
+  @Patch('profile')
   @HttpCode(HttpStatus.NO_CONTENT)
   @JwtAuth('access')
   @ApiOperation({ summary: '프로필 변경' })
@@ -158,13 +156,13 @@ export class UserController {
   @Get('me/versus-record')
   @JwtAuth('access')
   @ApiOkResponse({
-    type: OverallOppTeamDto,
+    type: ResOverallOppTeamDto,
     description: 'oppTeam의 key는 팀의 아이디',
   })
   @ApiOperation({ summary: '해당 유저의 상대 팀 전적 및 승리 중 홈 비율 기록' })
   async getUserStats(@CurrentUser('id') userId: number) {
     const result = this.rankService.userStatsWithVerseTeam(userId);
-    return plainToInstance(OverallOppTeamDto, result);
+    return plainToInstance(ResOverallOppTeamDto, result);
   }
 
   /** 해당 유저의 간단한 정보와 직관 전적 가져오기 */
@@ -214,12 +212,12 @@ export class UserController {
   @JwtAuth('access')
   @HttpCode(HttpStatus.NO_CONTENT)
   @ApiOperation({ summary: '약관 동의' })
-  @ApiBody({ type: TermAgreeDto })
+  @ApiBody({ type: TermAgreementDto })
   @ApiNoContentResponse({ description: '성공 시 데이터 없이 상태코드만 응답' })
   @ApiInternalServerErrorResponse({ description: 'DB 업데이트 실패한 경우' })
   async agreeTerm(
     @CurrentUser('id') userId: number,
-    @Body() body: TermAgreeDto,
+    @Body() body: TermAgreementDto,
   ) {
     const { termIds } = body;
 
