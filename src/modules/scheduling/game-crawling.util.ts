@@ -118,9 +118,9 @@ function refineGamesData(rawData: string[][], year: number): TGameSchedule {
       if (review === '리뷰') {
         gameData['winner'] =
           homeTeam.score > awayTeam.score
-            ? homeTeam.name
+            ? TTeam[homeTeam.name]
             : homeTeam.score < awayTeam.score
-              ? awayTeam.name
+              ? TTeam[awayTeam.name]
               : null;
         gameData['homeScore'] = homeTeam.score;
         gameData['awayScore'] = awayTeam.score;
@@ -213,6 +213,7 @@ async function upsertMany(
       game.away_team_score = schedule.awayScore ?? null;
 
       let homeTeam = teams.find((team) => team.name === schedule.homeTeam);
+
       if (!homeTeam) {
         await manager
           .getRepository(Team)
@@ -287,6 +288,7 @@ async function upsertMany(
             id: preDoubleHeaderGameId,
           });
         }
+
         await manager.upsert(Game, game, ['id']);
       } catch (error) {
         console.error('게임 저장 중 오류 발생:', error);
