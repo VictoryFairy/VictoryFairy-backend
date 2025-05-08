@@ -60,7 +60,10 @@ export class UserService {
     }
   }
 
-  async isExistEmail(email: string) {
+  async isExistEmail(email: string): Promise<{
+    isExist: boolean;
+    initialSignUpType: 'local' | 'social' | null;
+  }> {
     const user = await this.userRepo.findOneWithLocalAuth({ email });
     const isExist = user ? true : false;
     let initialSignUpType: 'local' | 'social' | null = null;
