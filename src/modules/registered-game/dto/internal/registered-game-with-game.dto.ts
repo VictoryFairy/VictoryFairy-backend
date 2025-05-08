@@ -8,8 +8,8 @@ import {
   IsOptional,
   IsString,
 } from 'class-validator';
-import { Type } from 'class-transformer';
-import { Game } from 'src/modules/game/entities/game.entity';
+import { Expose, Type } from 'class-transformer';
+import { GameDto } from 'src/modules/game/dto/game.dto';
 
 export class RegisteredGameWithGameDto extends BaseInternalDto {
   @IsNotEmpty()
@@ -20,11 +20,9 @@ export class RegisteredGameWithGameDto extends BaseInternalDto {
   @IsString()
   image?: string;
 
-  @IsNotEmpty()
   @IsString()
   seat: string;
 
-  @IsNotEmpty()
   @IsString()
   review: string;
 
@@ -33,10 +31,11 @@ export class RegisteredGameWithGameDto extends BaseInternalDto {
   status?: RegisteredGameStatus;
 
   @IsNotEmpty()
-  @Type(() => Game)
-  game: Game;
+  @Type(() => GameDto)
+  game: GameDto;
 
   @IsNotEmpty()
+  @Expose({ name: 'cheering_team' })
   @Type(() => TeamDto)
-  cheering_team: TeamDto;
+  cheeringTeam: TeamDto;
 }

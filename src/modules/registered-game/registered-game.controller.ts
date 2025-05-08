@@ -26,8 +26,8 @@ import { CurrentUser } from 'src/common/decorators/current-user.decorator';
 import { RegisteredGameService } from 'src/modules/registered-game/registered-game.service';
 import { CreateRegisteredGameDto } from './dto/request/req-create-registered-game.dto';
 import { UpdateRegisteredGameDto } from './dto/request/req-update-registered-game.dto';
-import { RegisteredGameWithGameDto } from './dto/internal/registerd-game-with-game.dto';
-import { FindAllMonthlyQueryDto } from './dto/request/req-findall-monthly-quert.dto';
+import { RegisteredGameWithGameDto } from './dto/internal/registered-game-with-game.dto';
+import { FindAllMonthlyQueryDto } from './dto/request/req-findall-monthly-query.dto';
 import { DeleteRegisteredGameDto } from './dto/internal/delete-registered-game.dto';
 
 @ApiTags('RegisteredGame')

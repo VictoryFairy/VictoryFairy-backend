@@ -2,12 +2,12 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { RegisteredGame } from '../entities/registered-game.entity';
 import { FindOptionsOrder, FindOptionsWhere, Repository } from 'typeorm';
 import { Injectable, InternalServerErrorException } from '@nestjs/common';
-import { RegisteredGameWithGameDto } from '../dto/internal/registerd-game-with-game.dto';
-import { UpdateRegisteredGameDto } from '../dto/request/req-update-registered-game.dto';
+import { RegisteredGameWithGameDto } from '../dto/internal/registered-game-with-game.dto';
 import { SaveRegisteredGameDto } from '../dto/internal/save-registered-game.dto';
 import { IRegisteredGameRepository } from './registered-game.repository.interface';
 import { DeleteRegisteredGameDto } from '../dto/internal/delete-registered-game.dto';
 import { RegisteredGameWithUserDto } from '../dto/internal/registered-game-with-user.dto';
+import { UpdateRegisteredGameToEntityDto } from '../dto/internal/update-registered-game.dto';
 
 @Injectable()
 export class RegisteredGameRepository implements IRegisteredGameRepository {
@@ -81,7 +81,7 @@ export class RegisteredGameRepository implements IRegisteredGameRepository {
   async findOne(
     where: FindOptionsWhere<RegisteredGame>,
   ): Promise<RegisteredGameWithGameDto | null> {
-    let foundOne: RegisteredGameWithGameDto;
+    let foundOne: RegisteredGame;
     try {
       foundOne = await this.registeredGameRepository.findOne({
         where,
@@ -142,12 +142,16 @@ export class RegisteredGameRepository implements IRegisteredGameRepository {
     }
   }
 
-  async update(dto: UpdateRegisteredGameDto, id: number, userId: number) {
+  async update(
+    dto: UpdateRegisteredGameToEntityDto,
+    id: number,
+    userId: number,
+  ) {
     try {
-      const { image, seat, review, cheeringTeamId } = dto;
+      const { cheeringTeam, ...rest } = dto;
       const result = await this.registeredGameRepository.update(
         { id, user: { id: userId } },
-        { image, seat, review, cheering_team: { id: cheeringTeamId } },
+        { ...rest, cheering_team: cheeringTeam },
       );
       return result.affected > 0;
     } catch (error) {

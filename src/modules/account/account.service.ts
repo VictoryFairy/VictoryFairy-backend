@@ -79,7 +79,7 @@ export class AccountService {
       const isExistUser = await this.userService.isExistEmail(providerEmail);
 
       // 동일 이메일이 이미 가입된 경우
-      if (isExistUser) {
+      if (isExistUser.isExist) {
         throw new ConflictException('이미 가입된 이메일입니다.');
       }
       //없는 경우

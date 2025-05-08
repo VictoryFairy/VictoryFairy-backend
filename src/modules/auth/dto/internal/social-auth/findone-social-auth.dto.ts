@@ -1,7 +1,7 @@
 import { IsEnum, IsNotEmpty, IsNumber, IsString } from 'class-validator';
 import { SocialProvider } from 'src/modules/auth/const/auth.const';
 import { BaseInternalDto } from 'src/shared/dto/base-internal.dto';
-import { Transform } from 'class-transformer';
+import { Expose } from 'class-transformer';
 
 export class FindOneResultSocialAuthDto extends BaseInternalDto {
   @IsNotEmpty()
@@ -18,6 +18,6 @@ export class FindOneResultSocialAuthDto extends BaseInternalDto {
 
   @IsNotEmpty()
   @IsNumber()
-  @Transform(({ obj }) => obj.user_id)
+  @Expose({ name: 'user_id' })
   userId: number;
 }

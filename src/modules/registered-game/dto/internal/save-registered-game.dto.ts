@@ -7,11 +7,8 @@ import { BaseInternalDto } from 'src/shared/dto/base-internal.dto';
 import { RegisteredGameStatus } from '../../types/registered-game-status.type';
 
 export class SaveRegisteredGameDto extends BaseInternalDto {
-  @IsNotEmpty()
-  @IsString()
-  image: string;
+  image: string | null;
 
-  @IsNotEmpty()
   @IsString()
   seat: string;
 
@@ -19,7 +16,6 @@ export class SaveRegisteredGameDto extends BaseInternalDto {
   @IsString()
   status: RegisteredGameStatus | null;
 
-  @IsNotEmpty()
   @IsString()
   review: string;
 

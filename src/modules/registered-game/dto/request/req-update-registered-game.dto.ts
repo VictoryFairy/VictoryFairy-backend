@@ -1,6 +1,15 @@
-import { OmitType, PartialType } from '@nestjs/swagger';
-import { CreateRegisteredGameDto } from './req-create-registered-game.dto';
+import { IsNumber, IsOptional, IsString } from 'class-validator';
 
-export class UpdateRegisteredGameDto extends PartialType(
-  OmitType(CreateRegisteredGameDto, ['gameId'] as const),
-) {}
+export class UpdateRegisteredGameDto {
+  @IsNumber()
+  cheeringTeamId: number;
+
+  @IsString()
+  seat: string;
+
+  @IsString()
+  review: string;
+
+  @IsOptional()
+  image?: string;
+}

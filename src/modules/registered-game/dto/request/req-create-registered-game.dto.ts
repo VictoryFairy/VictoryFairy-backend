@@ -16,7 +16,6 @@ export class CreateRegisteredGameDto {
     description: '좌석 상세',
     example: '115블록 2열 13번',
   })
-  @IsNotEmpty()
   @IsString()
   @Expose()
   seat: string;
@@ -25,7 +24,6 @@ export class CreateRegisteredGameDto {
     description: '감상평',
     example: '좋았다',
   })
-  @IsNotEmpty()
   @IsString()
   @Expose()
   review: string;
