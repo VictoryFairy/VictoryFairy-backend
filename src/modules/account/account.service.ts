@@ -62,48 +62,44 @@ export class AccountService {
     provider: SocialProvider,
   ): Promise<{ user: UserWithTeamDto; isNewUser: boolean }> {
     let isNewUser = false;
-    try {
-      //해당 플랫폼으로 가입된 유저 조회
-      const socialAuth = await this.authService.getSocialAuth({
-        sub,
-        provider,
-      });
+    //해당 플랫폼으로 가입된 유저 조회
+    const socialAuth = await this.authService.getSocialAuth({
+      sub,
+      provider,
+    });
 
-      if (socialAuth) {
-        const user = await this.userService.getUserWithSupportTeam({
-          id: socialAuth.userId,
-        });
-        return { user, isNewUser };
-      }
-
-      const isExistUser = await this.userService.isExistEmail(providerEmail);
-
-      // 동일 이메일이 이미 가입된 경우
-      if (isExistUser.isExist) {
-        throw new ConflictException('이미 가입된 이메일입니다.');
-      }
-      //없는 경우
-      const createdUser = await this.createSocialUser(
-        { email: providerEmail },
-        { sub, provider, providerEmail, isPrimary: true },
-      );
+    if (socialAuth) {
       const user = await this.userService.getUserWithSupportTeam({
-        id: createdUser.id,
+        id: socialAuth.userId,
       });
-      isNewUser = true;
-      runOnTransactionCommit(async () => {
-        try {
-          await this.userRedisService.saveUser(createdUser);
-          await this.rankService.updateRedisRankings(user.id);
-        } catch (error) {
-          this.logger.warn(`유저 ${user.id} 캐싱 실패`, error.stack);
-        }
-      });
-
       return { user, isNewUser };
-    } catch (error) {
-      throw new InternalServerErrorException('소셜 로그인 실패');
     }
+
+    const isExistUser = await this.userService.isExistEmail(providerEmail);
+
+    // 동일 이메일이 이미 가입된 경우
+    if (isExistUser.isExist) {
+      throw new ConflictException('이미 가입된 이메일입니다.');
+    }
+    //없는 경우
+    const createdUser = await this.createSocialUser(
+      { email: providerEmail },
+      { sub, provider, providerEmail, isPrimary: true },
+    );
+    const user = await this.userService.getUserWithSupportTeam({
+      id: createdUser.id,
+    });
+    isNewUser = true;
+    runOnTransactionCommit(async () => {
+      try {
+        await this.userRedisService.saveUser(createdUser);
+        await this.rankService.updateRedisRankings(user.id);
+      } catch (error) {
+        this.logger.warn(`유저 ${user.id} 캐싱 실패`, error.stack);
+      }
+    });
+
+    return { user, isNewUser };
   }
 
   @Transactional()
