@@ -17,6 +17,12 @@ import { SocialAuthGuard } from 'src/common/guard/social-auth.guard';
 import { SocialPostGuard } from 'src/common/guard/social-post.guard';
 import { LocalAuth } from './entities/local-auth.entity';
 import { SocialAuth } from './entities/social-auth.entity';
+import { SOCIAL_AUTH_REPOSITORY } from './repository/social-auth.repository.interface';
+import { SocialAuthRepository } from './repository/social-auth.respository';
+import { LOCAL_AUTH_REPOSITORY } from './repository/local-auth.repository.interface';
+import { LocalAuthRepository } from './repository/local-auth.repository';
+import { UserModule } from 'src/modules/user/user.module';
+import { forwardRef } from '@nestjs/common';
 
 @Global()
 @Module({
@@ -25,6 +31,7 @@ import { SocialAuth } from './entities/social-auth.entity';
     JwtModule.register({}),
     MailModule,
     RedisModule,
+    forwardRef(() => UserModule),
   ],
   providers: [
     AuthService,
@@ -40,6 +47,14 @@ import { SocialAuth } from './entities/social-auth.entity';
       provide: OAUTH_STRATEGY_MANAGER,
       useClass: OAuthStrategyManager,
     },
+    {
+      provide: SOCIAL_AUTH_REPOSITORY,
+      useClass: SocialAuthRepository,
+    },
+    {
+      provide: LOCAL_AUTH_REPOSITORY,
+      useClass: LocalAuthRepository,
+    },
   ],
   exports: [
     AuthService,
@@ -47,6 +62,7 @@ import { SocialAuth } from './entities/social-auth.entity';
     RefreshTokenGuard,
     OAUTH_STRATEGY_MANAGER,
     JwtStrategy,
+    SOCIAL_AUTH_REPOSITORY,
   ],
 })
 export class AuthModule {}

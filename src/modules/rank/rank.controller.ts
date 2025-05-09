@@ -2,14 +2,12 @@ import { Controller, Get, Query } from '@nestjs/common';
 import { RankService } from './rank.service';
 import { ApiOkResponse, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { JwtAuth } from 'src/common/decorators/jwt-token.decorator';
-import {
-  QueryTotalRankingListAboutTeamDto,
-  ResNearByDto,
-  ResRankDto,
-  ResRankTopThreeDto,
-} from 'src/modules/rank/dto/rank.dto';
 import { CurrentUser } from 'src/common/decorators/current-user.decorator';
 import { plainToInstance } from 'class-transformer';
+import { ResRankTopThreeDto } from './dto/response/res-rank-top-three.dto';
+import { QueryTotalRankingListAboutTeamDto } from './dto/request/query.total-rank-list-about-team.dto';
+import { ResNearByDto } from './dto/response/res-nearby.dto';
+import { ResRankDto } from './dto/response/res-rank.dto';
 
 @ApiTags('rankings')
 @Controller('rankings')

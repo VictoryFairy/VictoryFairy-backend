@@ -1,48 +1,49 @@
 import {
   BadRequestException,
   ConflictException,
+  Inject,
   Injectable,
-  InternalServerErrorException,
   Logger,
 } from '@nestjs/common';
 import { DEFAULT_PROFILE_IMAGE } from 'src/modules/user/const/user.const';
-import { InjectRepository } from '@nestjs/typeorm';
-import {
-  FindOptionsRelations,
-  FindOptionsSelect,
-  FindOptionsWhere,
-  Repository,
-} from 'typeorm';
+import { FindOptionsWhere } from 'typeorm';
 import { EventEmitter2, OnEvent } from '@nestjs/event-emitter';
 import { EventName } from 'src/shared/const/event.const';
 import { Team } from 'src/modules/team/entities/team.entity';
 import { AwsS3Service } from 'src/core/aws-s3/aws-s3.service';
 import { runOnTransactionCommit, Transactional } from 'typeorm-transactional';
-import { CreateUserDto } from 'src/modules/account/account.dto';
-import { UserWithSupportTeamDto } from 'src/modules/user/dto/user.dto';
 import { User } from './entities/user.entity';
 import { UserRedisService } from 'src/core/redis/user-redis.service';
 import { TermService } from '../term/term.service';
+import {
+  IUserRepository,
+  USER_REPOSITORY,
+} from './repository/user.repository.interface';
+import { CreateUserDto } from './dto/internal/create-user.dto';
+import { RequiredCreateUserDto } from './dto/internal/required-create-user.dto';
+import { UserWithTeamDto } from './dto/internal/user-with-team.dto';
+import { UserWithLocalAuthDto } from './dto/internal/user-with-local-auth.dto';
+import { DeleteUserDto } from './dto/internal/deleteone-user.dto';
+import { TeamService } from '../team/team.service';
 
 @Injectable()
 export class UserService {
   private readonly logger = new Logger(UserService.name);
   constructor(
-    @InjectRepository(User)
-    private readonly userRepository: Repository<User>,
-    @InjectRepository(Team)
-    private readonly teamRepository: Repository<Team>,
+    @Inject(USER_REPOSITORY)
+    private readonly userRepo: IUserRepository,
     private readonly userRedisService: UserRedisService,
     private readonly eventEmitter: EventEmitter2,
     private readonly awsS3Service: AwsS3Service,
     private readonly termService: TermService,
+    private readonly teamService: TeamService,
   ) {}
 
   /** 레디스 연결 시 미리 저장 */
   @OnEvent(EventName.REDIS_CONNECT)
   async initCacheUsers(): Promise<void> {
     try {
-      const users = await this.userRepository.find();
+      const users = await this.userRepo.find();
       if (!users.length) return;
       const userIds = [];
       const cachingPromises = users.map((user) => {
@@ -59,123 +60,102 @@ export class UserService {
     }
   }
 
-  async isExistEmail(email: string) {
-    try {
-      const user = await this.userRepository.findOne({
-        where: { email },
-        relations: { local_auth: true },
-        select: { id: true, email: true, local_auth: { user_id: true } },
-      });
-      const isExist = user ? true : false;
-      let initialSignUpType: 'local' | 'social' | null = null;
+  async isExistEmail(email: string): Promise<{
+    isExist: boolean;
+    initialSignUpType: 'local' | 'social' | null;
+  }> {
+    const user = await this.userRepo.findOneWithLocalAuth({ email });
+    const isExist = user ? true : false;
+    let initialSignUpType: 'local' | 'social' | null = null;
 
-      if (isExist) {
-        initialSignUpType = user.local_auth ? 'local' : 'social';
-      }
-
-      return { isExist, initialSignUpType };
-    } catch (error) {
-      throw new InternalServerErrorException('DB 조회 실패');
+    if (isExist) {
+      initialSignUpType = user.local_auth ? 'local' : 'social';
     }
+
+    return { isExist, initialSignUpType };
   }
 
   async isExistNickname(nickname: string): Promise<boolean> {
-    try {
-      return this.userRepository.exists({ where: { nickname } });
-    } catch (error) {
-      throw new InternalServerErrorException('DB 조회 실패');
-    }
+    return this.userRepo.isExist({ nickname });
   }
 
   async saveUser(dto: CreateUserDto): Promise<User> {
-    try {
-      const { email } = dto;
-      dto.image = dto.nickname?.trim() ? dto.image : DEFAULT_PROFILE_IMAGE;
-      dto.nickname = dto.nickname?.trim()
-        ? dto.nickname
-        : await this.generateRandomNickname();
-      dto.teamId = dto.teamId || 1;
+    dto.image = dto.nickname?.trim() ? dto.image : DEFAULT_PROFILE_IMAGE;
+    dto.nickname = dto.nickname?.trim()
+      ? dto.nickname
+      : await this.generateRandomNickname();
+    dto.teamId = dto.teamId || 1;
 
-      const createdUser = await this.userRepository.save({
-        email,
-        nickname: dto.nickname,
-        profile_image: dto.image,
-        support_team: { id: dto.teamId } as Team,
-      });
-      createdUser.support_team = { id: dto.teamId } as Team;
-      return createdUser;
-    } catch (error) {
-      throw new InternalServerErrorException('DB 저장 실패');
-    }
+    const requiredCreateUserDto =
+      await RequiredCreateUserDto.createAndValidate(dto);
+
+    const createdUser = await this.userRepo.create(requiredCreateUserDto);
+    createdUser.support_team = { id: dto.teamId } as Team;
+    return createdUser;
   }
 
-  async getUser(
-    where: FindOptionsWhere<User>,
-    relations?: FindOptionsRelations<User>,
-    select?: FindOptionsSelect<User>,
-  ): Promise<User | null> {
-    const user = await this.userRepository.findOne({
-      where,
-      relations,
-      select,
-    });
+  async getUser(where: FindOptionsWhere<User>): Promise<User> {
+    const user = await this.userRepo.findOne(where);
+    if (!user) throw new BadRequestException('존재하지 않는 유저입니다.');
     return user;
   }
 
-  async getUserWithSupportTeamWithId(
-    userId: number,
-  ): Promise<UserWithSupportTeamDto> {
-    const user = await this.userRepository.findOne({
-      where: { id: userId },
-      relations: { support_team: true },
-      select: {
-        id: true,
-        email: true,
-        nickname: true,
-        support_team: { id: true, name: true },
-      },
-    });
-    return user as UserWithSupportTeamDto;
+  async getUserWithSupportTeam(
+    where: FindOptionsWhere<User>,
+  ): Promise<UserWithTeamDto> {
+    const user = await this.userRepo.findOneWithSupportTeam(where);
+    if (!user) throw new BadRequestException('존재하지 않는 유저입니다.');
+    return user;
+  }
+
+  async getUserWithLocalAuth(
+    where: FindOptionsWhere<User>,
+  ): Promise<UserWithLocalAuthDto> {
+    const user = await this.userRepo.findOneWithLocalAuth(where);
+    if (!user) throw new BadRequestException('존재하지 않는 유저입니다.');
+    return user;
   }
 
   async changeUserProfile(
     updateInput: { field: 'teamId' | 'image' | 'nickname'; value: any },
-    prevUserData: User,
-  ): Promise<User> {
+    prevUserData: UserWithTeamDto,
+  ): Promise<UserWithTeamDto> {
     const { field, value } = updateInput;
+    const updateData = {};
     switch (field) {
       case 'teamId':
-        prevUserData.support_team = { id: value } as Team;
+        updateData['support_team'] = { id: value } as Team;
         break;
       case 'nickname':
         const isExistNickname = await this.isExistNickname(value);
         if (isExistNickname) {
           throw new ConflictException('이미 존재하는 닉네임 입니다.');
         }
-        prevUserData.nickname = value;
+        updateData['nickname'] = value;
         break;
       case 'image':
-        prevUserData.profile_image = value;
+        updateData['profile_image'] = value;
         break;
       default:
         throw new BadRequestException('유효하지 않은 필드입니다.');
     }
 
-    try {
-      const updatedUser = await this.userRepository.save(prevUserData);
-      return updatedUser;
-    } catch (error) {
-      throw new InternalServerErrorException('유저 DB 업데이트 실패');
-    }
+    await this.userRepo.updateOne(updateData, prevUserData.id);
+    const updatedUser = await this.getUserWithSupportTeam({
+      id: prevUserData.id,
+    });
+
+    return updatedUser;
   }
 
   @Transactional()
   async deleteUser(userId: number): Promise<void> {
-    const teams = await this.teamRepository.find({ select: { id: true } });
-    const user = await this.userRepository.findOne({ where: { id: userId } });
+    const teams = await this.teamService.findAll();
+    const user = await this.userRepo.findOne({ id: userId });
     const { profile_image, id } = user;
 
-    await this.userRepository.delete(id);
+    const deleteUserDto = await DeleteUserDto.createAndValidate({ id });
+    await this.userRepo.deleteOne(deleteUserDto);
 
     runOnTransactionCommit(async () => {
       if (profile_image !== DEFAULT_PROFILE_IMAGE) {

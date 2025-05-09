@@ -24,21 +24,31 @@ export class RankingRedisService {
   }
 
   async getUserRank(userId: number, teamId?: number): Promise<number | null> {
-    const key = teamId ? teamId : 'total';
-    const userRank = await this.redisClient.zrevrank(
-      `${RedisKeys.RANKING}:${key}`,
-      userId.toString(),
-    );
-    return userRank;
+    try {
+      const key = teamId ? teamId : 'total';
+      const userRank = await this.redisClient.zrevrank(
+        `${RedisKeys.RANKING}:${key}`,
+        userId.toString(),
+      );
+      return userRank;
+    } catch (error) {
+      throw new InternalServerErrorException(
+        `Redis 랭킹 조회 실패 : ${userId}`,
+      );
+    }
   }
 
   async getRankingList(key: number | 'total', start: number, end: number) {
-    const rankList = await this.redisClient.zrevrange(
-      `${RedisKeys.RANKING}:${key}`,
-      start,
-      end,
-      'WITHSCORES',
-    );
-    return rankList;
+    try {
+      const rankList = await this.redisClient.zrevrange(
+        `${RedisKeys.RANKING}:${key}`,
+        start,
+        end,
+        'WITHSCORES',
+      );
+      return rankList;
+    } catch (error) {
+      throw new InternalServerErrorException(`Redis 랭킹 조회 실패 : ${key}`);
+    }
   }
 }

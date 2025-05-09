@@ -1,72 +1,80 @@
 import {
   ConflictException,
+  Inject,
   Injectable,
   Logger,
   NotFoundException,
 } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
-import { Between, DataSource, IsNull, Repository } from 'typeorm';
-import { RegisteredGame } from 'src/modules/registered-game/entities/registered-game.entity';
+import { Between, IsNull } from 'typeorm';
 import { TeamService } from '../team/team.service';
 import { GameService } from '../game/game.service';
 import * as moment from 'moment';
 import { RankService } from '../rank/rank.service';
 import { AwsS3Service } from '../../core/aws-s3/aws-s3.service';
-import { TRegisteredGameStatus } from 'src/modules/registered-game/types/registered-game-status.type';
 import { Transactional } from 'typeorm-transactional';
-import { Game } from '../game/entities/game.entity';
+import { RegisteredGameStatus } from './types/registered-game-status.type';
+import { RegisteredGameWithGameDto } from './dto/internal/registered-game-with-game.dto';
+import { CreateRegisteredGameDto } from './dto/request/req-create-registered-game.dto';
+import { UpdateRegisteredGameDto } from './dto/request/req-update-registered-game.dto';
+import { DeleteRegisteredGameDto } from './dto/internal/delete-registered-game.dto';
 import {
-  CreateRegisteredGameDto,
-  UpdateRegisteredGameDto,
-} from './dto/registered-game.dto';
+  IRegisteredGameRepository,
+  REGISTERED_GAME_REPOSITORY,
+} from './repository/registered-game.repository.interface';
+import { SaveRegisteredGameDto } from './dto/internal/save-registered-game.dto';
+import { DetermineGameStatusDto } from './dto/internal/determine-game-status.dto';
 
 @Injectable()
 export class RegisteredGameService {
   private readonly logger = new Logger(RegisteredGameService.name);
 
   constructor(
-    @InjectRepository(RegisteredGame)
-    private readonly registeredGameRepository: Repository<RegisteredGame>,
+    @Inject(REGISTERED_GAME_REPOSITORY)
+    private readonly registeredGameRepo: IRegisteredGameRepository,
     private readonly gameService: GameService,
     private readonly teamService: TeamService,
     private readonly rankService: RankService,
     private readonly awsS3Service: AwsS3Service,
-    private readonly dataSource: DataSource,
   ) {}
 
   @Transactional()
   async create(
     createRegisteredGameDto: CreateRegisteredGameDto,
     userId: number,
-  ): Promise<RegisteredGame> {
+  ): Promise<RegisteredGameWithGameDto> {
     const game = await this.gameService.findOne(createRegisteredGameDto.gameId);
     const cheeringTeam = await this.teamService.findOne(
       createRegisteredGameDto.cheeringTeamId,
     );
 
-    const duplcate = await this.registeredGameRepository.findOne({
-      where: {
-        game: game,
-        user: { id: userId },
-      },
+    const duplicate = await this.registeredGameRepo.findOne({
+      game: { id: createRegisteredGameDto.gameId },
+      user: { id: userId },
     });
 
-    if (duplcate)
+    if (duplicate)
       throw new ConflictException(
         'Users cannot register for more than one copy of the same game.',
       );
 
-    const registeredGame = this.registeredGameRepository.create({
+    const registeredGame = await SaveRegisteredGameDto.createAndValidate({
       ...createRegisteredGameDto,
       game,
       cheering_team: cheeringTeam,
       user: { id: userId },
+      status: this.getStatus(
+        {
+          status: game.status,
+          homeTeamScore: game.home_team_score,
+          awayTeamScore: game.away_team_score,
+          homeTeamId: game.home_team.id,
+          awayTeamId: game.away_team.id,
+        },
+        cheeringTeam.id,
+      ),
     });
 
-    const registeredGameStatus = this.getStatus(game, registeredGame);
-    registeredGame.status = registeredGameStatus;
-
-    await this.registeredGameRepository.save(registeredGame);
+    const { insertedId } = await this.registeredGameRepo.insert(registeredGame);
 
     if (registeredGame.status !== null) {
       await this.rankService.updateRankEntity(
@@ -82,81 +90,50 @@ export class RegisteredGameService {
       await this.rankService.updateRedisRankings(userId);
     }
 
-    return registeredGame;
+    return await RegisteredGameWithGameDto.createAndValidate({
+      id: insertedId,
+      ...registeredGame,
+    });
   }
 
-  async findAll(userId: number): Promise<RegisteredGame[]> {
-    const registeredGames = await this.registeredGameRepository.find({
-      where: { user: { id: userId } },
-      relations: {
-        cheering_team: true,
-        game: {
-          home_team: true,
-          away_team: true,
-          stadium: true,
-          winning_team: true,
-        },
-      },
+  async getAll(userId: number): Promise<RegisteredGameWithGameDto[]> {
+    const registeredGames = await this.registeredGameRepo.find({
+      user: { id: userId },
     });
     return registeredGames;
   }
 
-  async findAllMonthly(
+  async getAllMonthly(
     year: number,
     month: number,
     userId: number,
-  ): Promise<RegisteredGame[]> {
+  ): Promise<RegisteredGameWithGameDto[]> {
     const startDate = moment
-      .tz(`${year}-${month}-01`, 'Asia/Seoul')
+      .tz(`${year}-${month.toString().padStart(2, '0')}-01`, 'Asia/Seoul')
       .startOf('day')
       .format('YYYY-MM-DD');
     const endDate = moment
-      .tz(`${year}-${month}-01`, 'Asia/Seoul')
+      .tz(`${year}-${month.toString().padStart(2, '0')}-01`, 'Asia/Seoul')
       .endOf('month')
       .format('YYYY-MM-DD');
 
-    const registeredGames = await this.registeredGameRepository.find({
-      where: {
-        user: { id: userId },
-        game: {
-          date: Between(startDate, endDate),
-        },
-      },
-      relations: {
-        cheering_team: true,
-        game: {
-          home_team: true,
-          away_team: true,
-          stadium: true,
-          winning_team: true,
-        },
-      },
-      order: {
-        game: {
-          date: 'DESC',
-        },
-      },
-    });
+    const registeredGames = await this.registeredGameRepo.find(
+      { user: { id: userId }, game: { date: Between(startDate, endDate) } },
+      { game: { date: 'DESC' } },
+    );
 
     return registeredGames;
   }
 
-  async findOne(id: number, userId: number): Promise<RegisteredGame> {
-    const registeredGame = await this.registeredGameRepository.findOne({
-      where: { id, user: { id: userId } },
-      relations: {
-        cheering_team: true,
-        game: {
-          home_team: true,
-          away_team: true,
-          stadium: true,
-          winning_team: true,
-        },
-      },
+  async getOne(id: number, userId: number): Promise<RegisteredGameWithGameDto> {
+    const registeredGame = await this.registeredGameRepo.findOne({
+      id,
+      user: { id: userId },
     });
     if (!registeredGame) {
       throw new NotFoundException(`Registered game with ID ${id} not found`);
     }
+
     return registeredGame;
   }
 
@@ -166,79 +143,99 @@ export class RegisteredGameService {
     updateRegisteredGameDto: UpdateRegisteredGameDto,
     userId: number,
   ): Promise<void> {
-    const registeredGame = await this.registeredGameRepository.findOne({
-      where: { id, user: { id: userId } },
-      relations: {
-        cheering_team: true,
-        game: {
-          home_team: true,
-          away_team: true,
-          stadium: true,
-          winning_team: true,
-        },
-      },
+    const registeredGame = await this.registeredGameRepo.findOne({
+      id,
+      user: { id: userId },
     });
 
     if (!registeredGame) {
       throw new NotFoundException(`Registered game with ID ${id} not found`);
     }
+    const teams = await this.teamService.findAll();
+    const updateData = {
+      review: updateRegisteredGameDto.review,
+      seat: updateRegisteredGameDto.seat,
+      cheeringTeam: teams.filter(
+        (team) => team.id === updateRegisteredGameDto.cheeringTeamId,
+      )[0],
+    };
+    if (updateRegisteredGameDto.image) {
+      if (registeredGame.image) {
+        await this.awsS3Service.deleteImage({
+          fileUrl: registeredGame.image,
+        });
+      }
+      updateData['image'] = updateRegisteredGameDto.image;
+    }
 
-    if (updateRegisteredGameDto.cheeringTeamId !== undefined) {
-      const cheeringTeam = await this.teamService.findOne(
+    if (
+      updateRegisteredGameDto.cheeringTeamId !== registeredGame.cheeringTeam.id
+    ) {
+      // 변경된 cheering team의 status 업데이트
+      const changeStatus = this.getStatus(
+        {
+          status: registeredGame.game.status,
+          homeTeamScore: registeredGame.game.homeTeamScore,
+          awayTeamScore: registeredGame.game.awayTeamScore,
+          homeTeamId: registeredGame.game.homeTeam.id,
+          awayTeamId: registeredGame.game.awayTeam.id,
+        },
         updateRegisteredGameDto.cheeringTeamId,
       );
+      // 업데이트할 데이터에 status 추가
+      updateData['status'] = changeStatus;
 
-      if (!cheeringTeam) {
-        throw new NotFoundException(
-          `Team with ID ${updateRegisteredGameDto.cheeringTeamId} not found`,
-        );
-      }
-      registeredGame.cheering_team = cheeringTeam;
-      registeredGame.status = this.getStatus(
-        registeredGame.game,
-        registeredGame,
+      // 기존 cheering team 랭킹 업데이트
+      await this.rankService.updateRankEntity(
+        {
+          status: registeredGame.status,
+          team_id: registeredGame.cheeringTeam.id,
+          user_id: userId,
+          year: moment(registeredGame.game.date).year(),
+        },
+        false,
       );
-    }
-    if (updateRegisteredGameDto.image !== undefined) {
-      this.awsS3Service.deleteImage({
-        fileUrl: registeredGame.image,
-      });
-      registeredGame.image = updateRegisteredGameDto.image;
-    }
-    if (updateRegisteredGameDto.seat !== undefined) {
-      registeredGame.seat = updateRegisteredGameDto.seat;
-    }
-    if (updateRegisteredGameDto.review !== undefined) {
-      registeredGame.review = updateRegisteredGameDto.review;
-    }
+      //변경 cheering team 랭킹 업데이트
+      await this.rankService.updateRankEntity(
+        {
+          status: changeStatus,
+          team_id: updateRegisteredGameDto.cheeringTeamId,
+          user_id: userId,
+          year: moment(registeredGame.game.date).year(),
+        },
+        true,
+      );
 
-    await this.registeredGameRepository.save(registeredGame);
+      //랭킹 변경사항 레디스 적용
+      await this.rankService.updateRedisRankings(userId);
+    }
+    await this.registeredGameRepo.update(updateData, id, userId);
   }
 
   @Transactional()
-  async delete(id: number, userId: number): Promise<void> {
-    const registeredGame = await this.findOne(id, userId);
+  async delete(dto: DeleteRegisteredGameDto): Promise<void> {
+    const registeredGame = await this.getOne(dto.gameId, dto.userId);
     const status = registeredGame.status;
-    const team_id = registeredGame.cheering_team.id;
-    const user_id = userId;
+    const team_id = registeredGame.cheeringTeam.id;
+    const user_id = dto.userId;
     const year = moment(registeredGame.game.date).year();
 
+    const result = await this.registeredGameRepo.delete(dto);
+
+    if (!result) {
+      throw new NotFoundException(
+        `Registered game with ID ${dto.gameId} not found`,
+      );
+    }
     await this.awsS3Service.deleteImage({
       fileUrl: registeredGame.image,
     });
-    const result = await this.registeredGameRepository.delete({
-      id,
-      user: { id: userId },
-    });
-    if (result.affected === 0) {
-      throw new NotFoundException(`Registered game with ID ${id} not found`);
-    }
     if (status !== null) {
       await this.rankService.updateRankEntity(
         { status, team_id, user_id, year },
         false,
       );
-      await this.rankService.updateRedisRankings(userId);
+      await this.rankService.updateRedisRankings(user_id);
     }
   }
 
@@ -246,12 +243,9 @@ export class RegisteredGameService {
   async batchBulkUpdateByGameId(gameId: string) {
     try {
       const game = await this.gameService.findOne(gameId);
-      const registeredGames = await this.registeredGameRepository.find({
-        where: {
-          game: { id: gameId },
-          status: IsNull(),
-        },
-        relations: { cheering_team: true, game: true, user: true },
+      const registeredGames = await this.registeredGameRepo.findWithUser({
+        game: { id: gameId },
+        status: IsNull(),
       });
       if (!registeredGames.length) {
         this.logger.log(
@@ -261,15 +255,23 @@ export class RegisteredGameService {
       }
 
       for (const registeredGame of registeredGames) {
-        const team_id = registeredGame.cheering_team.id;
+        const team_id = registeredGame.cheeringTeam.id;
         const user_id = registeredGame.user.id;
+        const statusDto = await DetermineGameStatusDto.createAndValidate({
+          status: game.status,
+          homeTeamScore: game.home_team_score,
+          awayTeamScore: game.away_team_score,
+          homeTeamId: game.home_team.id,
+          awayTeamId: game.away_team.id,
+        });
+        registeredGame.status = this.getStatus(statusDto, team_id);
 
-        const registeredGameStatus = this.getStatus(game, registeredGame);
-        registeredGame.status = registeredGameStatus;
+        const registeredSaveDto =
+          await SaveRegisteredGameDto.createAndValidate(registeredGame);
 
         // 직관 경기 저장
         const updatedGame =
-          await this.registeredGameRepository.save(registeredGame);
+          await this.registeredGameRepo.save(registeredSaveDto);
         const status = updatedGame.status;
         // Rank 업데이트
         await this.rankService.updateRankEntity(
@@ -294,21 +296,25 @@ export class RegisteredGameService {
   }
 
   private getStatus(
-    game: Game,
-    registeredGame: RegisteredGame,
-  ): TRegisteredGameStatus | null {
-    if (/.*취소$/.test(game.status) || game.status === '그라운드사정') {
+    dto: DetermineGameStatusDto,
+    cheeringTeamId: number,
+  ): RegisteredGameStatus | null {
+    const { status, homeTeamScore, awayTeamScore, homeTeamId, awayTeamId } =
+      dto;
+    if (
+      /.*취소$/.test(status) ||
+      status === '그라운드사정' ||
+      status === '기타'
+    ) {
       return 'No game';
     }
-    if (game.status === '경기종료') {
-      if (game.away_team_score === game.home_team_score) {
+    if (status === '경기종료') {
+      if (awayTeamScore === homeTeamScore) {
         return 'Tie';
       }
       const winningTeamId =
-        game.away_team_score > game.home_team_score
-          ? game.away_team.id
-          : game.home_team.id;
-      return registeredGame.cheering_team.id === winningTeamId ? 'Win' : 'Lose';
+        awayTeamScore > homeTeamScore ? awayTeamId : homeTeamId;
+      return cheeringTeamId === winningTeamId ? 'Win' : 'Lose';
     }
     return null;
   }

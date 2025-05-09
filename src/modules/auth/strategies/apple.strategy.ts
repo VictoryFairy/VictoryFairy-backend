@@ -8,7 +8,7 @@ import {
   ISocialUserInfo,
   IAppleTokenResponse,
   IAppleDecodedPayload,
-} from 'src/modules/auth/types/auth.type';
+} from 'src/modules/auth/strategies/interface/oauth.interface';
 
 @Injectable()
 export class AppleOAuthStrategy implements IOAuthStrategy {

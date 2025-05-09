@@ -1,19 +1,19 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
+import { Inject, Injectable, NotFoundException } from '@nestjs/common';
 import { Team } from 'src/modules/team/entities/team.entity';
-import { Between, Repository } from 'typeorm';
+import {
+  ITeamRepository,
+  TEAM_REPOSITORY,
+} from './repository/team.repository.interface';
 
 @Injectable()
 export class TeamService {
   constructor(
-    @InjectRepository(Team)
-    private readonly teamRepository: Repository<Team>,
+    @Inject(TEAM_REPOSITORY)
+    private readonly teamRepo: ITeamRepository,
   ) {}
 
   async findOne(id: number): Promise<Team> {
-    const team = await this.teamRepository.findOne({
-      where: { id },
-    });
+    const team = await this.teamRepo.findOne({ id });
     if (!team) {
       throw new NotFoundException(`Team with id ${id} is not found`);
     }
@@ -21,20 +21,7 @@ export class TeamService {
   }
 
   async findAll(name?: string): Promise<Team[]> {
-    if (name) {
-      return await this.teamRepository.find({
-        where: {
-          id: Between(1, 10),
-          name,
-        },
-      });
-    } else {
-      return await this.teamRepository.find({
-        where: {
-          id: Between(1, 10),
-        },
-      });
-    }
+    return await this.teamRepo.find(name);
   }
 
   async findOneByNameOrCreate(name: string): Promise<Team> {
@@ -43,16 +30,14 @@ export class TeamService {
     if (!team) {
       team = new Team();
       team.name = name;
-      await this.teamRepository.save(team);
+      await this.teamRepo.save(team);
     }
 
     return team;
   }
 
   async findOneByName(name: string): Promise<Team> {
-    const team = await this.teamRepository.findOne({
-      where: { name },
-    });
+    const team = await this.teamRepo.findOne({ name });
 
     return team;
   }

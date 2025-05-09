@@ -1,4 +1,4 @@
-import axios from 'axios';
+import axios, { AxiosResponse } from 'axios';
 import { Stadium } from 'src/modules/stadium/entities/stadium.entity';
 import { Team } from 'src/modules/team/entities/team.entity';
 import {
@@ -32,21 +32,13 @@ export async function upsertSchedules({
   dataSource,
 }: UpsertOptions): Promise<void> {
   try {
-    const response = await axios.post<IRawScheduleList>(
-      'https://www.koreabaseball.com/ws/Schedule.asmx/GetScheduleList',
-      {
-        leId: 1, // 1 => 1부 | 2 => 퓨처스 리그
-        srIdList: [0, 3, 4, 5, 7].join(','), // 0 => 프로팀 경기 | 3,4,5,7 => 포스트 시즌
-        seasonId: year,
-        gameMonth: month,
-        teamid: '',
-      },
-      {
-        headers: {
-          'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8',
-        },
-      },
-    );
+    const response = await tryFetchSchedule(year, month);
+    if (!response) {
+      console.error(
+        `Failed to fetch schedule after retry for ${year}-${month}`,
+      );
+      return;
+    }
 
     const convertRowsToArray = response.data.rows.map((row) =>
       extractTextFromHtml(row.row),
@@ -63,10 +55,57 @@ export async function upsertSchedules({
     await upsertMany(doubleHeaderProcessedGameData, dataSource);
   } catch (error) {
     console.error(
-      `Error while processing schedules for ${year}-${month}:`,
+      `Unexpected error while processing schedules for ${year}-${month}:`,
       error,
     );
-    throw error;
+  }
+}
+
+// 재시도 로직이 포함된 axios.post 래퍼 함수
+async function tryFetchSchedule(
+  year: number,
+  month: number,
+): Promise<AxiosResponse<IRawScheduleList> | null> {
+  try {
+    return await axios.post<IRawScheduleList>(
+      'https://www.koreabaseball.com/ws/Schedule.asmx/GetScheduleList',
+      {
+        leId: 1,
+        srIdList: [0, 3, 4, 5, 7].join(','),
+        seasonId: year,
+        gameMonth: month,
+        teamid: '',
+      },
+      {
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8',
+        },
+      },
+    );
+  } catch (error) {
+    try {
+      return await axios.post<IRawScheduleList>(
+        'https://www.koreabaseball.com/ws/Schedule.asmx/GetScheduleList',
+        {
+          leId: 1,
+          srIdList: [0, 3, 4, 5, 7].join(','),
+          seasonId: year,
+          gameMonth: month,
+          teamid: '',
+        },
+        {
+          headers: {
+            'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8',
+          },
+        },
+      );
+    } catch (retryError) {
+      console.error(
+        `Retry failed for schedule fetch ${year}-${month}:`,
+        retryError,
+      );
+      return null;
+    }
   }
 }
 
