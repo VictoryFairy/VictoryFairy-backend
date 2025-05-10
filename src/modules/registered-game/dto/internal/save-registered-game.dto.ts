@@ -1,5 +1,5 @@
 import { Type } from 'class-transformer';
-import { IsNotEmpty, IsString } from 'class-validator';
+import { IsIn, IsNotEmpty, IsString } from 'class-validator';
 import { GameDto } from 'src/modules/game/dto/game.dto';
 import { TeamDto } from 'src/modules/team/dto/response/res-team.dto';
 import { User } from 'src/modules/user/entities/user.entity';
@@ -12,8 +12,7 @@ export class SaveRegisteredGameDto extends BaseInternalDto {
   @IsString()
   seat: string;
 
-  @IsNotEmpty()
-  @IsString()
+  @IsIn([...Object.values(RegisteredGameStatus), null])
   status: RegisteredGameStatus | null;
 
   @IsString()
@@ -25,7 +24,7 @@ export class SaveRegisteredGameDto extends BaseInternalDto {
 
   @IsNotEmpty()
   @Type(() => TeamDto)
-  cheering_team: TeamDto;
+  cheeringTeam: TeamDto;
 
   @IsNotEmpty()
   @Type(() => User)

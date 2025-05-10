@@ -108,14 +108,14 @@ export class RegisteredGameRepository implements IRegisteredGameRepository {
 
   async insert(dto: SaveRegisteredGameDto): Promise<{ insertedId: number }> {
     try {
-      const { image, seat, review, game, cheering_team, user, status } = dto;
+      const { image, seat, review, game, cheeringTeam, user, status } = dto;
       const result = await this.registeredGameRepository.insert({
         image,
         seat,
         review,
         status,
         game: { id: game.id },
-        cheering_team: { id: cheering_team.id },
+        cheering_team: { id: cheeringTeam.id },
         user: { id: user.id },
       });
       return { insertedId: result.identifiers[0].id };
@@ -126,14 +126,14 @@ export class RegisteredGameRepository implements IRegisteredGameRepository {
 
   async save(dto: SaveRegisteredGameDto): Promise<RegisteredGame> {
     try {
-      const { image, seat, review, game, cheering_team, user, status } = dto;
+      const { image, seat, review, game, cheeringTeam, user, status } = dto;
       const result = await this.registeredGameRepository.save({
         image,
         seat,
         review,
         status,
         game: { id: game.id },
-        cheering_team: { id: cheering_team.id },
+        cheering_team: { id: cheeringTeam.id },
         user: { id: user.id },
       });
       return result;

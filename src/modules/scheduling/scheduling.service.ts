@@ -171,7 +171,9 @@ export class SchedulingService {
             intervalJob.stop();
             await this.gameService.updateStatusFinally(gameId, currentStatus);
             // 완료 시 경기결과 나오기전 직관 등록 데이터들 업데이트 및 랭킹 업데이트
-            await this.registeredGameService.batchBulkUpdateByGameId(gameId);
+            await this.registeredGameService.batchBulkGameResultUpdateByGameId(
+              gameId,
+            );
           } catch (error) {
             throw error;
           } finally {
