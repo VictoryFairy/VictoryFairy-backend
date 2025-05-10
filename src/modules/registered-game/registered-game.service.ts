@@ -42,10 +42,9 @@ export class RegisteredGameService {
     createRegisteredGameDto: CreateRegisteredGameDto,
     userId: number,
   ): Promise<RegisteredGameWithGameDto> {
-    const game = await this.gameService.findOne(createRegisteredGameDto.gameId);
-    const cheeringTeam = await this.teamService.findOne(
-      createRegisteredGameDto.cheeringTeamId,
-    );
+    const { gameId, cheeringTeamId, ...rest } = createRegisteredGameDto;
+    const game = await this.gameService.findOne(gameId);
+    const getCheeringTeam = await this.teamService.findOne(cheeringTeamId);
 
     const duplicate = await this.registeredGameRepo.findOne({
       game: { id: createRegisteredGameDto.gameId },
@@ -57,31 +56,35 @@ export class RegisteredGameService {
         'Users cannot register for more than one copy of the same game.',
       );
 
-    const registeredGame = await SaveRegisteredGameDto.createAndValidate({
-      ...createRegisteredGameDto,
-      game,
-      cheering_team: cheeringTeam,
-      user: { id: userId },
-      status: this.getStatus(
-        {
-          status: game.status,
-          homeTeamScore: game.home_team_score,
-          awayTeamScore: game.away_team_score,
-          homeTeamId: game.home_team.id,
-          awayTeamId: game.away_team.id,
-        },
-        cheeringTeam.id,
-      ),
-    });
+    const saveRegisteredGameDto = await SaveRegisteredGameDto.createAndValidate(
+      {
+        ...rest,
+        game,
+        cheeringTeam: getCheeringTeam,
+        user: { id: userId },
+        status: this.getStatus(
+          {
+            status: game.status,
+            homeTeamScore: game.home_team_score,
+            awayTeamScore: game.away_team_score,
+            homeTeamId: game.home_team.id,
+            awayTeamId: game.away_team.id,
+          },
+          getCheeringTeam.id,
+        ),
+      },
+    );
 
-    const { insertedId } = await this.registeredGameRepo.insert(registeredGame);
+    const { insertedId } = await this.registeredGameRepo.insert(
+      saveRegisteredGameDto,
+    );
 
-    if (registeredGame.status !== null) {
+    if (saveRegisteredGameDto.status !== null) {
       await this.rankService.updateRankEntity(
         {
-          team_id: registeredGame.cheering_team.id,
-          user_id: registeredGame.user.id,
-          status: registeredGame.status,
+          team_id: saveRegisteredGameDto.cheeringTeam.id,
+          user_id: saveRegisteredGameDto.user.id,
+          status: saveRegisteredGameDto.status,
           year: moment(game.date).year(),
         },
         true,
@@ -92,7 +95,8 @@ export class RegisteredGameService {
 
     return await RegisteredGameWithGameDto.createAndValidate({
       id: insertedId,
-      ...registeredGame,
+      ...saveRegisteredGameDto,
+      cheering_team: getCheeringTeam,
     });
   }
 
@@ -240,7 +244,7 @@ export class RegisteredGameService {
   }
 
   @Transactional()
-  async batchBulkUpdateByGameId(gameId: string) {
+  async batchBulkGameResultUpdateByGameId(gameId: string) {
     try {
       const game = await this.gameService.findOne(gameId);
       const registeredGames = await this.registeredGameRepo.findWithUser({
@@ -266,13 +270,13 @@ export class RegisteredGameService {
         });
         registeredGame.status = this.getStatus(statusDto, team_id);
 
-        const registeredSaveDto =
-          await SaveRegisteredGameDto.createAndValidate(registeredGame);
-
-        // 직관 경기 저장
-        const updatedGame =
-          await this.registeredGameRepo.save(registeredSaveDto);
-        const status = updatedGame.status;
+        // 직관 경기 결과 업데이트
+        await this.registeredGameRepo.update(
+          registeredGame,
+          registeredGame.id,
+          registeredGame.user.id,
+        );
+        const status = registeredGame.status;
         // Rank 업데이트
         await this.rankService.updateRankEntity(
           {
