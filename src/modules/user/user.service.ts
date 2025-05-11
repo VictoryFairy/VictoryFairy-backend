@@ -154,7 +154,7 @@ export class UserService {
     const user = await this.userRepo.findOne({ id: userId });
     const { profile_image, id } = user;
 
-    const deleteUserDto = await DeleteUserDto.createAndValidate({ id });
+    const deleteUserDto = await DeleteUserDto.createAndValidate({ userId });
     await this.userRepo.deleteOne(deleteUserDto);
 
     runOnTransactionCommit(async () => {
