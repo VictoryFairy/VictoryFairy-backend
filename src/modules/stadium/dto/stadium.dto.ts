@@ -22,6 +22,10 @@ export class StadiumDto {
     return obj.name;
   })
   @Expose()
+  @Transform(({ obj }) => {
+    if (obj.name === '대전(신)') return '대전'; // 새로운 대전 구장 이름 그대로 대전으로 하도록 수정
+    return obj.name;
+  })
   name: string;
 
   @ApiProperty({
