@@ -55,4 +55,10 @@ export const stadiumSeeder: IStadiumSeed[] = [
     lat: 35.16820922209541,
     lng: 126.88911206152956,
   },
+  {
+    name: '대전(신)',
+    full_name: '대전 한화생명 볼파크',
+    lat: 36.3467,
+    lng: 127.3874,
+  },
 ];

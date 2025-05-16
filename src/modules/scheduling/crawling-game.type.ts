@@ -24,7 +24,8 @@ export type TStadium =
   | '문학'
   | '수원'
   | '사직'
-  | '광주';
+  | '광주'
+  | '대전(신)';
 
 export type TGameStatus = '경기전' | '경기종료';
 
