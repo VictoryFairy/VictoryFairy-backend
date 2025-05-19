@@ -22,4 +22,5 @@ export interface IUserRepository {
   create(dto: RequiredCreateUserDto): Promise<User>;
   updateOne(data: any, userId: number): Promise<boolean>;
   deleteOne(dto: DeleteUserDto): Promise<boolean>;
+  countUsers(where?: FindOptionsWhere<User>): Promise<number>;
 }
