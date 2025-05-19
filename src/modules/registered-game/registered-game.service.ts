@@ -5,7 +5,7 @@ import {
   Logger,
   NotFoundException,
 } from '@nestjs/common';
-import { Between, IsNull } from 'typeorm';
+import { Between, FindOptionsWhere, IsNull } from 'typeorm';
 import { TeamService } from '../team/team.service';
 import { GameService } from '../game/game.service';
 import * as moment from 'moment';
@@ -23,6 +23,7 @@ import {
 } from './repository/registered-game.repository.interface';
 import { SaveRegisteredGameDto } from './dto/internal/save-registered-game.dto';
 import { DetermineGameStatusDto } from './dto/internal/determine-game-status.dto';
+import { RegisteredGame } from './entities/registered-game.entity';
 
 @Injectable()
 export class RegisteredGameService {
@@ -321,5 +322,11 @@ export class RegisteredGameService {
       return cheeringTeamId === winningTeamId ? 'Win' : 'Lose';
     }
     return null;
+  }
+
+  async countRegisteredGames(
+    where?: FindOptionsWhere<RegisteredGame>,
+  ): Promise<number> {
+    return this.registeredGameRepo.countRegisteredGames(where);
   }
 }

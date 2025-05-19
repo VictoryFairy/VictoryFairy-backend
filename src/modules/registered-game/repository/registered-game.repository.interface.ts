@@ -27,4 +27,7 @@ export interface IRegisteredGameRepository {
     userId: number,
   ): Promise<boolean>;
   delete(dto: DeleteRegisteredGameDto): Promise<boolean>;
+  countRegisteredGames(
+    where?: FindOptionsWhere<RegisteredGame>,
+  ): Promise<number>;
 }

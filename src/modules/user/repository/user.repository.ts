@@ -118,4 +118,13 @@ export class UserRepository implements IUserRepository {
       throw new InternalServerErrorException('User DB 삭제 실패');
     }
   }
+
+  async countUsers(where?: FindOptionsWhere<User>): Promise<number> {
+    try {
+      const result = await this.userRepo.count({ where });
+      return result;
+    } catch (error) {
+      throw new InternalServerErrorException('User DB 카운트 실패');
+    }
+  }
 }

@@ -170,4 +170,15 @@ export class RegisteredGameRepository implements IRegisteredGameRepository {
       throw new InternalServerErrorException(`직관 등록 DB delete 실패`);
     }
   }
+
+  async countRegisteredGames(
+    where?: FindOptionsWhere<RegisteredGame>,
+  ): Promise<number> {
+    try {
+      const result = await this.registeredGameRepository.count({ where });
+      return result;
+    } catch (error) {
+      throw new InternalServerErrorException(`직관 등록 DB count 실패`);
+    }
+  }
 }

@@ -188,4 +188,8 @@ export class UserService {
       }
     }
   }
+
+  async countUsers(where?: FindOptionsWhere<User>): Promise<number> {
+    return this.userRepo.countUsers(where);
+  }
 }
