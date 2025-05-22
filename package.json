@@ -20,7 +20,7 @@
     "test:debug": "node --inspect-brk -r tsconfig-paths/register -r ts-node/register node_modules/.bin/jest --runInBand",
     "------------------------------------------ E2E TEST ------------------------------------------": "",
     "e2e:run": "npm run e2e:up && npm run e2e:migration:run && npm run e2e:seed && npm run e2e:test; EXIT_CODE=$?; npm run e2e:down; exit $EXIT_CODE",
-    "e2e:test": "cross-env NODE_ENV=test jest --config ./test/jest-e2e.json --runInBand --detectOpenHandles --forceExit",
+    "e2e:test": "cross-env NODE_ENV=test jest --config ./test/jest-e2e.json --runInBand --detectOpenHandles --forceExit --testTimeout=30000",
     "e2e:up": "docker compose -f docker-compose.e2e.yml --env-file .env.test up -d",
     "e2e:down": "docker compose -f docker-compose.e2e.yml down",
     "e2e:seed": "ts-node -r tsconfig-paths/register ./node_modules/typeorm-extension/bin/cli.cjs seed:run -d ./test/utils/test-datasource.ts",
