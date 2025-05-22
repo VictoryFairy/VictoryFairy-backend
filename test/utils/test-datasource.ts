@@ -14,7 +14,7 @@ dotenv.config({ path: join(__dirname, '../../.env.test') });
 const dataSourceOptions: DataSourceOptions & SeederOptions = {
   type: 'postgres',
   host: process.env.DB_CONTAINER_NAME,
-  port: parseInt(process.env.DB_TCP_PORT ?? '5432'),
+  port: parseInt(process.env.DB_TCP_PORT || '5432'),
   database: process.env.DB_DATABASE_NAME,
   username: process.env.DB_USER,
   password: process.env.DB_PASSWORD,

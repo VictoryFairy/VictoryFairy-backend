@@ -4,15 +4,20 @@ services:
     image: postgres:alpine
     restart: always
     shm_size: 128mb
+    env_file:
+      - ./.env.test
     ports:
       - '${DB_TCP_PORT}:${DB_TCP_PORT}'
     environment:
       - POSTGRES_USER=${DB_USER}
       - POSTGRES_PASSWORD=${DB_PASSWORD}
       - POSTGRES_DB=${DB_DATABASE_NAME}
+      - PGPORT=${DB_TCP_PORT}
   redis-server:
     container_name: ${REDIS_CONTAINER}
     image: redis:alpine
+    env_file:
+      - ./.env.test
     ports:
       - '${REDIS_TCP_PORT}:${REDIS_TCP_PORT}'
     command: >
