@@ -8,13 +8,13 @@ import { requestWithDefault } from './utils/request-with-default';
 import { TestAppModule } from './test.module';
 import { correctGameExample } from './mock/data/correct-game-example';
 import { RegisteredGameStatus } from 'src/modules/registered-game/types/registered-game-status.type';
-import { getTestUser } from './mock/data/mock-users';
+import { getTestUsers } from './mock/data/mock-users';
 
 describe('Core User Action Flow(e2e)', () => {
   // 테스트에 필요한 변수 선언
   let app: NestExpressApplication;
   let accessTokenList = []; // 로그인 후 발급받은 토큰 저장 배열
-  const mockUserList = getTestUser(); // 테스트 유저 데이터
+  const mockUserList = getTestUsers(); // 테스트 유저 데이터
   let createdRegisteredGameId: number; // 직관 등록 후 생성된 ID
   const game = correctGameExample.find((game) => game.id === '20250511LTKT1'); // 테스트용 게임 데이터
 

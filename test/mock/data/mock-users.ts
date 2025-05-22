@@ -1,7 +1,7 @@
 import { DEFAULT_PROFILE_IMAGE } from 'src/modules/user/const/user.const';
 
-export const getTestUser = () => {
-  const mockerUserList = [];
+export const getTestUsers = () => {
+  const mockUserList = [];
 
   for (let i = 1; i <= 20; i++) {
     const mockUser = {
@@ -11,8 +11,8 @@ export const getTestUser = () => {
       image: DEFAULT_PROFILE_IMAGE,
       teamId: i <= 10 ? 1 : (i % 10) + 1,
     };
-    mockerUserList.push(mockUser);
+    mockUserList.push(mockUser);
   }
 
-  return mockerUserList;
+  return mockUserList;
 };

@@ -37,8 +37,13 @@ import { addTransactionalDataSource } from 'typeorm-transactional';
         if (!options) {
           throw new Error('Invalid options passed');
         }
-        const dataSource = await new DataSource(options).initialize();
-        return addTransactionalDataSource(dataSource);
+        try {
+          const dataSource = await new DataSource(options).initialize();
+          return addTransactionalDataSource(dataSource);
+        } catch (error) {
+          console.error('Failed to initialize database connection:', error);
+          throw error;
+        }
       },
       inject: [ConfigService],
     }),
