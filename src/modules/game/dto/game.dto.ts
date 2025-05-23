@@ -39,8 +39,12 @@ export class GameDto {
   @Expose()
   status: string;
 
-  @ApiProperty({ example: 0 })
+  @ApiProperty({
+    description: '경기 타입 (0: 일반, 1: DH1, 2: DH2)',
+    example: 0,
+  })
   @Transform(({ obj }) => getGameType(obj.id))
+  @IsNumber()
   @Expose()
   gameType: number;
 
