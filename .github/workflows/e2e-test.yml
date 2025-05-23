@@ -1,0 +1,41 @@
+name: E2E Test
+
+on:
+  pull_request:
+    branches: [main, dev]
+
+jobs:
+  e2e-test:
+    runs-on: ubuntu-latest
+    environment: test
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y jq docker-compose
+          npm ci
+
+      - name: Create .env.test file from secrets
+        run: |
+          {
+              echo '${{ toJson(secrets) }}' | jq -r 'to_entries | .[] | "\(.key)=\(.value)"';
+              echo '${{ toJson(vars) }}' | jq -r 'to_entries | .[] | "\(.key)=\(.value)"'
+          } > .env.test
+
+      - name: Run E2E Tests
+        run: npm run e2e:run
+
+      - name: Clean up
+        if: always()
+        run: |
+          rm .env.test
