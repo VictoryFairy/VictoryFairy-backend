@@ -3,6 +3,7 @@ import { Exclude, Expose, Transform, Type } from 'class-transformer';
 import { IsNumber, IsString, ValidateNested } from 'class-validator';
 import { StadiumDto } from '../../stadium/dto/stadium.dto';
 import { TeamDto } from '../../team/dto/response/res-team.dto';
+import { getGameType } from 'src/common/utils/getGameType';
 
 @Exclude()
 export class GameDto {
@@ -37,6 +38,11 @@ export class GameDto {
   @IsString()
   @Expose()
   status: string;
+
+  @ApiProperty({ example: 0 })
+  @Transform(({ obj }) => getGameType(obj.id))
+  @Expose()
+  gameType: number;
 
   @ApiProperty({
     description: '홈 팀 정보',
