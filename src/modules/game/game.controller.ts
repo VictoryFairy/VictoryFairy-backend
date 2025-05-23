@@ -48,7 +48,11 @@ export class GameController {
   })
   @ApiOkResponse({
     type: [GameDto],
-    description: '데이터가 없으면 빈 배열 반환',
+    description: [
+      '데이터가 없으면 빈 배열 반환',
+      '',
+      '[gameType] - 0: 일반 / 1: DH1 / 2: DH2',
+    ].join('\n'),
   })
   async findAllDaily(@Query() query: FindAllDailyQueryDto): Promise<GameDto[]> {
     const { year, month, day } = query;
@@ -65,7 +69,10 @@ export class GameController {
     description: '경기의 ID',
     example: '20240801SSLG0',
   })
-  @ApiOkResponse({ type: GameDto })
+  @ApiOkResponse({
+    type: GameDto,
+    description: '[gameType] - 0: 일반 / 1: DH1 / 2: DH2',
+  })
   @ApiNotFoundResponse({ description: '해당 ID의 경기가 없을 경우' })
   async findOne(@Param('id') id: string): Promise<GameDto> {
     const game = await this.gameService.findOne(id);
