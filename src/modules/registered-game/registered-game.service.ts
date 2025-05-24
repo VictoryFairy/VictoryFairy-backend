@@ -60,6 +60,7 @@ export class RegisteredGameService {
     const saveRegisteredGameDto = await SaveRegisteredGameDto.createAndValidate(
       {
         ...rest,
+        image: rest.image || null,
         game,
         cheeringTeam: getCheeringTeam,
         user: { id: userId },
