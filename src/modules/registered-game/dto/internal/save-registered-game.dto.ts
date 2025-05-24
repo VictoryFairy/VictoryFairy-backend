@@ -1,5 +1,5 @@
 import { Type } from 'class-transformer';
-import { IsIn, IsNotEmpty, IsString } from 'class-validator';
+import { IsIn, IsNotEmpty, IsOptional, IsString } from 'class-validator';
 import { GameDto } from 'src/modules/game/dto/game.dto';
 import { TeamDto } from 'src/modules/team/dto/response/res-team.dto';
 import { User } from 'src/modules/user/entities/user.entity';
@@ -7,6 +7,8 @@ import { BaseInternalDto } from 'src/shared/dto/base-internal.dto';
 import { RegisteredGameStatus } from '../../types/registered-game-status.type';
 
 export class SaveRegisteredGameDto extends BaseInternalDto {
+  @IsOptional()
+  @IsString()
   image: string | null;
 
   @IsString()
