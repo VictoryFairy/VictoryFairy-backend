@@ -285,8 +285,16 @@ async function upsertMany(
       }
       game.away_team = awayTeam;
 
-      game.winning_team =
-        schedule.winner === homeTeam.name ? homeTeam : awayTeam;
+      if (
+        game.home_team_score !== null &&
+        game.away_team_score !== null &&
+        game.home_team_score !== game.away_team_score
+      ) {
+        game.winning_team =
+          schedule.homeScore > schedule.awayScore ? homeTeam : awayTeam;
+      } else {
+        game.winning_team = null;
+      }
 
       game.stadium =
         stadiums.find((stadium) => stadium.name === schedule.stadium) ??

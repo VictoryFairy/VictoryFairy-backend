@@ -68,7 +68,7 @@ export const mockGames = [
     away_team_score: 1,
     home_team_id: 9,
     away_team_id: 1,
-    winning_team_id: 1,
+    winning_team_id: null,
     stadium_id: 7,
   },
   {
