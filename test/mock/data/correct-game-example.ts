@@ -106,10 +106,7 @@ export const correctGameExample = [
     },
     homeTeamScore: 1,
     awayTeamScore: 1,
-    winningTeam: {
-      id: 1,
-      name: '롯데 자이언츠',
-    },
+    winningTeam: null,
   },
   {
     id: '20250511LGSS0',
