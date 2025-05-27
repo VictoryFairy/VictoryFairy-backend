@@ -16,7 +16,7 @@ import { SchedulingModule } from './modules/scheduling/scheduling.module';
 import { CheeringSongModule } from './modules/cheering-song/cheering-song.module';
 import { EventEmitterModule } from '@nestjs/event-emitter';
 import { APP_FILTER, APP_GUARD } from '@nestjs/core';
-import { CustomExceptionFilter } from './common/filters/custom-exception.filter';
+import { GlobalExceptionFilter } from './common/filters/global-exception.filter';
 import { addTransactionalDataSource } from 'typeorm-transactional';
 import { DataSource } from 'typeorm';
 import { AccountModule } from './modules/account/account.module';
@@ -75,7 +75,7 @@ import { CustomThrottlerGuard } from './common/guard/custom-throttler.guard';
   providers: [
     AppService,
     SeederService,
-    { provide: APP_FILTER, useClass: CustomExceptionFilter },
+    { provide: APP_FILTER, useClass: GlobalExceptionFilter },
     { provide: APP_GUARD, useClass: CustomThrottlerGuard },
   ],
 })
