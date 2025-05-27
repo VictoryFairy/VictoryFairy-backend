@@ -7,16 +7,18 @@ import {
   Logger,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
+import * as Sentry from '@sentry/node';
 import { SlackService } from 'src/core/slack/slack.service';
 
 @Catch()
-export class CustomExceptionFilter implements ExceptionFilter {
-  private readonly logger = new Logger(CustomExceptionFilter.name);
+export class GlobalExceptionFilter implements ExceptionFilter {
+  private readonly logger = new Logger(GlobalExceptionFilter.name);
   constructor(
     private readonly slackService: SlackService,
     private readonly configService: ConfigService,
   ) {}
   async catch(exception: unknown, host: ArgumentsHost): Promise<void> {
+    Sentry.captureException(exception);
     const ctx = host.switchToHttp();
     const response = ctx.getResponse();
     const request = ctx.getRequest();
@@ -53,7 +55,6 @@ export class CustomExceptionFilter implements ExceptionFilter {
         await this.slackService.sendInternalErrorNotification(
           responseBody.message,
           (exception as any).name,
-          (exception as any).stack,
         );
       }
     } else {
