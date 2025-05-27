@@ -6,7 +6,7 @@ import { ThrottlerModule } from '@nestjs/throttler';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { AppController } from 'src/app.controller';
 import { AppService } from 'src/app.service';
-import { CustomExceptionFilter } from 'src/common/filters/custom-exception.filter';
+import { GlobalExceptionFilter } from 'src/common/filters/global-exception.filter';
 import { CustomThrottlerGuard } from 'src/common/guard/custom-throttler.guard';
 import { getDatabaseConfig } from 'src/core/config/database.config';
 import { RedisThrottlerStorageService } from 'src/core/redis/redis-throttler-storage.service';
@@ -76,7 +76,7 @@ import { addTransactionalDataSource } from 'typeorm-transactional';
   providers: [
     AppService,
     SeederService,
-    { provide: APP_FILTER, useClass: CustomExceptionFilter },
+    { provide: APP_FILTER, useClass: GlobalExceptionFilter },
     { provide: APP_GUARD, useClass: CustomThrottlerGuard },
   ],
 })
