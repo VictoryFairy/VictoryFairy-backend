@@ -8,6 +8,9 @@
 
 [간략한 소개 및 기능보기](https://github.com/VictoryFairy/VictoryFairy-frontEnd/blob/main/README.md)
 
+## 아키텍쳐
+<img width="1000" alt="Image" src="https://github.com/user-attachments/assets/f3aa3140-4f9c-4eeb-ad03-36ec66e72a17" />
+
 ## 기술 스택
 
 | 범주                   | 사용 기술                                   |
@@ -44,17 +47,15 @@
 
 ## ERD
 
-<p align='center'>
-    <img src="https://github.com/user-attachments/assets/5660ba7d-262a-4c4f-84cf-dde915f6eb7e">
-</p>
+<img width="1000" alt="Image" src="https://github.com/user-attachments/assets/ada1bb5f-a9cb-495e-a586-0fef1998b364" />
 
 ## 깃 브랜치 전략
 
 - main: 실제 운영 서비스 브랜치
 - dev: 스테이징 서버 운영 브랜치
-- 기능 개발 시 main 브랜치에서 'feature' 생성 후 개발
-- 기능 개발 완료 시 dev에 커밋 머지하여 스테이징 환경에서 테스트
-- 프론트엔드 개발 및 연동 테스트 완료 후 문제없으면 feature -> main 커밋 머지 및 운영 배포
+- 기능 개발 시 main 브랜치에서 분기 생성 후 개발
+- 기능 개발 완료 시 dev 브랜치에 머지하여 스테이징 서버 배포
+- 프론트엔드 개발,연동 및 테스트 완료 후 문제없으면 분기 브랜치 -> main 머지 및 운영 서버 배포
 
 ## 배포(깃허브 액션)
 
