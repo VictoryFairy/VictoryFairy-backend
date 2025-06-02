@@ -1,4 +1,4 @@
-import { IsIn, IsNumber } from 'class-validator';
+import { IsIn, IsNumber, ValidateIf } from 'class-validator';
 
 export class BatchUpdateGameDto {
   @IsNumber()
@@ -7,6 +7,7 @@ export class BatchUpdateGameDto {
   @IsNumber()
   awayScore: number | null;
 
+  @ValidateIf((obj) => obj.status !== null)
   @IsIn(['경기전', '경기중', '경기종료'])
-  status: string;
+  status: string | null;
 }

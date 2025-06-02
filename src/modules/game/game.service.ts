@@ -1,20 +1,18 @@
-import { HttpService } from '@nestjs/axios';
 import { Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { forkJoin, map, Observable } from 'rxjs';
 import { Repository } from 'typeorm';
 import parse from 'node-html-parser';
 import * as moment from 'moment-timezone';
 import { BatchUpdateGameDto } from 'src/modules/game/dto/batch-update-game.dto';
 import { isNumber } from 'src/common/utils/is-number.util';
 import { Game } from './entities/game.entity';
+import axios from 'axios';
 
 @Injectable()
 export class GameService {
   private readonly logger = new Logger(GameService.name);
 
   constructor(
-    private readonly httpService: HttpService,
     @InjectRepository(Game)
     private readonly gameRepository: Repository<Game>,
   ) {}
@@ -108,12 +106,12 @@ export class GameService {
     });
   }
 
-  getCurrentGameStatus(
+  async getCurrentGameStatus(
     leagueId: number,
     seriesId: number,
     gameId: string,
     gyear: number,
-  ): Observable<BatchUpdateGameDto> {
+  ): Promise<BatchUpdateGameDto> {
     const extractStatus = (htmlString: string) => {
       const root = parse(htmlString);
       const statusElement = root.querySelector('span.date');
@@ -146,57 +144,45 @@ export class GameService {
       };
     };
 
-    return forkJoin({
-      scores: this.httpService
-        .post(
-          'https://www.koreabaseball.com/Game/LiveTextView1.aspx',
-          {
-            leagueId,
-            seriesId,
-            gameId,
-            gyear,
+    const [scoreRes, statusRes] = await Promise.allSettled([
+      axios.post(
+        'https://www.koreabaseball.com/Game/LiveTextView1.aspx',
+        { leagueId, seriesId, gameId, gyear },
+        {
+          headers: {
+            'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8',
           },
-          {
-            headers: {
-              'Content-Type':
-                'application/x-www-form-urlencoded; charset=UTF-8',
-            },
+        },
+      ),
+      axios.post(
+        'https://www.koreabaseball.com/Game/LiveTextView2.aspx',
+        { leagueId, seriesId, gameId, gyear },
+        {
+          headers: {
+            'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8',
           },
-        )
-        .pipe(
-          map((response) => extractScore(response.data)), // 점수 추출
-        ),
-      status: this.httpService
-        .post(
-          'https://www.koreabaseball.com/Game/LiveTextView2.aspx',
-          {
-            leagueId,
-            seriesId,
-            gameId,
-            gyear,
-          },
-          {
-            headers: {
-              'Content-Type':
-                'application/x-www-form-urlencoded; charset=UTF-8',
-            },
-          },
-        )
-        .pipe(
-          map((response) => extractStatus(response.data)), // 상태 추출
-        ),
-    }).pipe(
-      map(({ scores, status }) => {
-        const data = {
-          homeScore: scores.homeScore,
-          awayScore: scores.awayScore,
-          status: status.status,
-        };
-        // this.logger.log(
-        //   `Scrapped data for game ${gameId} -> homeScore: ${data.homeScore}, awayScore: ${data.awayScore}, status: ${data.status}`,
-        // );
-        return data;
-      }),
-    );
+        },
+      ),
+    ]);
+
+    if (scoreRes.status === 'fulfilled' && statusRes.status === 'fulfilled') {
+      const score = extractScore(scoreRes.value.data);
+      const status = extractStatus(statusRes.value.data);
+      return {
+        homeScore: score.homeScore,
+        awayScore: score.awayScore,
+        status: status.status,
+      };
+    }
+
+    if (scoreRes.status === 'rejected' || statusRes.status === 'rejected') {
+      this.logger.error(`Failed to get current game status for game ${gameId}`);
+    }
+
+    return {
+      homeScore: null,
+      awayScore: null,
+      status: null,
+    };
   }
 }

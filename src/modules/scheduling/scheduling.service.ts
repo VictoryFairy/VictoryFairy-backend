@@ -1,6 +1,5 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { Cron, CronExpression, SchedulerRegistry } from '@nestjs/schedule';
-import { firstValueFrom } from 'rxjs';
 import { CronJob } from 'cron';
 import * as moment from 'moment-timezone';
 import { getNextMonth } from 'src/common/utils/get-next-month.util';
@@ -149,13 +148,11 @@ export class SchedulingService {
     const intervalJob = new CronJob(
       CronExpression.EVERY_MINUTE,
       async () => {
-        const currentStatus = await firstValueFrom(
-          this.gameService.getCurrentGameStatus(
-            1,
-            seriesId,
-            gameId,
-            new Date().getFullYear(),
-          ),
+        const currentStatus = await this.gameService.getCurrentGameStatus(
+          1,
+          seriesId,
+          gameId,
+          new Date().getFullYear(),
         );
         await this.gameService.updateStatusRepeatedly(gameId, currentStatus);
         if (
