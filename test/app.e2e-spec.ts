@@ -9,6 +9,7 @@ import { TestAppModule } from './test.module';
 import { correctGameExample } from './mock/data/correct-game-example';
 import { RegisteredGameStatus } from 'src/modules/registered-game/types/registered-game-status.type';
 import { getTestUsers } from './mock/data/mock-users';
+import { getGameType } from 'src/common/utils/getGameType';
 
 describe('Core User Action Flow(e2e)', () => {
   // 테스트에 필요한 변수 선언
@@ -142,6 +143,7 @@ describe('Core User Action Flow(e2e)', () => {
       expect(res.body).toHaveProperty('status', RegisteredGameStatus.Win); // 응원팀이 이겼으므로 Win
       expect(res.body).toHaveProperty('game', {
         id: game.id,
+        gameType: getGameType(game.id),
         date: game.date,
         time: game.time,
         status: game.status,

@@ -1,5 +1,5 @@
 services:
-  postgres:
+  test-postgres:
     container_name: ${DB_CONTAINER_NAME}
     image: postgres:alpine
     restart: always
@@ -13,7 +13,7 @@ services:
       - POSTGRES_PASSWORD=${DB_PASSWORD}
       - POSTGRES_DB=${DB_DATABASE_NAME}
       - PGPORT=${DB_TCP_PORT}
-  redis-server:
+  test-redis-server:
     container_name: ${REDIS_CONTAINER}
     image: redis:alpine
     env_file:

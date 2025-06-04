@@ -1,6 +1,7 @@
 export const correctGameExample = [
   {
     id: '20250511LTKT1',
+    gameType: 1,
     date: '2025-05-11',
     time: '14:00:00',
     status: '경기종료',
@@ -28,6 +29,7 @@ export const correctGameExample = [
   },
   {
     id: '20250511NCOB2',
+    gameType: 2,
     date: '2025-05-11',
     time: '17:00:00',
     status: '경기종료',
@@ -55,6 +57,7 @@ export const correctGameExample = [
   },
   {
     id: '20250511HTSK2',
+    gameType: 2,
     date: '2025-05-11',
     time: '17:00:00',
     status: '경기종료',
@@ -82,6 +85,7 @@ export const correctGameExample = [
   },
   {
     id: '20250511LTKT2',
+    gameType: 2,
     date: '2025-05-11',
     time: '17:00:00',
     status: '경기종료',
@@ -102,13 +106,11 @@ export const correctGameExample = [
     },
     homeTeamScore: 1,
     awayTeamScore: 1,
-    winningTeam: {
-      id: 1,
-      name: '롯데 자이언츠',
-    },
+    winningTeam: null,
   },
   {
     id: '20250511LGSS0',
+    gameType: 0,
     date: '2025-05-11',
     time: '14:00:00',
     status: '경기종료',
@@ -136,6 +138,7 @@ export const correctGameExample = [
   },
   {
     id: '20250511HHWO0',
+    gameType: 0,
     date: '2025-05-11',
     time: '14:00:00',
     status: '경기종료',
@@ -163,6 +166,7 @@ export const correctGameExample = [
   },
   {
     id: '20250511NCOB1',
+    gameType: 1,
     date: '2025-05-11',
     time: '14:00:00',
     status: '경기종료',
@@ -190,6 +194,7 @@ export const correctGameExample = [
   },
   {
     id: '20250511HTSK1',
+    gameType: 1,
     date: '2025-05-11',
     time: '14:00:00',
     status: '경기종료',
