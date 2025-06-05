@@ -6,10 +6,11 @@ import {
   IGoogleOAuthUserInfo,
   ISocialUserInfo,
 } from 'src/modules/auth/strategies/interface/oauth.interface';
+import { IDotenv } from 'src/core/config/dotenv.interface';
 
 @Injectable()
 export class GoogleOAuthStrategy extends BaseOAuthStrategy {
-  constructor(configService: ConfigService) {
+  constructor(configService: ConfigService<IDotenv>) {
     super(
       SocialProvider.GOOGLE,
       configService,

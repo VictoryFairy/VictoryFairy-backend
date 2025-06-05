@@ -10,6 +10,7 @@ import { RegisteredGameService } from 'src/modules/registered-game/registered-ga
 import { upsertSchedules } from './game-crawling.util';
 import { Game } from '../game/entities/game.entity';
 import { SCHEDULER_NAME } from './type/schedule-job-name.type';
+import { IDotenv } from 'src/core/config/dotenv.interface';
 
 @Injectable()
 export class SchedulingService {
@@ -19,7 +20,7 @@ export class SchedulingService {
     private readonly gameService: GameService,
     private readonly registeredGameService: RegisteredGameService,
     private readonly schedulerRegistry: SchedulerRegistry,
-    private readonly configService: ConfigService,
+    private readonly configService: ConfigService<IDotenv>,
     private readonly dataSource: DataSource,
   ) {}
   /**
@@ -144,7 +145,9 @@ export class SchedulingService {
   private async createGameScoreJobForOneMinute(
     gameId: string,
   ): Promise<CronJob> {
-    const seriesId = this.configService.get<number>('SERIES_ID');
+    const seriesId = this.configService.get('SERIES_ID', {
+      infer: true,
+    });
     const intervalJob = new CronJob(
       CronExpression.EVERY_MINUTE,
       async () => {

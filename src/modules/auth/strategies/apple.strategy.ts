@@ -9,6 +9,7 @@ import {
   IAppleTokenResponse,
   IAppleDecodedPayload,
 } from 'src/modules/auth/strategies/interface/oauth.interface';
+import { IDotenv } from 'src/core/config/dotenv.interface';
 
 @Injectable()
 export class AppleOAuthStrategy implements IOAuthStrategy {
@@ -21,10 +22,16 @@ export class AppleOAuthStrategy implements IOAuthStrategy {
   private readonly keyId: string;
   private readonly privateKey: string;
   private readonly jwksClient: jwksClient.JwksClient;
-  constructor(private readonly configService: ConfigService) {
-    this.serviceId = this.configService.get<string>('APPLE_SERVICE_ID');
-    this.teamId = this.configService.get<string>('APPLE_TEAM_ID');
-    this.keyId = this.configService.get<string>('APPLE_KEY_ID');
+  constructor(private readonly configService: ConfigService<IDotenv>) {
+    this.serviceId = this.configService.get('APPLE_SERVICE_ID', {
+      infer: true,
+    });
+    this.teamId = this.configService.get('APPLE_TEAM_ID', {
+      infer: true,
+    });
+    this.keyId = this.configService.get('APPLE_KEY_ID', {
+      infer: true,
+    });
     this.privateKey = Buffer.from(
       this.configService.get<string>('APPLE_PRIVATE_KEY_BASE64') || '',
       'base64',

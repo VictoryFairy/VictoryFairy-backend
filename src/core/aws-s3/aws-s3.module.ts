@@ -3,6 +3,7 @@ import { AwsS3Service } from './aws-s3.service';
 import { ConfigService } from '@nestjs/config';
 import { s3Config } from 'src/core/config/s3.config';
 import { AwsS3Controller } from 'src/core/aws-s3/aws-s3.controller';
+import { IDotenv } from '../config/dotenv.interface';
 
 @Module({
   controllers: [AwsS3Controller],
@@ -10,7 +11,7 @@ import { AwsS3Controller } from 'src/core/aws-s3/aws-s3.controller';
     AwsS3Service,
     {
       provide: 'S3_CLIENT',
-      inject: [ConfigService],
+      inject: [ConfigService<IDotenv>],
       useFactory: s3Config,
     },
   ],
