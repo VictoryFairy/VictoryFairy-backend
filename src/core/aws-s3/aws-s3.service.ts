@@ -17,6 +17,7 @@ import { v4 as uuid4, v7 as uuid7 } from 'uuid';
 import { ImgFileType, S3_EXPIRES_IN, S3Category } from './const/s3.const';
 import { IDotenv } from '../config/dotenv.interface';
 
+
 @Injectable()
 export class AwsS3Service {
   private readonly logger = new Logger(AwsS3Service.name);
@@ -34,6 +35,7 @@ export class AwsS3Service {
     this.region = this.configService.get('AWS_S3_REGION', {
       infer: true,
     });
+
   }
 
   async uploadProfile(file: Buffer, mimeType: string) {
