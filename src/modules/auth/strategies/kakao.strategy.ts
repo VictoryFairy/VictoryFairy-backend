@@ -6,10 +6,11 @@ import {
 } from 'src/modules/auth/strategies/interface/oauth.interface';
 import { ConfigService } from '@nestjs/config';
 import { BaseOAuthStrategy } from './base-oauth.strategy';
+import { IDotenv } from 'src/core/config/dotenv.interface';
 
 @Injectable()
 export class KakaoOAuthStrategy extends BaseOAuthStrategy {
-  constructor(configService: ConfigService) {
+  constructor(configService: ConfigService<IDotenv>) {
     super(
       SocialProvider.KAKAO,
       configService,

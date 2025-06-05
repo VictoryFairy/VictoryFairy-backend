@@ -40,17 +40,23 @@ import { UserMyPageDto } from './dto/response/res-user-mypage.dto';
 import { ResCheckPwDto } from './dto/response/res-check-pw-dto';
 import { TermAgreementDto } from '../term/dto/request/term-argreement.dto';
 import { ResOverallOppTeamDto } from '../rank/dto/response/res-overall-opp-team.dto';
+import { IDotenv } from 'src/core/config/dotenv.interface';
 
 @ApiTags('User')
 @Controller('users')
 export class UserController {
+  private readonly nodeEnv: string;
   constructor(
     private readonly accountService: AccountService,
     private readonly authService: AuthService,
     private readonly userService: UserService,
     private readonly rankService: RankService,
-    private readonly configService: ConfigService,
-  ) {}
+    private readonly configService: ConfigService<IDotenv>,
+  ) {
+    this.nodeEnv = this.configService.get('NODE_ENV', {
+      infer: true,
+    });
+  }
 
   /** 유저 회원가입 */
   @Post('signup')
@@ -194,16 +200,12 @@ export class UserController {
   @ApiNoContentResponse({ description: '삭제 성공한 경우 상태코드만 응답' })
   @ApiInternalServerErrorResponse({ description: 'DB 삭제 실패한 경우' })
   async deleteUser(@CurrentUser('id') userId: number, @Res() res: Response) {
-    const domain = this.configService.get('DOMAIN');
-    const nodeEnv = this.configService.get('NODE_ENV');
-
     await this.userService.deleteUser(userId);
     res.clearCookie('token', {
       maxAge: 0,
-      domain: domain || 'localhost',
       httpOnly: true,
-      secure: nodeEnv === 'production' || nodeEnv === 'staging',
-      sameSite: nodeEnv === 'staging' ? 'none' : 'lax',
+      secure: this.nodeEnv === 'production' || this.nodeEnv === 'staging',
+      sameSite: this.nodeEnv === 'staging' ? 'none' : 'lax',
     });
     res.sendStatus(HttpStatus.NO_CONTENT);
   }

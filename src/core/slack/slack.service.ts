@@ -1,13 +1,14 @@
 import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { IncomingWebhook } from '@slack/webhook';
+import { IDotenv } from '../config/dotenv.interface';
 
 @Injectable()
 export class SlackService {
   private readonly webhook: IncomingWebhook;
-  constructor(private readonly configService: ConfigService) {
+  constructor(private readonly configService: ConfigService<IDotenv>) {
     this.webhook = new IncomingWebhook(
-      this.configService.get<string>('SLACK_WEBHOOK_URL', ''),
+      this.configService.get('SLACK_WEBHOOK_URL', { infer: true }) || '',
     );
   }
 

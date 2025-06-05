@@ -15,6 +15,7 @@ import { instanceToPlain } from 'class-transformer';
 import { DeleteImageAwsS3Dto } from 'src/core/aws-s3/aws-s3.dto';
 import { v4 as uuid4, v7 as uuid7 } from 'uuid';
 import { ImgFileType, S3_EXPIRES_IN, S3Category } from './const/s3.const';
+import { IDotenv } from '../config/dotenv.interface';
 
 @Injectable()
 export class AwsS3Service {
@@ -23,12 +24,16 @@ export class AwsS3Service {
   private readonly region: string;
 
   constructor(
-    private readonly configService: ConfigService,
+    private readonly configService: ConfigService<IDotenv>,
     @Inject('S3_CLIENT')
     private readonly s3Client: S3Client,
   ) {
-    this.bucketName = this.configService.get<string>('AWS_S3_BUCKET_NAME');
-    this.region = this.configService.get<string>('AWS_S3_REGION');
+    this.bucketName = this.configService.get('AWS_S3_BUCKET_NAME', {
+      infer: true,
+    });
+    this.region = this.configService.get('AWS_S3_REGION', {
+      infer: true,
+    });
   }
 
   async uploadProfile(file: Buffer, mimeType: string) {

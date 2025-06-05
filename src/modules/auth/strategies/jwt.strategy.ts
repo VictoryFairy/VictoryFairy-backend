@@ -4,22 +4,30 @@ import { ConfigService } from '@nestjs/config';
 import { IJwtPayload } from 'src/modules/auth/types/auth.type';
 import { UserRedisService } from 'src/core/redis/user-redis.service';
 import { UserService } from 'src/modules/user/user.service';
+import { IDotenv } from 'src/core/config/dotenv.interface';
 
 @Injectable()
 export class JwtStrategy {
+  private readonly refreshSecret: string;
+  private readonly accessSecret: string;
   constructor(
     private readonly jwtService: JwtService,
-    private readonly configService: ConfigService,
+    private readonly configService: ConfigService<IDotenv>,
     private readonly userRedisService: UserRedisService,
     private readonly userService: UserService,
-  ) {}
+  ) {
+    this.refreshSecret = this.configService.get('JWT_REFRESH_SECRET', {
+      infer: true,
+    });
+    this.accessSecret = this.configService.get('JWT_ACCESS_SECRET', {
+      infer: true,
+    });
+  }
 
   async validateToken(token: string, type: 'refresh' | 'access') {
     try {
       const secret =
-        type === 'refresh'
-          ? this.configService.get('JWT_REFRESH_SECRET')
-          : this.configService.get('JWT_ACCESS_SECRET');
+        type === 'refresh' ? this.refreshSecret : this.accessSecret;
       const payload: IJwtPayload = await this.jwtService.verifyAsync(token, {
         secret,
       });

@@ -9,17 +9,18 @@ import { ApiLoggingInterceptor } from './common/interceptors/api-logger.intercep
 import { initializeTransactionalContext } from 'typeorm-transactional';
 import { NestExpressApplication } from '@nestjs/platform-express';
 import * as Sentry from '@sentry/node';
+import { IDotenv } from './core/config/dotenv.interface';
 
 async function bootstrap() {
   initializeTransactionalContext();
 
   const app = await NestFactory.create<NestExpressApplication>(AppModule);
-  const configService = app.get(ConfigService);
-  const frontendRootUrl = configService.get<string>(
-    'FRONT_END_URL',
-    'http://localhost:5173',
-  );
-  const nodeEnv = configService.get<string>('NODE_ENV');
+  const configService = app.get(ConfigService<IDotenv>);
+  const frontendRootUrl =
+    configService.get('FRONT_END_URL', { infer: true }) ||
+    'http://localhost:5173';
+  const nodeEnv =
+    configService.get('NODE_ENV', { infer: true }) || 'development';
 
   if (nodeEnv === 'production') {
     Sentry.init({

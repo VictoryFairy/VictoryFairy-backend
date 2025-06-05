@@ -8,15 +8,20 @@ import {
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import * as Sentry from '@sentry/node';
+import { IDotenv } from 'src/core/config/dotenv.interface';
 import { SlackService } from 'src/core/slack/slack.service';
 
 @Catch()
 export class GlobalExceptionFilter implements ExceptionFilter {
   private readonly logger = new Logger(GlobalExceptionFilter.name);
+  private readonly isProduction: boolean;
   constructor(
     private readonly slackService: SlackService,
-    private readonly configService: ConfigService,
-  ) {}
+    private readonly configService: ConfigService<IDotenv>,
+  ) {
+    this.isProduction =
+      this.configService.get('NODE_ENV', { infer: true }) === 'production';
+  }
   async catch(exception: unknown, host: ArgumentsHost): Promise<void> {
     Sentry.captureException(exception);
     const ctx = host.switchToHttp();
@@ -49,9 +54,7 @@ export class GlobalExceptionFilter implements ExceptionFilter {
       this.logger.error(
         `${method} ${url} ${httpStatus} - \n${userAgent} / ${extractedIp} \nError: ${responseBody.message} \nErrorStack : ${(exception as any).stack}`,
       );
-      const isProd =
-        this.configService.get<string>('NODE_ENV') === 'production';
-      if (isProd) {
+      if (this.isProduction) {
         await this.slackService.sendInternalErrorNotification(
           responseBody.message,
           (exception as any).name,
