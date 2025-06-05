@@ -60,7 +60,7 @@ import { IDotenv } from 'src/core/config/dotenv.interface';
 @Controller('auth')
 export class AuthController {
   private readonly nodeEnv: string;
-  private readonly refreshExTime: string;
+  private readonly rfExTime: string;
   constructor(
     private readonly accountService: AccountService,
     private readonly authService: AuthService,
@@ -69,7 +69,7 @@ export class AuthController {
     private readonly userService: UserService,
   ) {
     this.nodeEnv = this.configService.get('NODE_ENV', { infer: true });
-    this.refreshExTime = this.configService.get('REFRESH_EXPIRE_TIME', {
+    this.rfExTime = this.configService.get('REFRESH_EXPIRE_TIME', {
       infer: true,
     });
   }
@@ -96,8 +96,11 @@ export class AuthController {
       this.authService.issueToken({ email, id }, 'access'),
     ];
 
-    const rfExTime = this.configService.get('REFRESH_EXPIRE_TIME');
-    res.cookie('token', rfToken, this.getCookieOptions(parseInt(rfExTime)));
+    res.cookie(
+      'token',
+      rfToken,
+      this.getCookieOptions(parseInt(this.rfExTime)),
+    );
     res.json({ acToken, teamId: support_team.id, teamName: support_team.name });
   }
 
@@ -243,7 +246,7 @@ export class AuthController {
     res.cookie(
       'token',
       rfToken,
-      this.getCookieOptions(parseInt(this.refreshExTime)),
+      this.getCookieOptions(parseInt(this.rfExTime)),
     );
     res.json({
       acToken,
