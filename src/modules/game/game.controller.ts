@@ -45,7 +45,16 @@ export class GameController {
       '',
       'registeredGameIds: 해당 날짜의 유저가 등록한 경기 ID 목록',
     ].join('\n'),
-    example: ResGameDailyDto.swaggerExample(),
+    examples: {
+      example1: {
+        summary: '게임 있는 경우',
+        value: ResGameDailyDto.swaggerExample(),
+      },
+      example2: {
+        summary: '게임 없는 경우',
+        value: { games: {}, registeredGameIds: [] },
+      },
+    },
   })
   async findAllDaily(
     @CurrentUser('id') userId: number,
