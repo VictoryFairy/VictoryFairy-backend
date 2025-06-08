@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { forwardRef, Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { RegisteredGameController } from 'src/modules/registered-game/registered-game.controller';
 import { RegisteredGame } from 'src/modules/registered-game/entities/registered-game.entity';
@@ -13,7 +13,7 @@ import { REGISTERED_GAME_REPOSITORY } from './repository/registered-game.reposit
 @Module({
   imports: [
     TypeOrmModule.forFeature([RegisteredGame]),
-    GameModule,
+    forwardRef(() => GameModule),
     TeamModule,
     RankModule,
     AwsS3Module,

@@ -18,46 +18,58 @@ import { plainToInstance } from 'class-transformer';
 import { JwtAuth } from 'src/common/decorators/jwt-token.decorator';
 import { GameService } from 'src/modules/game/game.service';
 import { FindAllDailyQueryDto, GameDto } from './dto/game.dto';
+import { RegisteredGameService } from '../registered-game/registered-game.service';
+import { ResGameDailyDto } from './dto/response/res-game-daily.dto';
+import { groupGamesByTeam } from './util/gamel-list-group-by-team.util';
+import { CurrentUser } from 'src/common/decorators/current-user.decorator';
 
 @ApiTags('Game')
 @Controller('games')
 @JwtAuth('access')
 export class GameController {
-  constructor(private readonly gameService: GameService) {}
+  constructor(
+    private readonly gameService: GameService,
+    private readonly registeredGameService: RegisteredGameService,
+  ) {}
 
   @Get('daily')
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: '하루 동안의 경기 목록 반환' })
-  @ApiQuery({
-    name: 'year',
-    type: Number,
-    description: '년도',
-    example: 2024,
-  })
-  @ApiQuery({
-    name: 'month',
-    type: Number,
-    description: '월',
-    example: 8,
-  })
-  @ApiQuery({
-    name: 'day',
-    type: Number,
-    description: '일',
-    example: 1,
-  })
+  @ApiQuery({ name: 'year', type: Number, description: '년도', example: 2024 })
+  @ApiQuery({ name: 'month', type: Number, description: '월', example: 8 })
+  @ApiQuery({ name: 'day', type: Number, description: '일', example: 1 })
   @ApiOkResponse({
-    type: [GameDto],
+    type: ResGameDailyDto,
     description: [
-      '데이터가 없으면 빈 배열 반환',
+      'games: 해당 날짜의 경기를 팀별로 그룹화한 데이터',
       '',
-      '[gameType] - 0: 일반 / 1: DH1 / 2: DH2',
+      'registeredGameIds: 해당 날짜의 유저가 등록한 경기 ID 목록',
     ].join('\n'),
+    example: ResGameDailyDto.swaggerExample(),
   })
-  async findAllDaily(@Query() query: FindAllDailyQueryDto): Promise<GameDto[]> {
+  async findAllDaily(
+    @CurrentUser('id') userId: number,
+    @Query() query: FindAllDailyQueryDto,
+  ): Promise<ResGameDailyDto> {
     const { year, month, day } = query;
-    const games = await this.gameService.findAllDaily(year, month, day);
-    return plainToInstance(GameDto, games);
+    const [games, registeredGameIds] = await Promise.all([
+      this.gameService.findAllDaily(year, month, day),
+      this.registeredGameService.getDailyRegisteredGameId(
+        year,
+        month,
+        day,
+        userId,
+      ),
+    ]);
+
+    const gamesDto = plainToInstance(GameDto, games);
+
+    const groupedGames = groupGamesByTeam(gamesDto);
+
+    return {
+      games: groupedGames,
+      registeredGameIds,
+    };
   }
 
   @Get(':id')
