@@ -7,6 +7,7 @@ import {
   Query,
 } from '@nestjs/common';
 import {
+  ApiInternalServerErrorResponse,
   ApiNotFoundResponse,
   ApiOkResponse,
   ApiOperation,
@@ -22,6 +23,7 @@ import { RegisteredGameService } from '../registered-game/registered-game.servic
 import { ResGameDailyDto } from './dto/response/res-game-daily.dto';
 import { groupGamesByTeam } from './util/gamel-list-group-by-team.util';
 import { CurrentUser } from 'src/common/decorators/current-user.decorator';
+import * as moment from 'moment';
 
 @ApiTags('Game')
 @Controller('games')
@@ -79,6 +81,23 @@ export class GameController {
       games: groupedGames,
       registeredGameIds,
     };
+  }
+
+  @Get('today')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({
+    summary: '오늘 경기 목록 반환, 경기가 없는 경우 빈배열 반환',
+  })
+  @ApiOkResponse({
+    type: [GameDto],
+    description: '오늘 경기 목록',
+  })
+  @ApiInternalServerErrorResponse({ description: '서버 오류 발생 시' })
+  async findToday(): Promise<GameDto[]> {
+    const today = moment().tz('Asia/Seoul');
+    const [year, month, day] = [today.year(), today.month() + 1, today.date()];
+    const games = await this.gameService.findAllDaily(year, month, day);
+    return plainToInstance(GameDto, games);
   }
 
   @Get(':id')
