@@ -143,6 +143,28 @@ export class RegisteredGameService {
     return registeredGame;
   }
 
+  async getDailyRegisteredGameId(
+    year: number,
+    month: number,
+    day: number,
+    userId: number,
+  ): Promise<string[]> {
+    const targetDate = moment
+      .tz(
+        `${year}-${month.toString().padStart(2, '0')}-${day.toString().padStart(2, '0')}`,
+        'Asia/Seoul',
+      )
+      .startOf('day')
+      .format('YYYY-MM-DD');
+
+    const registeredGames = await this.registeredGameRepo.find({
+      game: { date: targetDate },
+      user: { id: userId },
+    });
+
+    return registeredGames.map((registeredGame) => registeredGame.game.id);
+  }
+
   @Transactional()
   async update(
     id: number,

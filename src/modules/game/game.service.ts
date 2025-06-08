@@ -2,7 +2,6 @@ import { Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import parse from 'node-html-parser';
-import * as moment from 'moment-timezone';
 import { BatchUpdateGameDto } from 'src/modules/game/dto/batch-update-game.dto';
 import { isNumber } from 'src/common/utils/is-number.util';
 import { Game } from './entities/game.entity';
@@ -22,14 +21,9 @@ export class GameService {
     month: number,
     day: number,
   ): Promise<Game[]> {
-    const dateString = moment
-      .utc({ year, month: month - 1, day })
-      .format('YYYY-MM-DD');
-
+    const dateString = this.getDateString(year, month, day);
     const games = await this.gameRepository.find({
-      where: {
-        date: dateString,
-      },
+      where: { date: dateString },
       relations: {
         home_team: true,
         away_team: true,
@@ -37,7 +31,6 @@ export class GameService {
         stadium: true,
       },
     });
-
     return games;
   }
 
@@ -186,5 +179,12 @@ export class GameService {
       awayScore: null,
       status: null,
     };
+  }
+
+  private getDateString(year: number, month: number, day: number): string {
+    const y = String(year);
+    const m = String(month).padStart(2, '0');
+    const d = String(day).padStart(2, '0');
+    return `${y}-${m}-${d}`;
   }
 }
