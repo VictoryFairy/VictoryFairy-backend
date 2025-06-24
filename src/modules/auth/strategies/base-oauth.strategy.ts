@@ -4,6 +4,7 @@ import {
   ISocialUserInfo,
 } from 'src/modules/auth/strategies/interface/oauth.interface';
 import { ConfigService } from '@nestjs/config';
+import { IDotenv } from 'src/core/config/dotenv.interface';
 
 export abstract class BaseOAuthStrategy implements IOAuthStrategy {
   protected clientId: string;
@@ -11,7 +12,7 @@ export abstract class BaseOAuthStrategy implements IOAuthStrategy {
 
   constructor(
     public readonly provider: SocialProvider,
-    protected configService: ConfigService,
+    protected configService: ConfigService<IDotenv>,
     protected authUrl: string,
     protected tokenUrl: string,
     protected userInfoUrl: string,
@@ -19,9 +20,11 @@ export abstract class BaseOAuthStrategy implements IOAuthStrategy {
   ) {
     this.clientId = this.configService.get<string>(
       `${provider.toUpperCase()}_CLIENT_ID`,
+      { infer: true },
     );
     this.clientSecret = this.configService.get<string>(
       `${provider.toUpperCase()}_CLIENT_SECRET`,
+      { infer: true },
     );
     this.scope = scope;
   }

@@ -27,6 +27,7 @@ import { SlackModule } from './core/slack/slack.module';
 import { ThrottlerModule } from '@nestjs/throttler';
 import { RedisThrottlerStorageService } from './core/redis/redis-throttler-storage.service';
 import { CustomThrottlerGuard } from './common/guard/custom-throttler.guard';
+import { IDotenv } from './core/config/dotenv.interface';
 
 @Module({
   imports: [
@@ -42,7 +43,7 @@ import { CustomThrottlerGuard } from './common/guard/custom-throttler.guard';
         const dataSource = await new DataSource(options).initialize();
         return addTransactionalDataSource(dataSource);
       },
-      inject: [ConfigService],
+      inject: [ConfigService<IDotenv>],
     }),
     ThrottlerModule.forRootAsync({
       inject: [RedisThrottlerStorageService],

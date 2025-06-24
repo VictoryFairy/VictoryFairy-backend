@@ -33,19 +33,37 @@ import { FindOptionsWhere } from 'typeorm';
 import { FindOneResultSocialAuthDto } from './dto/internal/social-auth/findone-social-auth.dto';
 import { IJwtPayload } from './types/auth.type';
 import { EmailWithCodeDto } from '../user/dto/request/req-email-user.dto';
+import { IDotenv } from 'src/core/config/dotenv.interface';
 
 @Injectable()
 export class AuthService {
+  private readonly jwtAccessSecret: string;
+  private readonly jwtRefreshSecret: string;
+  private readonly accessExpireTime: string;
+  private readonly refreshExpireTime: string;
   constructor(
     private readonly jwtService: JwtService,
-    private readonly configService: ConfigService,
+    private readonly configService: ConfigService<IDotenv>,
     private readonly mailService: MailService,
     private readonly authRedisService: AuthRedisService,
     @Inject(SOCIAL_AUTH_REPOSITORY)
     private readonly socialAuthRepo: ISocialAuthRepository,
     @Inject(LOCAL_AUTH_REPOSITORY)
     private readonly localAuthRepo: ILocalAuthRepository,
-  ) {}
+  ) {
+    this.jwtAccessSecret = this.configService.get('JWT_ACCESS_SECRET', {
+      infer: true,
+    });
+    this.jwtRefreshSecret = this.configService.get('JWT_REFRESH_SECRET', {
+      infer: true,
+    });
+    this.accessExpireTime = this.configService.get('ACCESS_EXPIRE_TIME', {
+      infer: true,
+    });
+    this.refreshExpireTime = this.configService.get('REFRESH_EXPIRE_TIME', {
+      infer: true,
+    });
+  }
 
   async getSocialAuth(
     where: FindOptionsWhere<SocialAuth>,
@@ -81,19 +99,12 @@ export class AuthService {
     type: 'refresh' | 'access',
   ) {
     const secret =
-      type === 'refresh'
-        ? this.configService.get<string>('JWT_REFRESH_SECRET')
-        : this.configService.get<string>('JWT_ACCESS_SECRET');
+      type === 'refresh' ? this.jwtRefreshSecret : this.jwtAccessSecret;
     const exTime =
-      type === 'refresh'
-        ? this.configService.get<string>('REFRESH_EXPIRE_TIME')
-        : this.configService.get<string>('ACCESS_EXPIRE_TIME');
+      type === 'refresh' ? this.refreshExpireTime : this.accessExpireTime;
     return this.jwtService.sign(
       { ...payload, type: type === 'refresh' ? 'rf' : 'ac' },
-      {
-        secret,
-        expiresIn: parseInt(exTime),
-      },
+      { secret, expiresIn: Number(exTime) },
     );
   }
 

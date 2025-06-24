@@ -7,20 +7,21 @@ import * as moment from 'moment';
 import { Between } from 'typeorm';
 import { CronExpression } from '@nestjs/schedule';
 import { CronJob } from 'cron';
+import { IDotenv } from 'src/core/config/dotenv.interface';
 
 @Injectable()
 export class ReportScheduleService implements OnModuleInit {
-  private readonly discordWebhookUrl: string | undefined;
+  private readonly discordWebhookUrl: string;
   private readonly logger = new Logger(ReportScheduleService.name);
   constructor(
-    private readonly configService: ConfigService,
+    private readonly configService: ConfigService<IDotenv>,
     private readonly userService: UserService,
     private readonly registeredGameService: RegisteredGameService,
   ) {
-    this.discordWebhookUrl = this.configService.get(
-      'DISCORD_REPORT_WEBHOOK',
-      '',
-    );
+    this.discordWebhookUrl =
+      this.configService.get('DISCORD_REPORT_WEBHOOK', {
+        infer: true,
+      }) || '';
   }
 
   async onModuleInit() {

@@ -50,18 +50,29 @@ import { CreateSocialAuthDto } from './dto/internal/social-auth/create-social-au
 import { UserService } from '../user/user.service';
 import { AccessTokenResDto } from './dto/response/res-aceess-token.dto';
 import { LoginLocalUserDto } from '../user/dto/request/req-login-local-user.dto';
-import { EmailDto, EmailWithCodeDto } from '../user/dto/request/req-email-user.dto';
+import {
+  EmailDto,
+  EmailWithCodeDto,
+} from '../user/dto/request/req-email-user.dto';
+import { IDotenv } from 'src/core/config/dotenv.interface';
 
 @ApiTags('Auth')
 @Controller('auth')
 export class AuthController {
+  private readonly nodeEnv: string;
+  private readonly rfExTime: string;
   constructor(
     private readonly accountService: AccountService,
     private readonly authService: AuthService,
-    private readonly configService: ConfigService,
+    private readonly configService: ConfigService<IDotenv>,
     @Inject(forwardRef(() => UserService))
     private readonly userService: UserService,
-  ) {}
+  ) {
+    this.nodeEnv = this.configService.get('NODE_ENV', { infer: true });
+    this.rfExTime = this.configService.get('REFRESH_EXPIRE_TIME', {
+      infer: true,
+    });
+  }
 
   /** 유저 로그인 */
   @Post('login')
@@ -85,8 +96,11 @@ export class AuthController {
       this.authService.issueToken({ email, id }, 'access'),
     ];
 
-    const rfExTime = this.configService.get('REFRESH_EXPIRE_TIME');
-    res.cookie('token', rfToken, this.getCookieOptions(parseInt(rfExTime)));
+    res.cookie(
+      'token',
+      rfToken,
+      this.getCookieOptions(parseInt(this.rfExTime)),
+    );
     res.json({ acToken, teamId: support_team.id, teamName: support_team.name });
   }
 
@@ -229,8 +243,11 @@ export class AuthController {
       this.authService.issueToken({ email: user.email, id: user.id }, 'access'),
     ];
 
-    const rfExTime = this.configService.get('REFRESH_EXPIRE_TIME');
-    res.cookie('token', rfToken, this.getCookieOptions(parseInt(rfExTime)));
+    res.cookie(
+      'token',
+      rfToken,
+      this.getCookieOptions(parseInt(this.rfExTime)),
+    );
     res.json({
       acToken,
       teamId: isNewUser ? null : user.support_team.id,
@@ -382,15 +399,11 @@ export class AuthController {
   }
 
   private getCookieOptions(maxAge: number): CookieOptions {
-    const domain = this.configService.get('DOMAIN');
-    const nodeEnv = this.configService.get('NODE_ENV');
-
     return {
       maxAge,
-      domain: domain || 'localhost',
       httpOnly: true,
-      secure: nodeEnv === 'production' || nodeEnv === 'staging',
-      sameSite: nodeEnv === 'staging' ? 'none' : 'lax',
+      secure: this.nodeEnv === 'production' || this.nodeEnv === 'staging',
+      sameSite: this.nodeEnv === 'staging' ? 'none' : 'lax',
     };
   }
 }
