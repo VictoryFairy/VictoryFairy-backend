@@ -42,6 +42,7 @@ import { TermAgreementDto } from '../term/dto/request/term-argreement.dto';
 import { ResOverallOppTeamDto } from '../rank/dto/response/res-overall-opp-team.dto';
 import { IDotenv } from 'src/core/config/dotenv.interface';
 import { rankScoreWithDecimal } from 'src/common/utils/calculateRankScore.util';
+import { Throttle } from '@nestjs/throttler';
 
 @ApiTags('User')
 @Controller('users')
@@ -60,6 +61,7 @@ export class UserController {
   }
 
   /** 유저 회원가입 */
+  @Throttle({ default: { limit: 1, ttl: 2 } })
   @Post('signup')
   @ApiOperation({ summary: '회원가입' })
   @ApiBody({ type: CreateLocalUserDto, description: '회원가입에 필요한 정보' })
@@ -138,6 +140,7 @@ export class UserController {
   }
 
   /** 유저 프로필 변경 */
+  @Throttle({ default: { limit: 1, ttl: 2 } })
   @Patch('profile')
   @HttpCode(HttpStatus.NO_CONTENT)
   @JwtAuth('access')
