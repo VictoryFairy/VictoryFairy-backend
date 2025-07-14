@@ -10,7 +10,10 @@ export class UserMeResDto {
   provider: SocialProvider[];
   primaryProvider: SocialProvider | null;
 
-  constructor(user: User, socialAuths: SocialAuth[]) {
+  constructor(
+    user: Pick<User, 'id' | 'email' | 'nickname' | 'profile_image'>,
+    socialAuths: SocialAuth[],
+  ) {
     this.id = user.id;
     this.email = user.email;
     this.nickname = user.nickname;

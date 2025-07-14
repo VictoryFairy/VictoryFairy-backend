@@ -9,7 +9,10 @@ import {
 } from 'typeorm';
 import { InsertRankDto } from '../dto/internal/insert-rank.dto';
 import { GameResultColumnMap } from '../types/game-result-column-map.type';
-import { IRankRepository } from './rank.repository.interface';
+import {
+  AggregatedRecordRaw,
+  IRankRepository,
+} from './rank.repository.interface';
 
 @Injectable()
 export class RankRepository implements IRankRepository {
@@ -56,6 +59,49 @@ export class RankRepository implements IRankRepository {
       return { insertedId: result.identifiers[0].id };
     } catch (error) {
       throw new InternalServerErrorException('DB Rank 인서트 실패');
+    }
+  }
+
+  async aggregateRecord(
+    userId: number,
+    withUserProfile: boolean,
+  ): Promise<AggregatedRecordRaw> {
+    try {
+      const queryBuilder = this.rankRepository
+        .createQueryBuilder()
+        .from(
+          (qb) =>
+            qb
+              .select([
+                'SUM(r.win) as win',
+                'SUM(r.lose) as lose',
+                'SUM(r.tie) as tie',
+                'SUM(r.cancel) as cancel',
+                'SUM(r.win + r.lose + r.tie + r.cancel) as total',
+                'r.user_id as user_id',
+              ])
+              .from('rank', 'r')
+              .where('r.user_id = :userId', { userId })
+              .groupBy('r.user_id'),
+          'st',
+        )
+        .select(['st.win, st.lose, st.tie, st.cancel, st.total']);
+
+      if (withUserProfile) {
+        queryBuilder
+          .leftJoin('user', 'u', 'u.id = st.user_id')
+          .addSelect([
+            'u.id as id',
+            'u.nickname as nickname',
+            'u.profile_image as profile_image',
+            'u.email as email',
+          ]);
+      }
+
+      const result = await queryBuilder.getRawOne<AggregatedRecordRaw>();
+      return result;
+    } catch (error) {
+      throw new InternalServerErrorException('DB Rank 기록 집계 실패');
     }
   }
 
