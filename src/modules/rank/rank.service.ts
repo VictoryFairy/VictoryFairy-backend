@@ -27,6 +27,8 @@ import {
   AggregateRecordDto,
   AggregateRecordWithUserDto,
 } from './dto/internal/aggregate-rank.dto';
+import { rankScoreWithDecimal } from 'src/common/utils/calculateRankScore.util';
+
 @Injectable()
 export class RankService {
   private readonly logger = new Logger(RankService.name);
@@ -198,7 +200,7 @@ export class RankService {
     const stat = await this.calculateUserRankings(userId);
 
     for (const [key, value] of Object.entries(stat)) {
-      const scoreString = this.calculateScore(value).toString();
+      const scoreString = rankScoreWithDecimal(value).toString();
 
       await this.rankingRedisService.updateRankingScoreByUserId(
         userId,
@@ -222,7 +224,7 @@ export class RankService {
     for (const stat of foundUserStats) {
       const { id, team_id, ...rest } = stat;
 
-      const score = this.calculateScore(rest);
+      const score = rankScoreWithDecimal(rest);
       // 서포트 팀 아이디가 key 값
       data[team_id] = { ...rest, score };
       totals.win += rest.win || 0;
@@ -230,7 +232,7 @@ export class RankService {
       totals.tie += rest.tie || 0;
       totals.cancel += rest.cancel || 0;
     }
-    const totalScore = this.calculateScore(totals);
+    const totalScore = rankScoreWithDecimal(totals);
     data['total'] = { ...totals, score: totalScore };
     return data;
   }
@@ -312,20 +314,5 @@ export class RankService {
     } catch (error) {
       throw new InternalServerErrorException('데이터 조회 중 문제가 발생');
     }
-  }
-
-  private calculateScore({
-    win = 0,
-    lose = 0,
-    tie = 0,
-    cancel = 0,
-  }: {
-    win?: number;
-    lose?: number;
-    tie?: number;
-    cancel?: number;
-  }): number {
-    const score = 1000 + (win - lose) * 10 + (win + lose + tie + cancel) / 1000;
-    return score;
   }
 }
