@@ -16,3 +16,16 @@ export interface IRankRepository {
     isRegister: boolean,
   ): Promise<boolean>;
 }
+
+export interface AggregatedRecordRaw {
+  win: string;
+  lose: string;
+  tie: string;
+  cancel: string;
+  total: string;
+  user_id: number;
+  id?: number;
+  nickname?: string;
+  profile_image?: string;
+  email?: string;
+}
