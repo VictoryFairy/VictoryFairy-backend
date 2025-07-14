@@ -37,7 +37,7 @@ function refineSamsungTeamSong() {
   }));
 
   fs.writeFileSync(
-    'src/seeds/refined-cheering-songs/samsung.team.song.json',
+    'src/tools/seeds/data/refined-cheering-songs/samsung.team.song.json',
     JSON.stringify(parsedData, null, 2),
     'utf-8',
   );
@@ -62,7 +62,7 @@ function refineSamsungPlayerSong() {
   );
 
   fs.writeFileSync(
-    'src/seeds/refined-cheering-songs/samsung.player.song.json',
+    'src/tools/seeds/data/refined-cheering-songs/samsung.player.song.json',
     JSON.stringify(parsedData, null, 2),
     'utf-8',
   );
@@ -81,7 +81,7 @@ function refineSsgTeamSong() {
   }));
 
   fs.writeFileSync(
-    'src/seeds/refined-cheering-songs/ssg.team.song.json',
+    'src/tools/seeds/data/refined-cheering-songs/ssg.team.song.json',
     JSON.stringify(parsedData, null, 2),
     'utf-8',
   );
@@ -106,7 +106,7 @@ function refineSsgPlayerSong() {
   );
 
   fs.writeFileSync(
-    'src/seeds/refined-cheering-songs/ssg.player.song.json',
+    'src/tools/seeds/data/refined-cheering-songs/ssg.player.song.json',
     JSON.stringify(parsedData, null, 2),
     'utf-8',
   );
@@ -125,7 +125,7 @@ function refineNcTeamSong() {
   }));
 
   fs.writeFileSync(
-    'src/seeds/refined-cheering-songs/nc.team.song.json',
+    'src/tools/seeds/data/refined-cheering-songs/nc.team.song.json',
     JSON.stringify(parsedData, null, 2),
     'utf-8',
   );
@@ -148,7 +148,7 @@ function refineNcPlayerSong() {
   }));
 
   fs.writeFileSync(
-    'src/seeds/refined-cheering-songs/nc.player.song.json',
+    'src/tools/seeds/data/refined-cheering-songs/nc.player.song.json',
     JSON.stringify(parsedData, null, 2),
     'utf-8',
   );
@@ -167,7 +167,7 @@ function refineLotteTeamSong() {
   }));
 
   fs.writeFileSync(
-    'src/seeds/refined-cheering-songs/lotte.team.song.json',
+    'src/tools/seeds/data/refined-cheering-songs/lotte.team.song.json',
     JSON.stringify(parsedData, null, 2),
     'utf-8',
   );
@@ -190,7 +190,7 @@ function refineLottePlayerSong() {
   }));
 
   fs.writeFileSync(
-    'src/seeds/refined-cheering-songs/lotte.player.song.json',
+    'src/tools/seeds/data/refined-cheering-songs/lotte.player.song.json',
     JSON.stringify(parsedData, null, 2),
     'utf-8',
   );
@@ -211,7 +211,7 @@ function refineLgTeamSong() {
   );
 
   fs.writeFileSync(
-    'src/seeds/refined-cheering-songs/lg.team.song.json',
+    'src/tools/seeds/data/refined-cheering-songs/lg.team.song.json',
     JSON.stringify(parsedData, null, 2),
     'utf-8',
   );
@@ -236,7 +236,7 @@ function refineLgPlayerSong() {
   );
 
   fs.writeFileSync(
-    'src/seeds/refined-cheering-songs/lg.player.song.json',
+    'src/tools/seeds/data/refined-cheering-songs/lg.player.song.json',
     JSON.stringify(parsedData, null, 2),
     'utf-8',
   );
@@ -257,7 +257,7 @@ function refineKtTeamSong() {
   );
 
   fs.writeFileSync(
-    'src/seeds/refined-cheering-songs/kt.team.song.json',
+    'src/tools/seeds/data/refined-cheering-songs/kt.team.song.json',
     JSON.stringify(parsedData, null, 2),
     'utf-8',
   );
@@ -282,7 +282,7 @@ function refineKtPlayerSong() {
   );
 
   fs.writeFileSync(
-    'src/seeds/refined-cheering-songs/kt.player.song.json',
+    'src/tools/seeds/data/refined-cheering-songs/kt.player.song.json',
     JSON.stringify(parsedData, null, 2),
     'utf-8',
   );
@@ -303,7 +303,7 @@ function refineKiwoomTeamSong() {
   );
 
   fs.writeFileSync(
-    'src/seeds/refined-cheering-songs/kiwoom.team.song.json',
+    'src/tools/seeds/data/refined-cheering-songs/kiwoom.team.song.json',
     JSON.stringify(parsedData, null, 2),
     'utf-8',
   );
@@ -328,7 +328,7 @@ function refineKiwoomPlayerSong() {
   );
 
   fs.writeFileSync(
-    'src/seeds/refined-cheering-songs/kiwoom.player.song.json',
+    'src/tools/seeds/data/refined-cheering-songs/kiwoom.player.song.json',
     JSON.stringify(parsedData, null, 2),
     'utf-8',
   );
@@ -347,7 +347,7 @@ function refineKiaTeamSong() {
   }));
 
   fs.writeFileSync(
-    'src/seeds/refined-cheering-songs/kia.team.song.json',
+    'src/tools/seeds/data/refined-cheering-songs/kia.team.song.json',
     JSON.stringify(parsedData, null, 2),
     'utf-8',
   );
@@ -370,7 +370,7 @@ function refineKiaPlayerSong() {
   }));
 
   fs.writeFileSync(
-    'src/seeds/refined-cheering-songs/kia.player.song.json',
+    'src/tools/seeds/data/refined-cheering-songs/kia.player.song.json',
     JSON.stringify(parsedData, null, 2),
     'utf-8',
   );
@@ -389,7 +389,7 @@ function refineHanhwaTeamSong() {
   }));
 
   fs.writeFileSync(
-    'src/seeds/refined-cheering-songs/hanhwa.team.song.json',
+    'src/tools/seeds/data/refined-cheering-songs/hanhwa.team.song.json',
     JSON.stringify(parsedData, null, 2),
     'utf-8',
   );
@@ -414,7 +414,7 @@ function refineHanhwaPlayerSong() {
   );
 
   fs.writeFileSync(
-    'src/seeds/refined-cheering-songs/hanhwa.player.song.json',
+    'src/tools/seeds/data/refined-cheering-songs/hanhwa.player.song.json',
     JSON.stringify(parsedData, null, 2),
     'utf-8',
   );
@@ -435,7 +435,7 @@ function refineDoosanTeamSong() {
   );
 
   fs.writeFileSync(
-    'src/seeds/refined-cheering-songs/doosan.team.song.json',
+    'src/tools/seeds/data/refined-cheering-songs/doosan.team.song.json',
     JSON.stringify(parsedData, null, 2),
     'utf-8',
   );
@@ -460,7 +460,7 @@ function refineDoosanPlayerSong() {
   );
 
   fs.writeFileSync(
-    'src/seeds/refined-cheering-songs/doosan.player.song.json',
+    'src/tools/seeds/data/refined-cheering-songs/doosan.player.song.json',
     JSON.stringify(parsedData, null, 2),
     'utf-8',
   );
