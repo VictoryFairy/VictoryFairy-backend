@@ -41,6 +41,7 @@ import { ResCheckPwDto } from './dto/response/res-check-pw-dto';
 import { TermAgreementDto } from '../term/dto/request/term-argreement.dto';
 import { ResOverallOppTeamDto } from '../rank/dto/response/res-overall-opp-team.dto';
 import { IDotenv } from 'src/core/config/dotenv.interface';
+import { rankScoreWithDecimal } from 'src/common/utils/calculateRankScore.util';
 
 @ApiTags('User')
 @Controller('users')
@@ -181,15 +182,18 @@ export class UserController {
   })
   @ApiInternalServerErrorResponse({ description: 'DB 문제인 경우' })
   async getUserInfo(@CurrentUser('id') userId: number) {
-    const [record, socialAuths, foundUser] = await Promise.all([
-      this.rankService.userOverallGameStats(userId),
+    const [recordWithUser, socialAuths] = await Promise.all([
+      this.rankService.userOverallGameStatsWithUserProfile(userId),
       this.authService.getUserWithSocialAuthList(userId),
-      this.userService.getUser({ id: userId }),
     ]);
+    const { user: userProfile, ...record } = recordWithUser;
+    const { win, lose, tie, cancel } = record;
 
-    const userDto = new UserMeResDto(foundUser, socialAuths);
-
-    return new UserMyPageDto(userDto, record);
+    const userMeResDto = new UserMeResDto(userProfile, socialAuths);
+    return new UserMyPageDto(userMeResDto, {
+      ...record,
+      score: Math.floor(rankScoreWithDecimal({ win, lose, tie, cancel })),
+    });
   }
 
   /** 회원 탈퇴 */
