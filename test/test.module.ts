@@ -1,13 +1,12 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
-import { APP_FILTER, APP_GUARD } from '@nestjs/core';
+import { APP_FILTER } from '@nestjs/core';
 import { EventEmitterModule } from '@nestjs/event-emitter';
 import { ThrottlerModule } from '@nestjs/throttler';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { AppController } from 'src/app.controller';
 import { AppService } from 'src/app.service';
 import { GlobalExceptionFilter } from 'src/common/filters/global-exception.filter';
-import { CustomThrottlerGuard } from 'src/common/guard/custom-throttler.guard';
 import { getDatabaseConfig } from 'src/core/config/database.config';
 import { RedisThrottlerStorageService } from 'src/core/redis/redis-throttler-storage.service';
 import { RedisModule } from 'src/core/redis/redis.module';
