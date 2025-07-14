@@ -29,6 +29,7 @@ import { UpdateRegisteredGameDto } from './dto/request/req-update-registered-gam
 import { RegisteredGameWithGameDto } from './dto/internal/registered-game-with-game.dto';
 import { FindAllMonthlyQueryDto } from './dto/request/req-findall-monthly-query.dto';
 import { DeleteRegisteredGameDto } from './dto/internal/delete-registered-game.dto';
+import { Throttle } from '@nestjs/throttler';
 
 @ApiTags('RegisteredGame')
 @Controller('registered-games')
@@ -36,6 +37,7 @@ import { DeleteRegisteredGameDto } from './dto/internal/delete-registered-game.d
 export class RegisteredGameController {
   constructor(private readonly registeredGameService: RegisteredGameService) {}
 
+  @Throttle({ default: { limit: 1, ttl: 2 } })
   @Post()
   @HttpCode(HttpStatus.CREATED)
   @ApiOperation({ summary: '직관 경기 등록' })

@@ -3,7 +3,6 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { initializeTransactionalContext } from 'typeorm-transactional';
 import * as cookieParser from 'cookie-parser';
 import { NestExpressApplication } from '@nestjs/platform-express';
-import { CustomThrottlerGuard } from 'src/common/guard/custom-throttler.guard';
 import { requestWithDefault } from './utils/request-with-default';
 import { TestAppModule } from './test.module';
 import {
@@ -32,10 +31,7 @@ describe('Core User Action Flow(e2e)', () => {
     // 테스트 모듈 생성
     const module: TestingModule = await Test.createTestingModule({
       imports: [TestAppModule],
-    })
-      .overrideGuard(CustomThrottlerGuard)
-      .useValue(() => true) // 요청 제한 가드 비활성화
-      .compile();
+    }).compile();
     app = module.createNestApplication();
 
     // 앱 설정
