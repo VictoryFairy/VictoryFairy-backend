@@ -4,6 +4,7 @@ import {
   Injectable,
   InternalServerErrorException,
   Logger,
+  NotFoundException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { RegisteredGame } from 'src/modules/registered-game/entities/registered-game.entity';
@@ -22,6 +23,10 @@ import { GameResultColumnMap } from './types/game-result-column-map.type';
 import { ResRankRecordDto } from './dto/response/res-rank-record.dto';
 import { RegisteredGameStatus } from '../registered-game/types/registered-game-status.type';
 import { RegisteredGameSummaryDto } from '../registered-game/dto/internal/registered-game-summary.dto';
+import {
+  AggregateRecordDto,
+  AggregateRecordWithUserDto,
+} from './dto/internal/aggregate-rank.dto';
 @Injectable()
 export class RankService {
   private readonly logger = new Logger(RankService.name);
@@ -230,24 +235,26 @@ export class RankService {
     return data;
   }
 
-  /** @description 유저의 직관 경기 전체 기록 */
-  async userOverallGameStats(userId: number): Promise<ResRankRecordDto> {
-    const userRecord = await this.rankRepo.find({ user: { id: userId } });
+  /** @description 유저의 직관 경기 전체 기록만 반환 */
+  async userOverallGameStats(userId: number): Promise<AggregateRecordDto> {
+    const record = await this.rankRepo.aggregateRecord(userId, false);
 
-    const sum = userRecord.reduce(
-      (acc, cur) => {
-        return {
-          win: acc.win + cur.win,
-          lose: acc.lose + cur.lose,
-          tie: acc.tie + cur.tie,
-          cancel: acc.cancel + cur.cancel,
-          total: acc.total + cur.win + cur.lose + cur.tie + cur.cancel,
-        };
-      },
-      { win: 0, lose: 0, tie: 0, cancel: 0, total: 0 },
-    );
-    const score = Math.floor(this.calculateScore(sum));
-    return { ...sum, score };
+    if (!record) {
+      throw new NotFoundException('유저 랭킹 기록 없음');
+    }
+    return new AggregateRecordDto(record);
+  }
+
+  /** @description 유저의 직관 경기 전체 기록과 user profile 데이터를 같이 반환 */
+  async userOverallGameStatsWithUserProfile(
+    userId: number,
+  ): Promise<AggregateRecordWithUserDto> {
+    const record = await this.rankRepo.aggregateRecord(userId, true);
+
+    if (!record) {
+      throw new NotFoundException('유저 랭킹 기록 없음');
+    }
+    return new AggregateRecordWithUserDto(record);
   }
 
   /** @description 직관 홈 승리 & 상대팀 전적 불러오기 */

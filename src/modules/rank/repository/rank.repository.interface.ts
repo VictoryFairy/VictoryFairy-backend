@@ -8,6 +8,10 @@ export const RANK_REPOSITORY = Symbol('RANK_REPOSITORY');
 export interface IRankRepository {
   find(where: FindOptionsWhere<Rank>): Promise<Rank[]>;
   findOne(where: FindOneOptions<Rank>): Promise<Rank | null>;
+  aggregateRecord(
+    userId: number,
+    withUserProfile: boolean,
+  ): Promise<AggregatedRecordRaw>;
   isExist(where: FindOptionsWhere<Rank>): Promise<boolean>;
   insert(dto: InsertRankDto): Promise<{ insertedId: number }>;
   adjustRecord(
