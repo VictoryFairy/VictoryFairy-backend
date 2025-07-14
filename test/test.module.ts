@@ -77,7 +77,6 @@ import { addTransactionalDataSource } from 'typeorm-transactional';
     AppService,
     SeederService,
     { provide: APP_FILTER, useClass: GlobalExceptionFilter },
-    { provide: APP_GUARD, useClass: CustomThrottlerGuard },
   ],
 })
 export class TestAppModule {}
