@@ -53,10 +53,11 @@ export class AwsS3Controller {
     @Param('category', new ParseEnumPipe(S3Category)) category: S3Category,
     @Body() body: PresignedUrlDto,
   ) {
-    const { fileType } = body;
+    const { fileType, size } = body;
     const presignedUrl = await this.awsS3Service.createPresignedUrl(
       category,
       fileType,
+      size,
     );
     return { presignedUrl };
   }

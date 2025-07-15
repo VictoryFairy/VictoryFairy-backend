@@ -62,12 +62,17 @@ export class AwsS3Service {
     }
   }
 
-  async createPresignedUrl(category: S3Category, fileType: ImgFileType) {
+  async createPresignedUrl(
+    category: S3Category,
+    fileType: ImgFileType,
+    size: number,
+  ) {
     const uploadName = `${category}/${uuid7()}`;
     const command = new PutObjectCommand({
       Bucket: this.bucketName,
       Key: uploadName,
       ContentType: fileType,
+      ContentLength: size,
     });
     try {
       const presignedUrl = await getSignedUrl(this.s3Client, command, {
