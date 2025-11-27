@@ -7,7 +7,7 @@ import {
 } from 'typeorm';
 import { RegisteredGame } from '../../registered-game/entities/registered-game.entity';
 import { Player } from '../../cheering-song/entities/player.entity';
-import { User } from '../../user/entities/user.entity';
+import { User } from '../../account/core/domain/user.entity';
 import { CheeringSong } from '../../cheering-song/entities/cheering-song.entity';
 
 @Entity()
