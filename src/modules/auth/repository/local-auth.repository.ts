@@ -1,6 +1,6 @@
 import { Injectable, InternalServerErrorException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { LocalAuth } from '../entities/local-auth.entity';
+import { LocalAuth } from '../../account/core/domain/local-auth.entity';
 import { Repository, FindOptionsWhere } from 'typeorm';
 import { CreateLocalAuthDto } from '../dto/internal/local-auth/create-local-auth.dto';
 import { ILocalAuthRepository } from './local-auth.repository.interface';

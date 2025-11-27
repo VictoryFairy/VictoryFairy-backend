@@ -1,6 +1,6 @@
 import { SocialProvider } from 'src/modules/auth/const/auth.const';
-import { User } from '../../entities/user.entity';
-import { SocialAuth } from 'src/modules/auth/entities/social-auth.entity';
+import { User } from '../../../account/core/domain/user.entity';
+import { SocialAuth } from 'src/modules/account/core/domain/social-auth.entity';
 
 export class UserMeResDto {
   id: number;

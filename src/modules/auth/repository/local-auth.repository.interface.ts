@@ -1,5 +1,5 @@
 import { FindOptionsWhere } from 'typeorm';
-import { LocalAuth } from '../entities/local-auth.entity';
+import { LocalAuth } from '../../account/core/domain/local-auth.entity';
 import { CreateLocalAuthDto } from '../dto/internal/local-auth/create-local-auth.dto';
 import { UpdateLocalAuthDto } from '../dto/internal/local-auth/update-local-auth.dto';
 

@@ -1,4 +1,4 @@
-import { SocialAuth } from '../entities/social-auth.entity';
+import { SocialAuth } from '../../account/core/domain/social-auth.entity';
 import { FindOptionsWhere } from 'typeorm';
 import { FindOneResultSocialAuthDto } from '../dto/internal/social-auth/findone-social-auth.dto';
 import { DeleteSocialAuthDto } from '../dto/internal/social-auth/delete-social-auth.dto';

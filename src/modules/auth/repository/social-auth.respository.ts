@@ -1,4 +1,4 @@
-import { SocialAuth } from '../entities/social-auth.entity';
+import { SocialAuth } from '../../account/core/domain/social-auth.entity';
 import { FindOptionsWhere, Repository } from 'typeorm';
 import { InjectRepository } from '@nestjs/typeorm';
 import { InternalServerErrorException } from '@nestjs/common';
