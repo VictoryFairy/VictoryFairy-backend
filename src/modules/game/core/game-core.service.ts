@@ -1,0 +1,50 @@
+import { Injectable, Logger } from '@nestjs/common';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Game } from '../entities/game.entity';
+import { Repository } from 'typeorm';
+import { BatchUpdateGameDto } from '../dto/batch-update-game.dto';
+
+@Injectable()
+export class GameCoreService {
+  private readonly logger = new Logger(GameCoreService.name);
+  constructor(
+    @InjectRepository(Game)
+    private readonly gameRepo: Repository<Game>,
+  ) {}
+
+  async updateInProgressGame(
+    gameId: string,
+    currentStatus: BatchUpdateGameDto,
+  ) {
+    if (currentStatus.awayScore === null || currentStatus.homeScore === null)
+      return;
+    try {
+      const { homeScore, awayScore, status } = currentStatus;
+      const game = await this.gameRepo.findOne({
+        where: { id: gameId },
+        relations: { home_team: true, away_team: true, winning_team: true },
+      });
+
+      game.updateInProgressMatch({ status, homeScore, awayScore });
+
+      await this.gameRepo.save(game);
+    } catch (error) {
+      this.logger.log(
+        `Score for Game ${gameId} updated. homeScore: ${currentStatus.homeScore}, awayScore: ${currentStatus.awayScore}, status: ${currentStatus.status}`,
+      );
+    }
+  }
+
+  async updateFinishedMatch(gameId: string, currentStatus: BatchUpdateGameDto) {
+    if (currentStatus.awayScore === null || currentStatus.homeScore === null)
+      return;
+    const { homeScore, awayScore, status } = currentStatus;
+    const game = await this.gameRepo.findOne({
+      where: { id: gameId },
+      relations: { home_team: true, away_team: true, winning_team: true },
+    });
+    game.updateFinishedMatch({ status, homeScore, awayScore });
+
+    await this.gameRepo.save(game);
+  }
+}
