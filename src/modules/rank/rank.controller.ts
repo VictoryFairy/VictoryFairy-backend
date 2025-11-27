@@ -1,5 +1,4 @@
 import { Controller, Get, Query } from '@nestjs/common';
-import { RankService } from './rank.service';
 import { ApiOkResponse, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { JwtAuth } from 'src/common/decorators/jwt-token.decorator';
 import { CurrentUser } from 'src/common/decorators/current-user.decorator';
@@ -8,12 +7,15 @@ import { ResRankTopThreeDto } from './dto/response/res-rank-top-three.dto';
 import { QueryTotalRankingListAboutTeamDto } from './dto/request/query.total-rank-list-about-team.dto';
 import { ResNearByDto } from './dto/response/res-nearby.dto';
 import { ResRankDto } from './dto/response/res-rank.dto';
+import { RankApplicationQueryService } from './application/rank-application.query.service';
 
 @ApiTags('rankings')
 @Controller('rankings')
 @JwtAuth('access')
 export class RankController {
-  constructor(private readonly rankService: RankService) {}
+  constructor(
+    private readonly rankApplicationQueryService: RankApplicationQueryService,
+  ) {}
 
   @Get('top')
   @ApiOperation({
@@ -26,8 +28,12 @@ export class RankController {
     type: ResRankTopThreeDto,
   })
   async getRankTopThree(@Query() query: QueryTotalRankingListAboutTeamDto) {
-    const { teamId } = query;
-    const topResult = await this.rankService.getRankList(0, 2, teamId);
+    const teamId = query.teamId ? Number(query.teamId) : 'total';
+    const topResult = await this.rankApplicationQueryService.getRankList(
+      0,
+      2,
+      teamId,
+    );
 
     return plainToInstance(ResRankTopThreeDto, { top: topResult });
   }
@@ -46,19 +52,13 @@ export class RankController {
     @Query() query: QueryTotalRankingListAboutTeamDto,
     @CurrentUser('id') userId: number,
   ) {
-    const { teamId } = query;
-    const [nearBy, userStats] = await Promise.all([
-      this.rankService.getUserRankWithNeighbors(userId, teamId),
-      this.rankService.userOverallGameStats(userId),
-    ]);
-    return plainToInstance(ResNearByDto, {
-      nearBy,
-      user: {
-        userId: userId,
-        totalGames: userStats.total,
-        win: userStats.win,
-      },
-    });
+    const teamId = query.teamId ? Number(query.teamId) : 'total';
+    const result =
+      await this.rankApplicationQueryService.getUserNearByWithUserStats(
+        userId,
+        teamId,
+      );
+    return result;
   }
 
   @Get()
@@ -72,9 +72,13 @@ export class RankController {
     type: [ResRankDto],
   })
   async getRankList(@Query() query: QueryTotalRankingListAboutTeamDto) {
-    const { teamId } = query;
+    const teamId = query.teamId ? Number(query.teamId) : 'total';
 
-    const result = await this.rankService.getRankList(0, -1, teamId);
+    const result = await this.rankApplicationQueryService.getRankList(
+      0,
+      -1,
+      teamId,
+    );
 
     return result.map((rank) => plainToInstance(ResRankDto, rank));
   }
