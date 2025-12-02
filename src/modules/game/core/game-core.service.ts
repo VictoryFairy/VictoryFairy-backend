@@ -1,4 +1,4 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Game } from '../entities/game.entity';
 import { Repository } from 'typeorm';
@@ -11,6 +11,17 @@ export class GameCoreService {
     @InjectRepository(Game)
     private readonly gameRepo: Repository<Game>,
   ) {}
+
+  async getOneWithTeams(gameId: string): Promise<Game> {
+    const game = await this.gameRepo.findOne({
+      where: { id: gameId },
+      relations: { home_team: true, away_team: true, winning_team: true },
+    });
+    if (!game) {
+      throw new NotFoundException(`해당 경기를 찾을 수 없습니다`);
+    }
+    return game;
+  }
 
   async updateInProgressGame(
     gameId: string,
