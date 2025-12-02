@@ -23,18 +23,22 @@ import {
 } from '@nestjs/swagger';
 import { JwtAuth } from 'src/common/decorators/jwt-token.decorator';
 import { CurrentUser } from 'src/common/decorators/current-user.decorator';
-import { RegisteredGameService } from 'src/modules/registered-game/registered-game.service';
 import { CreateRegisteredGameDto } from './dto/request/req-create-registered-game.dto';
 import { UpdateRegisteredGameDto } from './dto/request/req-update-registered-game.dto';
 import { RegisteredGameWithGameDto } from './dto/internal/registered-game-with-game.dto';
 import { FindAllMonthlyQueryDto } from './dto/request/req-findall-monthly-query.dto';
 import { DeleteRegisteredGameDto } from './dto/internal/delete-registered-game.dto';
+import { RegisteredGameApplicationCommandService } from './application/registered-game-application.command.service';
+import { RegisteredGameApplicationQueryService } from './application/registered-game-application.query.service';
 
 @ApiTags('RegisteredGame')
 @Controller('registered-games')
 @JwtAuth('access')
 export class RegisteredGameController {
-  constructor(private readonly registeredGameService: RegisteredGameService) {}
+  constructor(
+    private readonly registeredGameApplicationCommandService: RegisteredGameApplicationCommandService,
+    private readonly registeredGameApplicationQueryService: RegisteredGameApplicationQueryService,
+  ) {}
 
   @Post()
   @HttpCode(HttpStatus.CREATED)
@@ -47,25 +51,12 @@ export class RegisteredGameController {
     @Body() createRegisteredGameDto: CreateRegisteredGameDto,
     @CurrentUser('id') userId: number,
   ): Promise<RegisteredGameWithGameDto> {
-    const registeredGame = await this.registeredGameService.create(
-      createRegisteredGameDto,
-      userId,
-    );
+    const registeredGame =
+      await this.registeredGameApplicationCommandService.register(
+        createRegisteredGameDto,
+        userId,
+      );
     return registeredGame;
-  }
-
-  @Get()
-  @HttpCode(HttpStatus.OK)
-  @ApiOperation({ summary: '유저가 등록한 모든 직관 경기 반환' })
-  @ApiOkResponse({
-    type: [RegisteredGameWithGameDto],
-    description: '유저가 등록한 직관 경기가 없을 경우에는 빈 배열 반환',
-  })
-  async findAll(
-    @CurrentUser('id') userId: number,
-  ): Promise<RegisteredGameWithGameDto[]> {
-    const registeredGames = await this.registeredGameService.getAll(userId);
-    return registeredGames;
   }
 
   @Get('monthly')
@@ -93,11 +84,11 @@ export class RegisteredGameController {
     @CurrentUser('id') userId: number,
   ): Promise<RegisteredGameWithGameDto[]> {
     const { year, month } = query;
-    const registeredGames = await this.registeredGameService.getAllMonthly(
-      year,
-      month,
-      userId,
-    );
+    const registeredGames =
+      await this.registeredGameApplicationQueryService.getAllMonthly(
+        { year, month },
+        userId,
+      );
     return registeredGames;
   }
 
@@ -120,7 +111,8 @@ export class RegisteredGameController {
     @Param('id', ParseIntPipe) id: number,
     @CurrentUser('id') userId: number,
   ): Promise<RegisteredGameWithGameDto> {
-    const registeredGame = await this.registeredGameService.getOne(id, userId);
+    const registeredGame =
+      await this.registeredGameApplicationQueryService.getOne(id, userId);
     return registeredGame;
   }
 
@@ -143,7 +135,7 @@ export class RegisteredGameController {
     @Body() updateRegisteredGameDto: UpdateRegisteredGameDto,
     @CurrentUser('id') userId: number,
   ): Promise<void> {
-    await this.registeredGameService.update(
+    await this.registeredGameApplicationCommandService.update(
       id,
       updateRegisteredGameDto,
       userId,
@@ -169,9 +161,9 @@ export class RegisteredGameController {
     @CurrentUser('id') userId: number,
   ): Promise<void> {
     const dto = await DeleteRegisteredGameDto.createAndValidate({
-      gameId: id,
+      RegisteredGameId: id,
       userId,
     });
-    await this.registeredGameService.delete(dto);
+    await this.registeredGameApplicationCommandService.delete(dto);
   }
 }

@@ -1,0 +1,75 @@
+import { Injectable, NotFoundException } from '@nestjs/common';
+import * as moment from 'moment';
+import { RegisteredGameWithGameDto } from '../dto/internal/registered-game-with-game.dto';
+import { Between, EntityManager } from 'typeorm';
+import { InjectEntityManager } from '@nestjs/typeorm';
+import { RegisteredGame } from '../entities/registered-game.entity';
+
+@Injectable()
+export class RegisteredGameApplicationQueryService {
+  constructor(
+    @InjectEntityManager()
+    private readonly em: EntityManager,
+  ) {}
+
+  async getAllMonthly(
+    dateInfo: { year: number; month: number },
+    userId: number,
+  ): Promise<RegisteredGameWithGameDto[]> {
+    const { year, month } = dateInfo;
+    const startDate = moment
+      .tz(`${year}-${month.toString().padStart(2, '0')}-01`, 'Asia/Seoul')
+      .startOf('day')
+      .format('YYYY-MM-DD');
+    const endDate = moment
+      .tz(`${year}-${month.toString().padStart(2, '0')}-01`, 'Asia/Seoul')
+      .endOf('month')
+      .format('YYYY-MM-DD');
+
+    const registeredGames = await this.em.find(RegisteredGame, {
+      where: {
+        user: { id: userId },
+        game: { date: Between(startDate, endDate) },
+      },
+      relations: {
+        game: {
+          home_team: true,
+          away_team: true,
+          stadium: true,
+          winning_team: true,
+        },
+        cheering_team: true,
+      },
+      order: { game: { date: 'DESC' } },
+    });
+
+    const registeredGameWithGameDtos = await Promise.all(
+      registeredGames.map(async (registeredGame) => {
+        return await RegisteredGameWithGameDto.createAndValidate(
+          registeredGame,
+        );
+      }),
+    );
+
+    return registeredGameWithGameDtos;
+  }
+
+  async getOne(id: number, userId: number): Promise<RegisteredGameWithGameDto> {
+    const registeredGame = await this.em.findOne(RegisteredGame, {
+      where: { id, user: { id: userId } },
+      relations: {
+        game: {
+          home_team: true,
+          away_team: true,
+          stadium: true,
+          winning_team: true,
+        },
+        cheering_team: true,
+      },
+    });
+    if (!registeredGame) {
+      throw new NotFoundException('Registered game not found');
+    }
+    return await RegisteredGameWithGameDto.createAndValidate(registeredGame);
+  }
+}
