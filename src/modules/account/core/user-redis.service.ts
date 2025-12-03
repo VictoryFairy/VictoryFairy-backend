@@ -54,70 +54,25 @@ export class UserRedisService {
 
   async getUserInfoByIds(
     userIds: number[],
-  ): Promise<
-    Record<string, { id: number; nickname: string; profileImage: string }>
-  > {
+  ): Promise<Record<
+    string,
+    { id: number; nickname: string; profile_image: string }
+  > | null> {
+    console.log('userIds', userIds);
     const rawUserInfo = await this.redisClient.hmget(
       RedisKeys.USER_INFO,
       ...userIds.map((id) => id.toString()),
     );
+    if (rawUserInfo[0] === null || rawUserInfo.length === 0) {
+      return null;
+    }
+
     const parsedInfo = {};
     Object.values(rawUserInfo).forEach((user) => {
       const obj = JSON.parse(user);
       parsedInfo[obj.id] = obj;
     });
+    console.log('parsedInfo', parsedInfo);
     return parsedInfo;
   }
-
-  // async getUserList() {
-  //   try {
-  //     const userInfo = await this.redisClient.hgetall(RedisKeys.USER_INFO);
-  //     const cachedUsers = Object.entries(userInfo).reduce(
-  //       (acc, [id, userInfoString]) => {
-  //         acc[parseInt(id)] = JSON.parse(userInfoString);
-  //         return acc;
-  //       },
-  //       {},
-  //     );
-  //     return cachedUsers;
-  //   } catch (error) {
-  //     throw new InternalServerErrorException('캐싱 유저 읽기 실패');
-  //   }
-  // }
-
-  // async userSynchronizationTransaction(userId: number, teams: Team[]) {
-  //   const redisTransaction = this.redisClient.multi();
-  //   // redis caching 동기화
-  //   redisTransaction.hdel(RedisKeys.USER_INFO, userId.toString());
-  //   redisTransaction.zrem(`${RedisKeys.RANKING}:total`, [userId]);
-  //   for (const team of teams) {
-  //     redisTransaction.zrem(`${RedisKeys.RANKING}:${team.id}`, [userId]);
-  //   }
-  //   const redisExecResult = await redisTransaction.exec();
-  //   if (!redisExecResult) {
-  //     throw new InternalServerErrorException('Redis 캐시 동기화 실패');
-  //   }
-  // }
-
-  // async getUserInfo(): Promise<
-  //   Record<string, { id: number; nickname: string; profile_image: string }>
-  // > {
-  //   const rawUserInfo = await this.redisClient.hgetall(RedisKeys.USER_INFO);
-  //   const parsedInfo = {};
-  //   Object.values(rawUserInfo).forEach((user) => {
-  //     const obj = JSON.parse(user);
-  //     parsedInfo[obj.id] = obj;
-  //   });
-  //   return parsedInfo;
-  // }
-
-  // async getUserInfoById(
-  //   userId: number,
-  // ): Promise<{ id: number; nickname: string; profile_image: string }> {
-  //   const userInfo = await this.redisClient.hget(
-  //     RedisKeys.USER_INFO,
-  //     userId.toString(),
-  //   );
-  //   return userInfo ? JSON.parse(userInfo) : null;
-  // }
 }

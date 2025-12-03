@@ -2,6 +2,7 @@ import {
   BadRequestException,
   ConflictException,
   Injectable,
+  InternalServerErrorException,
   UnauthorizedException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -27,6 +28,13 @@ export class AccountCoreService {
       relations: { support_team: true, local_auth: true },
     });
     if (!user) throw new BadRequestException('존재하지 않는 유저입니다.');
+    return user;
+  }
+
+  async getUserById(userId: number): Promise<User | null> {
+    const user = await this.userRepo.findOne({
+      where: { id: userId },
+    });
     return user;
   }
 
@@ -91,7 +99,11 @@ export class AccountCoreService {
     dto: CreateLocalUserDto,
     termIds: string[],
   ): Promise<UserWithTeamDto> {
-    const { password, email, image, nickname, teamId } = dto;
+    const { password, email, image, teamId } = dto;
+    let { nickname } = dto;
+    if (nickname.trim() === '' || !nickname.trim()) {
+      nickname = await this.generateRandomNickname();
+    }
     const createdUser = await User.createWithLocalAuth({
       email,
       image,
@@ -204,6 +216,14 @@ export class AccountCoreService {
     await this.userRepo.save(user);
   }
 
+  async checkPassword(userId: number, password: string): Promise<boolean> {
+    const user = await this.userRepo.findOne({
+      where: { id: userId },
+      relations: { local_auth: true },
+    });
+    return user.validatePassword(password);
+  }
+
   async updateUserProfileImage(
     userId: number,
     imageUrl: string,
@@ -251,5 +271,23 @@ export class AccountCoreService {
     });
     user.agreeTerms(termIds);
     await this.userRepo.save(user);
+  }
+
+  async generateRandomNickname(): Promise<string> {
+    let retryCount = 0;
+    const MAX_RETRIES = 30;
+    while (true) {
+      const randomNickname = User.generateRandomNickname();
+      const isExistNickname = await this.userRepo.findOne({
+        where: { nickname: randomNickname },
+      });
+      if (!isExistNickname) {
+        return randomNickname;
+      }
+      retryCount++;
+      if (retryCount >= MAX_RETRIES) {
+        throw new InternalServerErrorException('닉네임 생성 실패');
+      }
+    }
   }
 }
