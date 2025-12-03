@@ -35,7 +35,6 @@ import { CookieOptions, Request, Response } from 'express';
 import { ConfigService } from '@nestjs/config';
 import { JwtAuth } from 'src/common/decorators/jwt-token.decorator';
 import { OAuthStatus, SocialProvider } from 'src/modules/auth/const/auth.const';
-import { AccountService } from 'src/modules/account/account.service';
 import { ProviderParamCheckPipe } from 'src/common/pipe/provider-param-check.pipe';
 import { SocialFlowType } from 'src/modules/auth/types/auth.type';
 import { SocialFlowParamPipe } from 'src/common/pipe/social-flow-param-check.pipe';
@@ -63,7 +62,6 @@ export class AuthController {
   constructor(
     private readonly accountApplicationCommandService: AccountApplicationCommandService,
     private readonly accountApplicationQueryService: AccountApplicationQueryService,
-    private readonly accountService: AccountService,
     private readonly authService: AuthService,
     private readonly configService: ConfigService<IDotenv>,
   ) {
@@ -293,7 +291,7 @@ export class AuthController {
       providerEmail,
       isPrimary: false,
     });
-    await this.accountService.linkSocial(socialAuthData);
+    await this.accountApplicationCommandService.linkSocial(socialAuthData);
   }
 
   /** 소셜 계정 연동 해제*/
@@ -318,7 +316,7 @@ export class AuthController {
     provider: SocialProvider,
     @CurrentUser('id') userId: number,
   ) {
-    await this.accountService.unlinkSocial({
+    await this.accountApplicationCommandService.unlinkSocial({
       userId,
       provider,
     });
@@ -353,7 +351,11 @@ export class AuthController {
     },
   })
   async checkRefreshToken(@CurrentUser('id') userId: number) {
-    return await this.accountService.checkUserAgreedRequiredTerm(userId);
+    const notAgreedRequiredTerm =
+      await this.accountApplicationQueryService.getNotAgreedRequiredTermIds(
+        userId,
+      );
+    return { notAgreedRequiredTerm };
   }
 
   /** 엑세스 토큰 재발급 */
