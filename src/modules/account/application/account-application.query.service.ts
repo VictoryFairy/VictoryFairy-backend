@@ -74,7 +74,7 @@ export class AccountApplicationQueryService {
       where: { id: userId },
     });
     if (!user) throw new BadRequestException('존재하지 않는 유저입니다.');
-    return UserWithTeamDto.createAndValidate(user);
+    return await UserWithTeamDto.createAndValidate(user);
   }
 
   /**

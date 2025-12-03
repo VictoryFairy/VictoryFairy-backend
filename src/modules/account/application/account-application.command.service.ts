@@ -163,9 +163,14 @@ export class AccountApplicationCommandService {
     await this.accountCoreService.changePassword(email, password);
   }
 
-  /**
-   * [ ] 유저 프로필 레디스 캐싱
-   */
+  async checkPassword(userId: number, password: string): Promise<boolean> {
+    const result = await this.accountCoreService.checkPassword(
+      userId,
+      password,
+    );
+    return result;
+  }
+
   async updateUserProfile(
     userId: number,
     updateInput: { field: 'teamId' | 'image' | 'nickname'; value: any },
@@ -187,7 +192,7 @@ export class AccountApplicationCommandService {
 
     if (field === 'nickname') {
       await this.accountCoreService.updateUserProfileNickname(userId, value);
-      // 유저 레디스 프포링 캐싱
+      // 유저 레디스 프로필 캐싱
       await this.userRedisService.updateFieldsOfUser(userId, {
         field: 'nickname',
         value,
