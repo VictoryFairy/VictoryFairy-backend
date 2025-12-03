@@ -22,25 +22,20 @@ import {
   ApiTags,
 } from '@nestjs/swagger';
 import { plainToInstance } from 'class-transformer';
-import { AccountService } from 'src/modules/account/account.service';
 import { JwtAuth } from 'src/common/decorators/jwt-token.decorator';
 import { CurrentUser } from 'src/common/decorators/current-user.decorator';
-import { RankService } from 'src/modules/rank/rank.service';
 import { ConfigService } from '@nestjs/config';
 import { Response } from 'express';
-import { AuthService } from 'src/modules/auth/auth.service';
 import { CreateLocalUserDto } from 'src/modules/user/dto/request/req-create-local-user.dto';
 import { LoginLocalUserDto } from 'src/modules/user/dto/request/req-login-local-user.dto';
 import { EmailDto } from 'src/modules/user/dto/request/req-email-user.dto';
 import { NicknameDto } from 'src/modules/user/dto/request/req-nickname-user-dto';
 import { PatchUserProfileDto } from 'src/modules/user/dto/request/req-patch-user-profile.dto';
-import { UserMeResDto } from 'src/modules/user/dto/response/res-user-me.dto';
 import { UserMyPageDto } from 'src/modules/user/dto/response/res-user-mypage.dto';
 import { ResCheckPwDto } from 'src/modules/user/dto/response/res-check-pw-dto';
 import { TermAgreementDto } from 'src/modules/term/dto/request/term-argreement.dto';
 import { ResOverallOppTeamDto } from 'src/modules/rank/dto/response/res-overall-opp-team.dto';
 import { IDotenv } from 'src/core/config/dotenv.interface';
-import { rankScoreWithDecimal } from 'src/common/utils/calculateRankScore.util';
 import { AccountApplicationQueryService } from '../../account-application.query.service';
 import { AccountApplicationCommandService } from '../../account-application.command.service';
 
@@ -51,9 +46,6 @@ export class UserController {
   constructor(
     private readonly accountApplicationQueryService: AccountApplicationQueryService,
     private readonly accountApplicationCommandService: AccountApplicationCommandService,
-    private readonly accountService: AccountService,
-    private readonly authService: AuthService,
-    private readonly rankService: RankService,
     private readonly configService: ConfigService<IDotenv>,
   ) {
     this.nodeEnv = this.configService.get('NODE_ENV', {
@@ -68,7 +60,8 @@ export class UserController {
   @ApiCreatedResponse({ description: '성공 시 데이터 없이 상태코드만 응답' })
   @ApiInternalServerErrorResponse({ description: 'DB 유저 저장 실패한 경우' })
   async signUp(@Body() body: CreateLocalUserDto) {
-    await this.accountService.createLocalUser(body);
+    console.log('body', body);
+    await this.accountApplicationCommandService.registerLocalUser(body);
   }
 
   /** 이메일 중복 확인 */
@@ -119,10 +112,13 @@ export class UserController {
   async checkPassword(
     @CurrentUser('id') userId: number,
     @Body() body: Pick<LoginLocalUserDto, 'password'>,
-  ) {
+  ): Promise<{ isCorrect: boolean }> {
     const { password } = body;
-    const isCorrect = await this.authService.verifyLocalAuth(userId, password);
-    return plainToInstance(ResCheckPwDto, { isCorrect });
+    const isCorrect = await this.accountApplicationCommandService.checkPassword(
+      userId,
+      password,
+    );
+    return { isCorrect };
   }
 
   /** 비밀번호 변경 , 프로필과 따로 뺀 이유 : 이메일 인증 코드 확인 후 변경 */
@@ -138,7 +134,7 @@ export class UserController {
   })
   @ApiInternalServerErrorResponse({ description: 'DB 업데이트 실패' })
   async resetPw(@Body() body: LoginLocalUserDto) {
-    await this.accountService.changePassword(body.email, body.password);
+    await this.accountApplicationCommandService.changePassword(body);
   }
 
   /** 유저 프로필 변경 */
@@ -159,8 +155,8 @@ export class UserController {
   async updateUserProfile(
     @Body() body: PatchUserProfileDto,
     @CurrentUser('id') userId: number,
-  ) {
-    await this.accountService.profileUpdate(userId, body);
+  ): Promise<void> {
+    await this.accountApplicationCommandService.updateUserProfile(userId, body);
   }
 
   /** 해당 유저의 상대 팀 전적 및 승리 중 홈 비율 기록 */
@@ -172,7 +168,8 @@ export class UserController {
   })
   @ApiOperation({ summary: '해당 유저의 상대 팀 전적 및 승리 중 홈 비율 기록' })
   async getUserStats(@CurrentUser('id') userId: number) {
-    const result = this.rankService.userStatsWithVerseTeam(userId);
+    const result =
+      await this.accountApplicationQueryService.getUserVersusTeamStats(userId);
     return plainToInstance(ResOverallOppTeamDto, result);
   }
 
@@ -185,19 +182,10 @@ export class UserController {
     description: 'primaryProvider가 없는 경우 null',
   })
   @ApiInternalServerErrorResponse({ description: 'DB 문제인 경우' })
-  async getUserInfo(@CurrentUser('id') userId: number) {
-    const [recordWithUser, socialAuths] = await Promise.all([
-      this.rankService.userOverallGameStatsWithUserProfile(userId),
-      this.authService.getUserWithSocialAuthList(userId),
-    ]);
-    const { user: userProfile, ...record } = recordWithUser;
-    const { win, lose, tie, cancel } = record;
-
-    const userMeResDto = new UserMeResDto(userProfile, socialAuths);
-    return new UserMyPageDto(userMeResDto, {
-      ...record,
-      score: Math.floor(rankScoreWithDecimal({ win, lose, tie, cancel })),
-    });
+  async getUserInfo(@CurrentUser('id') userId: number): Promise<UserMyPageDto> {
+    const result =
+      await this.accountApplicationQueryService.getUserMyPageInfo(userId);
+    return result;
   }
 
   /** 회원 탈퇴 */
