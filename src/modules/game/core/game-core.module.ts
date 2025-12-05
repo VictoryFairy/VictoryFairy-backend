@@ -1,7 +1,7 @@
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { GameCoreService } from './game-core.service';
 import { Module } from '@nestjs/common';
-import { Game } from '../entities/game.entity';
+import { Game } from './domain/game.entity';
 
 @Module({
   imports: [TypeOrmModule.forFeature([Game])],

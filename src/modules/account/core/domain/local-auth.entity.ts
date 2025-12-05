@@ -9,7 +9,7 @@ import {
   UpdateDateColumn,
 } from 'typeorm';
 import * as bcrypt from 'bcrypt';
-import { HASH_ROUND } from 'src/modules/user/const/user.const';
+import { HASH_ROUND } from 'src/modules/account/core/const/user.const';
 
 @Entity()
 export class LocalAuth {

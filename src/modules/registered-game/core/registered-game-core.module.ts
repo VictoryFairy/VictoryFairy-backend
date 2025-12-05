@@ -1,5 +1,5 @@
 import { Module } from '@nestjs/common';
-import { RegisteredGame } from '../entities/registered-game.entity';
+import { RegisteredGame } from './domain/registered-game.entity';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { RegisteredGameCoreService } from './registered-game-core.service';
 

@@ -9,13 +9,13 @@ import {
   PrimaryGeneratedColumn,
   UpdateDateColumn,
 } from 'typeorm';
-import { Rank } from '../../../rank/entities/rank.entity';
+import { Rank } from 'src/modules/rank/core/domain/rank.entity';
 import { Team } from '../../../team/entities/team.entity';
-import { RegisteredGame } from '../../../registered-game/entities/registered-game.entity';
-import { LikeCheeringSong } from '../../../cheering-song/entities/like-cheering-song.entity';
+import { RegisteredGame } from 'src/modules/registered-game/core/domain/registered-game.entity';
+import { LikeCheeringSong } from 'src/modules/cheering-song/entities/like-cheering-song.entity';
 import { LocalAuth } from './local-auth.entity';
 import { SocialAuth } from './social-auth.entity';
-import { DEFAULT_PROFILE_IMAGE } from 'src/modules/user/const/user.const';
+import { DEFAULT_PROFILE_IMAGE } from 'src/modules/account/core/const/user.const';
 import { SocialProvider } from 'src/modules/auth/const/auth.const';
 import { BadRequestException } from '@nestjs/common';
 import { UserTerm } from './user-term.entity';

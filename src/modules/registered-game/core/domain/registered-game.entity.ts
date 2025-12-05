@@ -8,9 +8,9 @@ import {
   Unique,
   UpdateDateColumn,
 } from 'typeorm';
-import { Team } from '../../team/entities/team.entity';
+import { Team } from '../../../team/entities/team.entity';
 import { RegisteredGameStatus } from 'src/modules/registered-game/types/registered-game-status.type';
-import { Game } from '../../game/entities/game.entity';
+import { Game } from 'src/modules/game/core/domain/game.entity';
 import { User } from 'src/modules/account/core/domain/user.entity';
 
 @Entity()

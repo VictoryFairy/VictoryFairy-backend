@@ -8,9 +8,9 @@ import {
   PrimaryColumn,
   Unique,
 } from 'typeorm';
-import { Team } from '../../team/entities/team.entity';
-import { Stadium } from '../../stadium/entities/stadium.entity';
-import { RegisteredGame } from '../../registered-game/entities/registered-game.entity';
+import { Team } from 'src/modules/team/entities/team.entity';
+import { Stadium } from 'src/modules/stadium/entities/stadium.entity';
+import { RegisteredGame } from 'src/modules/registered-game/core/domain/registered-game.entity';
 import { TGameStatus } from 'src/modules/scheduling/crawling-game.type';
 
 @Entity()

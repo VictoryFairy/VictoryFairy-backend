@@ -1,5 +1,5 @@
 import { Entity, JoinColumn, ManyToOne, PrimaryGeneratedColumn } from 'typeorm';
-import { User } from '../../user/entities/user.entity';
+import { User } from '../../account/core/domain/user.entity';
 import { CheeringSong } from './cheering-song.entity';
 
 @Entity()

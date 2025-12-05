@@ -1,10 +1,12 @@
-import { Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { Rank } from '../entities/rank.entity';
+import { Rank } from './domain/rank.entity';
 import { InsertRankDto } from '../dto/internal/insert-rank.dto';
 import { RankingRedisService } from 'src/core/redis/ranking-redis.service';
 import { RankScoreVo } from './domain/vo/rank-score.vo';
+import { GameResultColumnMap } from '../types/game-result-column-map.type';
+import { RegisteredGameStatus } from 'src/modules/registered-game/types/registered-game-status.type';
 
 @Injectable()
 export class RankCoreService {
@@ -29,6 +31,35 @@ export class RankCoreService {
       await this.rankRepo.save(createRank);
       return;
     }
+    return;
+  }
+
+  async updateRankRecord(
+    dto: {
+      teamId: number;
+      userId: number;
+      activeYear: number;
+      status: RegisteredGameStatus;
+    },
+    isAdd: boolean,
+  ): Promise<void> {
+    const { teamId, userId, activeYear, status } = dto;
+    const column = GameResultColumnMap[status];
+    let targetRankData = await this.rankRepo.findOne({
+      where: { user: { id: userId }, active_year: activeYear, team_id: teamId },
+    });
+
+    if (!targetRankData) {
+      if (!isAdd) {
+        throw new BadRequestException(
+          '제거하려는 랭킹 기록이 존재하지 않습니다.',
+        );
+      }
+      targetRankData = Rank.create({ teamId, userId, activeYear });
+    }
+    targetRankData.adjustRecord(column, isAdd);
+
+    await this.rankRepo.save(targetRankData);
     return;
   }
 

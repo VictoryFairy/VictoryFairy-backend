@@ -3,7 +3,7 @@ import { IsNotEmpty, IsNumber } from 'class-validator';
 export class DeleteRegisteredGameDto extends BaseInternalDto {
   @IsNotEmpty()
   @IsNumber()
-  gameId: number;
+  RegisteredGameId: number;
 
   @IsNotEmpty()
   @IsNumber()

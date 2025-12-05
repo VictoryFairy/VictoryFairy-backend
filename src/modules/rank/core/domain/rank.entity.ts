@@ -8,7 +8,7 @@ import {
   UpdateDateColumn,
 } from 'typeorm';
 import { BadRequestException } from '@nestjs/common';
-import { GameResultColumnMap } from '../types/game-result-column-map.type';
+import { GameResultColumnMap } from 'src/modules/rank/types/game-result-column-map.type';
 import { User } from 'src/modules/account/core/domain/user.entity';
 
 @Entity()

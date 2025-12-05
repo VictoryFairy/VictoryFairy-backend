@@ -45,11 +45,11 @@ import { Throttle } from '@nestjs/throttler';
 import { PidReqDto } from 'src/modules/auth/dto/request/req-pid.dto';
 import { CreateSocialAuthDto } from 'src/modules/auth/dto/internal/social-auth/create-social-auth.dto';
 import { AccessTokenResDto } from 'src/modules/auth/dto/response/res-aceess-token.dto';
-import { LoginLocalUserDto } from 'src/modules/user/dto/request/req-login-local-user.dto';
+import { LoginLocalUserDto } from '../../../dto/request/req-login-local-user.dto';
 import {
   EmailDto,
   EmailWithCodeDto,
-} from 'src/modules/user/dto/request/req-email-user.dto';
+} from '../../../dto/request/req-email-user.dto';
 import { IDotenv } from 'src/core/config/dotenv.interface';
 import { AccountApplicationCommandService } from '../../account-application.command.service';
 import { AccountApplicationQueryService } from '../../account-application.query.service';

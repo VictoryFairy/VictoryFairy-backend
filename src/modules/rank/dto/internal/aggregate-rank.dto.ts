@@ -1,5 +1,17 @@
-import { User } from 'src/modules/user/entities/user.entity';
-import { AggregatedRecordRaw } from '../../repository/rank.repository.interface';
+import { User } from 'src/modules/account/core/domain/user.entity';
+
+export interface AggregatedRecordRaw {
+  win: string;
+  lose: string;
+  tie: string;
+  cancel: string;
+  total: string;
+  user_id: number;
+  id?: number;
+  nickname?: string;
+  profile_image?: string;
+  email?: string;
+}
 
 export class AggregateRecordDto {
   win: number;

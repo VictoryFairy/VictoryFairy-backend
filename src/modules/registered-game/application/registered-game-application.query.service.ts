@@ -3,7 +3,7 @@ import * as moment from 'moment';
 import { RegisteredGameWithGameDto } from '../dto/internal/registered-game-with-game.dto';
 import { Between, EntityManager } from 'typeorm';
 import { InjectEntityManager } from '@nestjs/typeorm';
-import { RegisteredGame } from '../entities/registered-game.entity';
+import { RegisteredGame } from '../core/domain/registered-game.entity';
 
 @Injectable()
 export class RegisteredGameApplicationQueryService {

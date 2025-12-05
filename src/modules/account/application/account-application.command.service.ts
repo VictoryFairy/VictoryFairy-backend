@@ -5,11 +5,11 @@ import {
   UnauthorizedException,
 } from '@nestjs/common';
 import { AccountCoreService } from '../core/account-core.service';
-import { CreateLocalUserDto } from 'src/modules/user/dto/request/req-create-local-user.dto';
+import { CreateLocalUserDto } from '../dto/request/req-create-local-user.dto';
 import { UserRedisService } from '../core/user-redis.service';
 import * as moment from 'moment';
-import { LoginLocalUserDto } from 'src/modules/user/dto/request/req-login-local-user.dto';
-import { UserWithTeamDto } from 'src/modules/user/dto/internal/user-with-team.dto';
+import { LoginLocalUserDto } from '../dto/request/req-login-local-user.dto';
+import { UserWithTeamDto } from '../dto/internal/user-with-team.dto';
 import { runOnTransactionCommit, Transactional } from 'typeorm-transactional';
 import { SocialProvider } from 'src/modules/auth/const/auth.const';
 import { InsertRankDto } from 'src/modules/rank/dto/internal/insert-rank.dto';

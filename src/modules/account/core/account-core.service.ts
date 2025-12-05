@@ -8,12 +8,12 @@ import {
 import { InjectRepository } from '@nestjs/typeorm';
 import { User } from './domain/user.entity';
 import { Repository } from 'typeorm';
-import { LoginLocalUserDto } from 'src/modules/user/dto/request/req-login-local-user.dto';
-import { UserWithTeamDto } from 'src/modules/user/dto/internal/user-with-team.dto';
-import { CreateLocalUserDto } from 'src/modules/user/dto/request/req-create-local-user.dto';
+import { LoginLocalUserDto } from '../dto/request/req-login-local-user.dto';
+import { UserWithTeamDto } from '../dto/internal/user-with-team.dto';
+import { CreateLocalUserDto } from '../dto/request/req-create-local-user.dto';
 import { SocialProvider } from 'src/modules/auth/const/auth.const';
 import { CreateSocialAuthDto } from 'src/modules/auth/dto/internal/social-auth/create-social-auth.dto';
-import { DEFAULT_PROFILE_IMAGE } from 'src/modules/user/const/user.const';
+import { DEFAULT_PROFILE_IMAGE } from 'src/modules/account/core/const/user.const';
 
 @Injectable()
 export class AccountCoreService {

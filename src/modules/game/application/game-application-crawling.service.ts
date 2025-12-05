@@ -1,10 +1,10 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { GameScheduleCrawlingService } from '../infra/crawling/game-schedule.crawling.service';
 import { GameScoreCrawlingService } from '../infra/crawling/game-score.crawling.service';
-import { DataSource } from 'typeorm';
+import { DataSource, IsNull } from 'typeorm';
 import * as moment from 'moment-timezone';
 import { getNextMonth } from 'src/common/utils/get-next-month.util';
-import { Game } from '../entities/game.entity';
+import { Game } from '../core/domain/game.entity';
 import { IGameData } from 'src/modules/scheduling/crawling-game.type';
 import { Team } from 'src/modules/team/entities/team.entity';
 import { Stadium } from 'src/modules/stadium/entities/stadium.entity';
@@ -16,6 +16,10 @@ import { CronExpression, SchedulerRegistry } from '@nestjs/schedule';
 import { ConfigService } from '@nestjs/config';
 import { IDotenv } from 'src/core/config/dotenv.interface';
 import { GameCoreService } from '../core/game-core.service';
+import { runOnTransactionCommit, Transactional } from 'typeorm-transactional';
+import { RegisteredGameCoreService } from 'src/modules/registered-game/core/registered-game-core.service';
+import { RankCoreService } from 'src/modules/rank/core/rank-core.service';
+import { RankingRedisService } from 'src/core/redis/ranking-redis.service';
 
 @Injectable()
 export class GameApplicationCrawlingService {
@@ -25,12 +29,36 @@ export class GameApplicationCrawlingService {
     private readonly gameScheduleCrawlingService: GameScheduleCrawlingService,
     private readonly gameScoreCrawlingService: GameScoreCrawlingService,
     private readonly gameCoreService: GameCoreService,
+    private readonly registeredGameCoreService: RegisteredGameCoreService,
+    private readonly rankCoreService: RankCoreService,
+    private readonly rankRedisService: RankingRedisService,
     private readonly dataSource: DataSource,
     private readonly teamService: TeamService,
     private readonly stadiumService: StadiumService,
     private readonly schedulerRegistry: SchedulerRegistry,
     private readonly configService: ConfigService<IDotenv>,
   ) {}
+
+  /**
+   * 시드 데이터 크롤링 작성
+   */
+  async crawlSeedGameData(dateInfo: {
+    year: number;
+    month: number;
+  }): Promise<void> {
+    try {
+      const { year, month } = dateInfo;
+      const crawlResult =
+        await this.gameScheduleCrawlingService.crawlGameSchedule({
+          year,
+          month,
+        });
+      await this.saveGamesFromCrawling(crawlResult);
+    } catch (error) {
+      this.logger.error('Error in crawlSeedGameData', error.stack);
+      throw error;
+    }
+  }
 
   /**
    * 이번달과 다음달 경기 데이터를 크롤링하고 DB에 저장.
@@ -251,9 +279,7 @@ export class GameApplicationCrawlingService {
               currentStatus,
             );
             // 완료 시 경기결과 나오기전 직관 등록 데이터들 업데이트 및 랭킹 업데이트
-            await this.registeredGameService.batchBulkGameResultUpdateByGameId(
-              gameId,
-            );
+            await this.batchBulkGameResultUpdateByGameId(gameId);
           } catch (error) {
             throw error;
           } finally {
@@ -282,13 +308,50 @@ export class GameApplicationCrawlingService {
     }
   }
 
-  /**
-   * @description
-   * 오늘의 날짜를 반환
-   * @return
-   * string
-   **/
-  private getTodayDate(): string {
-    return moment().tz('Asia/Seoul').format('YYYY-MM-DD');
+  @Transactional()
+  private async batchBulkGameResultUpdateByGameId(
+    gameId: string,
+  ): Promise<void> {
+    try {
+      const game = await this.gameCoreService.getOneWithTeams(gameId);
+      const registeredGames = await this.registeredGameCoreService.getByGameId(
+        gameId,
+        { status: IsNull() },
+      );
+      if (!registeredGames.length) {
+        this.logger.log(
+          `당일 경기:${gameId}을 경기 중에 등록한 유저 없음. 스킵`,
+        );
+        return;
+      }
+
+      const registeredGameUpdates = [];
+      for (const registeredGame of registeredGames) {
+        const team_id = registeredGame.cheering_team.id;
+        registeredGame.determineStatus(game.status, team_id);
+        registeredGameUpdates.push({
+          registeredGame,
+        });
+      }
+      // 직관 경기 결과 업데이트
+      const savedRegisteredGames =
+        await this.registeredGameCoreService.saveBulk(registeredGameUpdates);
+      runOnTransactionCommit(async () => {
+        savedRegisteredGames.forEach(async (registeredGame) => {
+          const userId = registeredGame.user.id;
+          // Rank 업데이트
+          const data =
+            await this.rankCoreService.aggregateRankStatsByUserId(userId);
+          await this.rankRedisService.updateRankings(userId, data);
+        });
+      });
+
+      this.logger.log(`당일 경기:${gameId} 상태 업데이트 후 트랜잭션 성공`);
+    } catch (error) {
+      this.logger.error(
+        `당일 경기:${gameId} 상태 업데이트 후 트랜잭션 실패`,
+        error.stack,
+      );
+    }
   }
 }

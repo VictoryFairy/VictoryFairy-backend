@@ -2,8 +2,8 @@ import { Injectable } from '@nestjs/common';
 import { InjectEntityManager } from '@nestjs/typeorm';
 import { EntityManager } from 'typeorm';
 import { ResGameDailyDto } from '../dto/response/res-game-daily.dto';
-import { Game } from '../entities/game.entity';
-import { RegisteredGame } from 'src/modules/registered-game/entities/registered-game.entity';
+import { Game } from '../core/domain/game.entity';
+import { RegisteredGame } from 'src/modules/registered-game/core/domain/registered-game.entity';
 import { plainToInstance } from 'class-transformer';
 import { GameDto } from '../dto/game.dto';
 

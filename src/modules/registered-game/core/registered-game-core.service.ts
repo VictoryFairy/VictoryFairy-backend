@@ -5,7 +5,7 @@ import {
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { FindOptionsWhere, Repository } from 'typeorm';
-import { RegisteredGame } from '../entities/registered-game.entity';
+import { RegisteredGame } from './domain/registered-game.entity';
 import { SaveRegisteredGameDto } from '../dto/internal/save-registered-game.dto';
 import { UpdateRegisteredGameDto } from '../dto/request/req-update-registered-game.dto';
 import { RegisteredGameStatus } from '../types/registered-game-status.type';

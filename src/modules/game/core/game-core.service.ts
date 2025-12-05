@@ -1,6 +1,6 @@
 import { Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Game } from '../entities/game.entity';
+import { Game } from './domain/game.entity';
 import { Repository } from 'typeorm';
 import { BatchUpdateGameDto } from '../dto/batch-update-game.dto';
 
