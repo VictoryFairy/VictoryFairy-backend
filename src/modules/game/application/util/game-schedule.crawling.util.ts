@@ -7,19 +7,21 @@ import {
   ITeamAndScore,
   TGameSchedule,
   TTeam,
-} from 'src/modules/scheduling/crawling-game.type';
-import { DataSource } from 'typeorm';
+} from 'src/modules/game/application/util/crawling-game.type';
+import { EntityManager } from 'typeorm';
 import { teamNameToTeamId } from 'src/common/utils/teamid-mapper';
 import {
   convertDateFormat,
   isNotTimeFormat,
 } from 'src/common/utils/time-format';
-import { Game } from 'src/modules/game/entities/game.entity';
+import { Game } from 'src/modules/game/core/domain/game.entity';
+import { Logger } from '@nestjs/common';
 
 type UpsertOptions = {
   year: number;
   month: number;
-  dataSource: DataSource;
+  em: EntityManager;
+  logger?: Logger;
 };
 
 /**
@@ -29,7 +31,8 @@ type UpsertOptions = {
 export async function upsertSchedules({
   year,
   month,
-  dataSource,
+  em,
+  logger,
 }: UpsertOptions): Promise<void> {
   try {
     const response = await tryFetchSchedule(year, month);
@@ -52,12 +55,56 @@ export async function upsertSchedules({
     const doubleHeaderProcessedGameData: TGameSchedule =
       processDoubleHeader(refinedGameData);
 
-    await upsertMany(doubleHeaderProcessedGameData, dataSource);
+    await upsertMany(doubleHeaderProcessedGameData, em, logger);
   } catch (error) {
     console.error(
       `Unexpected error while processing schedules for ${year}-${month}:`,
       error,
     );
+  }
+}
+
+/**
+ * 게임 일정을 크롤링하여 반환합니다.
+ * @param year 연도
+ * @param month 월
+ * @returns 크롤링한 게임 데이터 배열
+ */
+export async function crawlGameSchedule({
+  year,
+  month,
+}: {
+  year: number;
+  month: number;
+}): Promise<IGameData[]> {
+  try {
+    const response = await tryFetchSchedule(year, month);
+    if (!response) {
+      console.error(
+        `Failed to fetch schedule after retry for ${year}-${month}`,
+      );
+      return [];
+    }
+
+    const convertRowsToArray = response.data.rows.map((row) =>
+      extractTextFromHtml(row.row),
+    );
+
+    const refinedGameData: IGameData[] = refineGamesData(
+      convertRowsToArray,
+      year,
+    );
+
+    const doubleHeaderProcessedGameData: IGameData[] =
+      processDoubleHeader(refinedGameData);
+
+    return doubleHeaderProcessedGameData;
+  } catch (error) {
+    console.error(
+      `Unexpected error while processing schedules for ${year}-${month}:`,
+      error,
+    );
+    return [];
   }
 }
 
@@ -122,13 +169,12 @@ function refineGamesData(rawData: string[][], year: number): TGameSchedule {
   let currentDate: string = '';
 
   rawData.forEach((entry) => {
-    let date, time, game, review, highlight, channel, empty1, stadium, status;
+    let date, time, game, review, stadium, status;
 
     if (entry.length === 9) {
-      [date, time, game, review, highlight, channel, empty1, stadium, status] =
-        entry;
+      [date, time, game, review, , , , stadium, status] = entry;
     } else if (entry.length === 8) {
-      [time, game, review, highlight, channel, empty1, stadium, status] = entry;
+      [time, game, review, , , , stadium, status] = entry;
     } else {
       return;
     }
@@ -235,112 +281,88 @@ function getTeamAndScore(gameString: string): {
 }
 
 async function upsertMany(
-  gameSchedules: TGameSchedule,
-  dataSource: DataSource,
+  games: IGameData[],
+  em: EntityManager,
+  logger?: Logger,
 ): Promise<void> {
-  await dataSource.manager.transaction(async (manager) => {
-    const teams = await manager.getRepository(Team).find();
-    const stadiums = await manager.getRepository(Stadium).find();
+  const localLogger = logger ? logger : console;
+  if (!games || games.length === 0) {
+    localLogger.log('No games to save');
+    return;
+  }
 
-    for (const schedule of gameSchedules) {
-      const game = new Game();
-      game.id = schedule.id;
-      game.date = schedule.date;
-      game.time = schedule.time;
-      game.status = schedule.status;
-      game.home_team_score = schedule.homeScore ?? null;
-      game.away_team_score = schedule.awayScore ?? null;
+  localLogger.log(`Saving ${games.length} games to database`);
+  try {
+    // DataSource를 사용하여 트랜잭션으로 게임 데이터 저장
+    await em.transaction(async (manager) => {
+      // 팀과 구장 정보 미리 로드
+      const teams = await manager.getRepository(Team).find();
+      const stadiums = await manager.getRepository(Stadium).find();
 
-      let homeTeam = teams.find((team) => team.name === schedule.homeTeam);
+      const teamMaps = new Map<string, Team>();
+      const stadiumMaps = new Map<string, Stadium>();
+      teams.forEach((team) => teamMaps.set(team.name, team));
+      stadiums.forEach((stadium) => stadiumMaps.set(stadium.name, stadium));
 
-      if (!homeTeam) {
-        await manager
-          .getRepository(Team)
-          .upsert({ name: schedule.homeTeam }, ['name']);
+      // 각 게임 데이터 처리
+      for (const gameData of games) {
+        // 게임 엔티티 생성 또는 업데이트
+        const { id, date, time, status, homeScore, awayScore } = gameData;
 
-        homeTeam = await manager
-          .getRepository(Team)
-          .findOne({ where: { name: schedule.homeTeam } });
-      }
-      // DB에 없는 경우
-      if (!homeTeam) {
-        console.log('홈 팀을 찾을 수 없습니다:', schedule.homeTeam);
-        continue;
-      }
-      game.home_team = homeTeam;
-
-      let awayTeam = teams.find((team) => team.name === schedule.awayTeam);
-      if (!awayTeam) {
-        await manager
-          .getRepository(Team)
-          .upsert({ name: schedule.awayTeam }, ['name']);
-        awayTeam = await manager
-          .getRepository(Team)
-          .findOne({ where: { name: schedule.awayTeam } });
-      }
-      // DB에 없는 경우
-      if (!awayTeam) {
-        console.log('원정 팀을 찾을 수 없습니다:', schedule.awayTeam);
-        continue;
-      }
-      game.away_team = awayTeam;
-
-      if (
-        game.home_team_score !== null &&
-        game.away_team_score !== null &&
-        game.home_team_score !== game.away_team_score
-      ) {
-        game.winning_team =
-          schedule.homeScore > schedule.awayScore ? homeTeam : awayTeam;
-      } else {
-        game.winning_team = null;
-      }
-
-      game.stadium =
-        stadiums.find((stadium) => stadium.name === schedule.stadium) ??
-        (await (async () => {
-          await manager.getRepository(Stadium).upsert(
-            {
-              name: schedule.stadium,
-              full_name: '등록되어 있지 않은 경기장',
-              latitude: 0,
-              longitude: 0,
-            },
-            ['name'],
-          );
-
-          return manager
-            .getRepository(Stadium)
-            .findOne({ where: { name: schedule.stadium } });
-        })());
-
-      if (!game.stadium) {
-        console.log(
-          '구장이 누락되었거나 아직 로드되지 않았습니다:',
-          game,
-          schedule,
-        );
-        continue;
-      }
-
-      if (!game.date || !game.time || !game.status) {
-        console.log('필수 필드가 누락되었거나 잘못되었습니다:', game, schedule);
-        continue;
-      }
-
-      try {
-        if (!game.id.endsWith('0')) {
-          const preDoubleHeaderGameId = `${game.id.slice(0, -1)}0`;
-          await manager.delete(Game, {
-            id: preDoubleHeaderGameId,
+        // 팀, 스타디움 확인 후 없으면 저장 후 맵에 추가
+        let [homeTeam, awayTeam, stadium] = [
+          teamMaps.get(gameData.homeTeam),
+          teamMaps.get(gameData.awayTeam),
+          stadiumMaps.get(gameData.stadium),
+        ];
+        if (!homeTeam) {
+          homeTeam = await manager.save(Team, { name: gameData.homeTeam });
+          teamMaps.set(gameData.homeTeam, homeTeam);
+        }
+        if (!awayTeam) {
+          awayTeam = await manager.save(Team, { name: gameData.awayTeam });
+          teamMaps.set(gameData.awayTeam, awayTeam);
+        }
+        if (!stadium) {
+          stadium = await manager.save(Stadium, {
+            name: gameData.stadium,
+            full_name: '등록되어 있지 않은 경기장',
+            latitude: 0,
+            longitude: 0,
           });
+          stadiumMaps.set(gameData.stadium, stadium);
         }
 
-        await manager.upsert(Game, game, ['id']);
-      } catch (error) {
-        console.error('게임 저장 중 오류 발생:', error);
-        throw error;
+        const game = Game.create({
+          id,
+          date,
+          time,
+          status,
+          homeTeamScore: homeScore ?? null,
+          awayTeamScore: awayScore ?? null,
+          homeTeam,
+          awayTeam,
+          stadium,
+        });
+
+        // 더블헤더 처리 및 게임 저장
+        try {
+          if (!game.id.endsWith('0')) {
+            const preDoubleHeaderGameId = `${game.id.slice(0, -1)}0`;
+            await manager.delete(Game, {
+              id: preDoubleHeaderGameId,
+            });
+          }
+
+          await manager.upsert(Game, game, ['id']);
+        } catch (error) {
+          localLogger.error('Error saving game:', error);
+          throw error;
+        }
       }
-    }
-  });
+    });
+  } catch (error) {
+    localLogger.error('Error saving games to database', error.stack);
+    throw error;
+  }
 }

@@ -23,6 +23,10 @@ export class GameCoreService {
     return game;
   }
 
+  async findGamesByDate(date: string): Promise<Game[]> {
+    return this.gameRepo.find({ where: { date } });
+  }
+
   async updateInProgressGame(
     gameId: string,
     currentStatus: BatchUpdateGameDto,

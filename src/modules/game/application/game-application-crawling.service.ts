@@ -1,16 +1,9 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { GameScheduleCrawlingService } from '../infra/crawling/game-schedule.crawling.service';
-import { GameScoreCrawlingService } from '../infra/crawling/game-score.crawling.service';
 import { DataSource, IsNull } from 'typeorm';
 import * as moment from 'moment-timezone';
 import { getNextMonth } from 'src/common/utils/get-next-month.util';
 import { Game } from '../core/domain/game.entity';
-import { IGameData } from 'src/modules/scheduling/crawling-game.type';
-import { Team } from 'src/modules/team/entities/team.entity';
-import { Stadium } from 'src/modules/stadium/entities/stadium.entity';
-import { TeamService } from 'src/modules/team/team.service';
-import { StadiumService } from 'src/modules/stadium/stadium.service';
-import { SCHEDULER_NAME } from 'src/modules/scheduling/type/schedule-job-name.type';
+import { SCHEDULER_NAME } from 'src/modules/game/application/const/scheduler-name.const';
 import { CronJob } from 'cron';
 import { CronExpression, SchedulerRegistry } from '@nestjs/schedule';
 import { ConfigService } from '@nestjs/config';
@@ -20,45 +13,22 @@ import { runOnTransactionCommit, Transactional } from 'typeorm-transactional';
 import { RegisteredGameCoreService } from 'src/modules/registered-game/core/registered-game-core.service';
 import { RankCoreService } from 'src/modules/rank/core/rank-core.service';
 import { RankingRedisService } from 'src/modules/rank/core/ranking-redis.service';
+import { upsertSchedules } from 'src/modules/game/application/util/game-schedule.crawling.util';
+import { getCurrentGameStatus } from 'src/modules/game/application/util/game-score.crawling.util';
 
 @Injectable()
 export class GameApplicationCrawlingService {
   private readonly logger = new Logger(GameApplicationCrawlingService.name);
 
   constructor(
-    private readonly gameScheduleCrawlingService: GameScheduleCrawlingService,
-    private readonly gameScoreCrawlingService: GameScoreCrawlingService,
     private readonly gameCoreService: GameCoreService,
     private readonly registeredGameCoreService: RegisteredGameCoreService,
     private readonly rankCoreService: RankCoreService,
     private readonly rankRedisService: RankingRedisService,
     private readonly dataSource: DataSource,
-    private readonly teamService: TeamService,
-    private readonly stadiumService: StadiumService,
     private readonly schedulerRegistry: SchedulerRegistry,
     private readonly configService: ConfigService<IDotenv>,
   ) {}
-
-  /**
-   * 시드 데이터 크롤링 작성
-   */
-  async crawlSeedGameData(dateInfo: {
-    year: number;
-    month: number;
-  }): Promise<void> {
-    try {
-      const { year, month } = dateInfo;
-      const crawlResult =
-        await this.gameScheduleCrawlingService.crawlGameSchedule({
-          year,
-          month,
-        });
-      await this.saveGamesFromCrawling(crawlResult);
-    } catch (error) {
-      this.logger.error('Error in crawlSeedGameData', error.stack);
-      throw error;
-    }
-  }
 
   /**
    * 이번달과 다음달 경기 데이터를 크롤링하고 DB에 저장.
@@ -70,21 +40,21 @@ export class GameApplicationCrawlingService {
       const [currentYear, currentMonth] = [fullDate[0], fullDate[1]];
       const { nextYear, nextMonth } = getNextMonth(currentYear, currentMonth);
 
-      // 현재 달 데이터 가져오기
-      const currentMonthGames =
-        await this.gameScheduleCrawlingService.crawlGameSchedule({
-          year: currentYear,
-          month: currentMonth,
-        });
-      await this.saveGamesFromCrawling(currentMonthGames);
+      // 현재 달 데이터 크롤링 및 저장
+      await upsertSchedules({
+        year: currentYear,
+        month: currentMonth,
+        em: this.dataSource.manager,
+        logger: this.logger,
+      });
 
-      // 다음 달 데이터 가져오기
-      const nextMonthGames =
-        await this.gameScheduleCrawlingService.crawlGameSchedule({
-          year: nextYear,
-          month: nextMonth,
-        });
-      await this.saveGamesFromCrawling(nextMonthGames);
+      // 다음 달 데이터 크롤링 및 저장
+      await upsertSchedules({
+        year: nextYear,
+        month: nextMonth,
+        em: this.dataSource.manager,
+        logger: this.logger,
+      });
     } catch (error) {
       this.logger.error('Error in getThisAndNextMonthGameData', error.stack);
       throw error;
@@ -92,84 +62,12 @@ export class GameApplicationCrawlingService {
   }
 
   /**
-   * 크롤링한 게임 데이터를 데이터베이스에 저장합니다.
-   * @param games 크롤링한 게임 데이터 배열
+   * 날짜 기반으로 경기 목록을 조회합니다.
+   * @param date 날짜 문자열 (YYYY-MM-DD 형식)
+   * @returns 해당 날짜의 경기 목록
    */
-  private async saveGamesFromCrawling(games: IGameData[]): Promise<void> {
-    if (!games || games.length === 0) {
-      this.logger.log('No games to save');
-      return;
-    }
-
-    this.logger.log(`Saving ${games.length} games to database`);
-    try {
-      // DataSource를 사용하여 트랜잭션으로 게임 데이터 저장
-      await this.dataSource.manager.transaction(async (manager) => {
-        // 팀과 구장 정보 미리 로드
-        const teams = await manager.getRepository(Team).find();
-        const stadiums = await manager.getRepository(Stadium).find();
-
-        const teamMaps = new Map<string, Team>();
-        const stadiumMaps = new Map<string, Stadium>();
-        teams.forEach((team) => teamMaps.set(team.name, team));
-        stadiums.forEach((stadium) => stadiumMaps.set(stadium.name, stadium));
-
-        // 각 게임 데이터 처리
-        for (const gameData of games) {
-          // 게임 엔티티 생성 또는 업데이트
-          const { id, date, time, status, homeScore, awayScore } = gameData;
-
-          // 팀, 스타디움 확인 후 없으면 저장 후 맵에 추가
-          let [homeTeam, awayTeam, stadium] = [
-            teamMaps.get(gameData.homeTeam),
-            teamMaps.get(gameData.awayTeam),
-            stadiumMaps.get(gameData.stadium),
-          ];
-          if (!homeTeam) {
-            homeTeam = await this.teamService.save(gameData.homeTeam, manager);
-            teamMaps.set(gameData.homeTeam, homeTeam);
-          }
-          if (!awayTeam) {
-            awayTeam = await this.teamService.save(gameData.awayTeam, manager);
-            teamMaps.set(gameData.awayTeam, awayTeam);
-          }
-          if (!stadium) {
-            stadium = await this.stadiumService.save(gameData.stadium, manager);
-            stadiumMaps.set(gameData.stadium, stadium);
-          }
-
-          const game = Game.create({
-            id,
-            date,
-            time,
-            status,
-            homeTeamScore: homeScore ?? null,
-            awayTeamScore: awayScore ?? null,
-            homeTeam,
-            awayTeam,
-            stadium,
-          });
-
-          // 더블헤더 처리 및 게임 저장
-          try {
-            if (!game.id.endsWith('0')) {
-              const preDoubleHeaderGameId = `${game.id.slice(0, -1)}0`;
-              await manager.delete(Game, {
-                id: preDoubleHeaderGameId,
-              });
-            }
-
-            await manager.upsert(Game, game, ['id']);
-          } catch (error) {
-            this.logger.error('Error saving game:', error);
-            throw error;
-          }
-        }
-      });
-    } catch (error) {
-      this.logger.error('Error saving games to database', error.stack);
-      throw error;
-    }
+  async findGamesByDate(date: string): Promise<Game[]> {
+    return this.gameCoreService.findGamesByDate(date);
   }
 
   /**
@@ -255,13 +153,12 @@ export class GameApplicationCrawlingService {
     const intervalJob = new CronJob(
       CronExpression.EVERY_MINUTE,
       async () => {
-        const currentStatus =
-          await this.gameScoreCrawlingService.getCurrentGameStatus(
-            1,
-            seriesId,
-            gameId,
-            new Date().getFullYear(),
-          );
+        const currentStatus = await getCurrentGameStatus(
+          1,
+          seriesId,
+          gameId,
+          new Date().getFullYear(),
+        );
         await this.gameCoreService.updateInProgressGame(gameId, currentStatus);
         if (
           currentStatus.status === '경기종료' ||

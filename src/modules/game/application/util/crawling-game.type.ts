@@ -35,8 +35,6 @@ export interface IGameData {
   id: string;
   date: string;
   time: string;
-  // game: string;
-  // review: string;
   stadium: TStadium;
   status: TGameStatus;
   homeTeam: TTeam;
@@ -45,6 +43,7 @@ export interface IGameData {
   homeScore?: number;
   awayScore?: number;
 }
+
 export interface ITeamAndScore {
   name: TTeam;
   score: number | null;
