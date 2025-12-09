@@ -72,4 +72,13 @@ export class RegisteredGameApplicationQueryService {
     }
     return await RegisteredGameWithGameDto.createAndValidate(registeredGame);
   }
+
+  async countNewRegistrationsByDateRange(
+    startDate: Date,
+    endDate: Date,
+  ): Promise<number> {
+    return await this.em.count(RegisteredGame, {
+      where: { created_at: Between(startDate, endDate) },
+    });
+  }
 }

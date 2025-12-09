@@ -2,7 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { Term } from '../entities/term.entity';
 import { Repository } from 'typeorm';
 import { InjectRepository } from '@nestjs/typeorm';
-import { CachedTermList } from '../types/term.type';
+import { CachedTermList } from './types/term.type';
 import { TermRedisService } from 'src/modules/term/core/term-redis.service';
 
 @Injectable()

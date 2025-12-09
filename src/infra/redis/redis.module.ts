@@ -20,6 +20,10 @@ import { RedisThrottlerStorageService } from 'src/infra/redis/redis-throttler-st
     RedisConnectionService,
     RedisThrottlerStorageService,
   ],
-  exports: ['REDIS_CLIENT', RedisConnectionService, RedisThrottlerStorageService],
+  exports: [
+    'REDIS_CLIENT',
+    RedisConnectionService,
+    RedisThrottlerStorageService,
+  ],
 })
 export class RedisModule {}

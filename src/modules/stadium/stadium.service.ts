@@ -1,7 +1,7 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Stadium } from 'src/modules/stadium/entities/stadium.entity';
-import { Not, Repository } from 'typeorm';
+import { EntityManager, Not, Repository } from 'typeorm';
 
 @Injectable()
 export class StadiumService {
@@ -52,5 +52,20 @@ export class StadiumService {
       where: { name },
     });
     return stadium;
+  }
+
+  async save(name: string, em?: EntityManager): Promise<Stadium> {
+    const repo = em ? em.getRepository(Stadium) : this.stadiumRepository;
+    await repo.upsert(
+      {
+        name: name,
+        full_name: '등록되어 있지 않은 경기장',
+        latitude: 0,
+        longitude: 0,
+      },
+      ['name'],
+    );
+    const newStadium = await repo.findOne({ where: { name: name } });
+    return newStadium;
   }
 }

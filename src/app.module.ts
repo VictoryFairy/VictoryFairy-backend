@@ -11,7 +11,6 @@ import { RedisModule } from './infra/redis/redis.module';
 import { MailModule } from './infra/mail/mail.module';
 import { AwsS3Module } from './infra/aws-s3/aws-s3.module';
 import { SeederService } from './infra/seeder/seeder.service';
-import { SchedulingModule } from './modules/scheduling/scheduling.module';
 import { CheeringSongModule } from './modules/cheering-song/cheering-song.module';
 import { EventEmitterModule } from '@nestjs/event-emitter';
 import { APP_FILTER, APP_GUARD } from '@nestjs/core';
@@ -19,7 +18,8 @@ import { GlobalExceptionFilter } from './common/filters/global-exception.filter'
 import { addTransactionalDataSource } from 'typeorm-transactional';
 import { DataSource } from 'typeorm';
 import { RequestMetaMiddleware } from './common/middleware/request-meta.middleware';
-import { SlackModule } from './infra/slack/slack.module';
+import { ExternalChannelModule } from './infra/external-channel/external-channel.module';
+import { WorkerModule } from './modules/worker/worker.module';
 import { ThrottlerModule } from '@nestjs/throttler';
 import { RedisThrottlerStorageService } from './infra/redis/redis-throttler-storage.service';
 import { CustomThrottlerGuard } from './common/guard/custom-throttler.guard';
@@ -70,9 +70,9 @@ import { AuthModule } from './modules/auth/auth.module';
     AuthModule,
     MailModule,
     AwsS3Module,
-    SchedulingModule,
+    ExternalChannelModule,
+    WorkerModule,
     CheeringSongModule,
-    SlackModule,
   ],
   controllers: [AppController],
   providers: [

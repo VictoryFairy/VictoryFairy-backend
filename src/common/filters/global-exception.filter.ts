@@ -9,7 +9,7 @@ import {
 import { ConfigService } from '@nestjs/config';
 import * as Sentry from '@sentry/node';
 import { IDotenv } from 'src/config/dotenv.interface';
-import { SlackService } from 'src/infra/slack/slack.service';
+import { SlackService } from 'src/infra/external-channel/slack.service';
 
 @Catch()
 export class GlobalExceptionFilter implements ExceptionFilter {
