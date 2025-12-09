@@ -1,4 +1,4 @@
-import { EntityManager } from 'typeorm';
+import { Between, EntityManager } from 'typeorm';
 import {
   BadRequestException,
   Injectable,
@@ -187,5 +187,14 @@ export class AccountApplicationQueryService {
         '데이터 조회 중 문제가 발생했습니다.',
       );
     }
+  }
+
+  async countNewUsersByDateRange(
+    startDate: Date,
+    endDate: Date,
+  ): Promise<number> {
+    return await this.em.count(User, {
+      where: { created_at: Between(startDate, endDate) },
+    });
   }
 }
