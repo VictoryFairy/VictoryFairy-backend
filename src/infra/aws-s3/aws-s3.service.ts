@@ -12,10 +12,10 @@ import {
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { instanceToPlain } from 'class-transformer';
-import { DeleteImageAwsS3Dto } from 'src/core/aws-s3/aws-s3.dto';
+import { DeleteImageAwsS3Dto } from 'src/infra/aws-s3/aws-s3.dto';
 import { v7 as uuid7 } from 'uuid';
 import { ImgFileType, S3_EXPIRES_IN, S3Category } from './const/s3.const';
-import { IDotenv } from '../config/dotenv.interface';
+import { IDotenv } from '../../config/dotenv.interface';
 
 @Injectable()
 export class AwsS3Service {

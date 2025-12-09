@@ -4,12 +4,16 @@ import {
   ITeamRepository,
   TEAM_REPOSITORY,
 } from './repository/team.repository.interface';
+import { EntityManager, Repository } from 'typeorm';
+import { InjectRepository } from '@nestjs/typeorm';
 
 @Injectable()
 export class TeamService {
   constructor(
     @Inject(TEAM_REPOSITORY)
     private readonly teamRepo: ITeamRepository,
+    @InjectRepository(Team)
+    private readonly teamRepository: Repository<Team>,
   ) {}
 
   async findOne(id: number): Promise<Team> {
@@ -40,5 +44,13 @@ export class TeamService {
     const team = await this.teamRepo.findOne({ name });
 
     return team;
+  }
+
+  async save(teamName: string, em?: EntityManager): Promise<Team> {
+    const repo = em ? em.getRepository(Team) : this.teamRepository;
+
+    await repo.upsert({ name: teamName }, ['name']);
+    const newTeam = await repo.findOne({ where: { name: teamName } });
+    return newTeam;
   }
 }

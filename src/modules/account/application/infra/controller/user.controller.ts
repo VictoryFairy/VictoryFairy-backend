@@ -35,7 +35,7 @@ import { UserMyPageDto } from '../../../dto/response/res-user-mypage.dto';
 import { ResCheckPwDto } from '../../../dto/response/res-check-pw-dto';
 import { TermAgreementDto } from 'src/modules/term/dto/request/term-argreement.dto';
 import { ResOverallOppTeamDto } from 'src/modules/rank/dto/response/res-overall-opp-team.dto';
-import { IDotenv } from 'src/core/config/dotenv.interface';
+import { IDotenv } from 'src/config/dotenv.interface';
 import { AccountApplicationQueryService } from '../../account-application.query.service';
 import { AccountApplicationCommandService } from '../../account-application.command.service';
 

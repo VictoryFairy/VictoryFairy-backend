@@ -50,7 +50,7 @@ import {
   EmailDto,
   EmailWithCodeDto,
 } from '../../../dto/request/req-email-user.dto';
-import { IDotenv } from 'src/core/config/dotenv.interface';
+import { IDotenv } from 'src/config/dotenv.interface';
 import { AccountApplicationCommandService } from '../../account-application.command.service';
 import { AccountApplicationQueryService } from '../../account-application.query.service';
 

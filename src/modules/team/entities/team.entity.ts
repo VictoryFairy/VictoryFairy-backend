@@ -5,7 +5,7 @@ import {
   PrimaryGeneratedColumn,
   Unique,
 } from 'typeorm';
-import { RegisteredGame } from '../../registered-game/entities/registered-game.entity';
+import { RegisteredGame } from '../../registered-game/core/domain/registered-game.entity';
 import { Player } from '../../cheering-song/entities/player.entity';
 import { User } from '../../account/core/domain/user.entity';
 import { CheeringSong } from '../../cheering-song/entities/cheering-song.entity';

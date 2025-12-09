@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { RankingRedisService } from 'src/core/redis/ranking-redis.service';
+import { RankingRedisService } from 'src/modules/rank/core/ranking-redis.service';
 import { UserRedisService } from 'src/modules/account/core/user-redis.service';
 import { RankCoreService } from '../core/rank-core.service';
 import { IRefinedRankData } from '../types/rank.type';

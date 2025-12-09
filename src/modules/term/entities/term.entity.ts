@@ -1,3 +1,4 @@
+import { UserTerm } from 'src/modules/account/core/domain/user-term.entity';
 import {
   Column,
   CreateDateColumn,
@@ -6,7 +7,6 @@ import {
   PrimaryColumn,
   UpdateDateColumn,
 } from 'typeorm';
-import { UserTerm } from './user-term.entity';
 
 @Entity()
 export class Term {

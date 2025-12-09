@@ -3,7 +3,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Rank } from './domain/rank.entity';
 import { InsertRankDto } from '../dto/internal/insert-rank.dto';
-import { RankingRedisService } from 'src/core/redis/ranking-redis.service';
+import { RankingRedisService } from 'src/modules/rank/core/ranking-redis.service';
 import { RankScoreVo } from './domain/vo/rank-score.vo';
 import { GameResultColumnMap } from '../types/game-result-column-map.type';
 import { RegisteredGameStatus } from 'src/modules/registered-game/types/registered-game-status.type';

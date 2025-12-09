@@ -6,7 +6,7 @@ import { GameCoreModule } from 'src/modules/game/core/game-core.module';
 import { RegisteredGameApplicationQueryService } from './registered-game-application.query.service';
 import { TeamModule } from 'src/modules/team/team.module';
 import { RankCoreModule } from 'src/modules/rank/core/rank-core.module';
-import { AwsS3Module } from 'src/core/aws-s3/aws-s3.module';
+import { AwsS3Module } from 'src/infra/aws-s3/aws-s3.module';
 
 @Module({
   imports: [

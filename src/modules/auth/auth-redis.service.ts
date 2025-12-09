@@ -1,13 +1,15 @@
 import {
+  Injectable,
   InternalServerErrorException,
   UnauthorizedException,
 } from '@nestjs/common';
 import Redis from 'ioredis';
 import { CODE_LIMIT_TIME } from 'src/modules/auth/const/auth.const';
-import { RedisKeys } from 'src/core/redis/const/redis.const';
+import { RedisKeys } from 'src/infra/redis/const/redis.const';
 import { InjectRedisClient } from 'src/common/decorators/redis-inject.decorator';
 import { IOAuthStateCachingData } from 'src/modules/auth/strategies/interface/oauth.interface';
 
+@Injectable()
 export class AuthRedisService {
   constructor(
     @InjectRedisClient()
@@ -107,3 +109,4 @@ export class AuthRedisService {
     }
   }
 }
+

@@ -2,7 +2,7 @@ import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
 import { IJwtPayload } from 'src/modules/auth/types/auth.type';
-import { IDotenv } from 'src/core/config/dotenv.interface';
+import { IDotenv } from 'src/config/dotenv.interface';
 import { UserRedisService } from 'src/modules/account/core/user-redis.service';
 import { AccountCoreService } from 'src/modules/account/core/account-core.service';
 

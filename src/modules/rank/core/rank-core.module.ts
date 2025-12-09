@@ -1,8 +1,8 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { Rank } from '../core/domain/rank.entity';
-import { RankCoreService } from './rank-core.service';
-import { RankingRedisService } from 'src/core/redis/ranking-redis.service';
+import { Rank } from 'src/modules/rank/core/domain/rank.entity';
+import { RankCoreService } from 'src/modules/rank/core/rank-core.service';
+import { RankingRedisService } from 'src/modules/rank/core/ranking-redis.service';
 
 @Module({
   imports: [TypeOrmModule.forFeature([Rank])],

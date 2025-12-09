@@ -3,7 +3,7 @@ import { Term } from '../entities/term.entity';
 import { Repository } from 'typeorm';
 import { InjectRepository } from '@nestjs/typeorm';
 import { CachedTermList } from '../types/term.type';
-import { TermRedisService } from 'src/core/redis/term-redis.service';
+import { TermRedisService } from 'src/modules/term/core/term-redis.service';
 
 @Injectable()
 export class TermCoreService {

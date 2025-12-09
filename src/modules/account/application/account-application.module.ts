@@ -5,7 +5,7 @@ import { AccountApplicationCommandService } from './account-application.command.
 import { AccountCoreModule } from '../core/account-core.module';
 import { TermCoreModule } from 'src/modules/term/core/term-core.module';
 import { AccountApplicationQueryService } from './account-application.query.service';
-import { AwsS3Module } from 'src/core/aws-s3/aws-s3.module';
+import { AwsS3Module } from 'src/infra/aws-s3/aws-s3.module';
 import { TeamModule } from 'src/modules/team/team.module';
 import { RankCoreModule } from 'src/modules/rank/core/rank-core.module';
 

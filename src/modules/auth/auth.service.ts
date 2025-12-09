@@ -5,15 +5,15 @@ import {
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
-import { MailService } from 'src/core/mail/mail.service';
+import { MailService } from 'src/infra/mail/mail.service';
 import { createRandomCode } from 'src/common/utils/random-code.util';
 import { CODE_LENGTH, SocialProvider } from 'src/modules/auth/const/auth.const';
 import { v7 as uuidv7 } from 'uuid';
-import { AuthRedisService } from 'src/core/redis/auth-redis.service';
+import { AuthRedisService } from './auth-redis.service';
 import { IOAuthStateCachingData } from 'src/modules/auth/strategies/interface/oauth.interface';
 import { IJwtPayload } from './types/auth.type';
 import { EmailWithCodeDto } from '../account/dto/request/req-email-user.dto';
-import { IDotenv } from 'src/core/config/dotenv.interface';
+import { IDotenv } from 'src/config/dotenv.interface';
 
 @Injectable()
 export class AuthService {

@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { IncomingWebhook } from '@slack/webhook';
-import { IDotenv } from '../config/dotenv.interface';
+import { IDotenv } from '../../config/dotenv.interface';
 
 @Injectable()
 export class SlackService {

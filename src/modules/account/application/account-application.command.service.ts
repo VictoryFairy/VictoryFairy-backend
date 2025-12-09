@@ -15,10 +15,10 @@ import { SocialProvider } from 'src/modules/auth/const/auth.const';
 import { InsertRankDto } from 'src/modules/rank/dto/internal/insert-rank.dto';
 import { TermCoreService } from 'src/modules/term/core/term-core.service';
 import { CreateSocialAuthDto } from 'src/modules/auth/dto/internal/social-auth/create-social-auth.dto';
-import { AwsS3Service } from 'src/core/aws-s3/aws-s3.service';
+import { AwsS3Service } from 'src/infra/aws-s3/aws-s3.service';
 import { TeamService } from 'src/modules/team/team.service';
 import { RankCoreService } from 'src/modules/rank/core/rank-core.service';
-import { RankingRedisService } from 'src/core/redis/ranking-redis.service';
+import { RankingRedisService } from 'src/modules/rank/core/ranking-redis.service';
 
 @Injectable()
 export class AccountApplicationCommandService {

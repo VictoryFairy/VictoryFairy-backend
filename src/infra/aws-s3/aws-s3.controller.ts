@@ -15,7 +15,7 @@ import {
   ApiResponse,
   ApiTags,
 } from '@nestjs/swagger';
-import { AwsS3Service } from 'src/core/aws-s3/aws-s3.service';
+import { AwsS3Service } from 'src/infra/aws-s3/aws-s3.service';
 import { S3Category } from './const/s3.const';
 import { PresignedUrlDto } from './dto/s3.dto';
 import { JwtAuth } from 'src/common/decorators/jwt-token.decorator';

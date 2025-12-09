@@ -1,8 +1,8 @@
 import { Module } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { nodeMailerConfig } from 'src/core/config/nodemailer.config';
-import { MailService } from 'src/core/mail/mail.service';
-import { IDotenv } from '../config/dotenv.interface';
+import { nodeMailerConfig } from 'src/config/nodemailer.config';
+import { MailService } from 'src/infra/mail/mail.service';
+import { IDotenv } from '../../config/dotenv.interface';
 
 @Module({
   providers: [

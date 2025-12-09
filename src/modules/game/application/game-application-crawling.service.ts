@@ -14,12 +14,12 @@ import { SCHEDULER_NAME } from 'src/modules/scheduling/type/schedule-job-name.ty
 import { CronJob } from 'cron';
 import { CronExpression, SchedulerRegistry } from '@nestjs/schedule';
 import { ConfigService } from '@nestjs/config';
-import { IDotenv } from 'src/core/config/dotenv.interface';
+import { IDotenv } from 'src/config/dotenv.interface';
 import { GameCoreService } from '../core/game-core.service';
 import { runOnTransactionCommit, Transactional } from 'typeorm-transactional';
 import { RegisteredGameCoreService } from 'src/modules/registered-game/core/registered-game-core.service';
 import { RankCoreService } from 'src/modules/rank/core/rank-core.service';
-import { RankingRedisService } from 'src/core/redis/ranking-redis.service';
+import { RankingRedisService } from 'src/modules/rank/core/ranking-redis.service';
 
 @Injectable()
 export class GameApplicationCrawlingService {

@@ -9,7 +9,7 @@ import { GameCronScheduler } from './game-cron.scheduler';
 import { RegisteredGameCoreModule } from 'src/modules/registered-game/core/registered-game-core.module';
 import { RankCoreModule } from 'src/modules/rank/core/rank-core.module';
 import { AccountCoreModule } from 'src/modules/account/core/account-core.module';
-import { AwsS3Module } from 'src/core/aws-s3/aws-s3.module';
+import { AwsS3Module } from 'src/infra/aws-s3/aws-s3.module';
 import { TeamModule } from 'src/modules/team/team.module';
 import { StadiumModule } from 'src/modules/stadium/stadium.module';
 

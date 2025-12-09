@@ -6,10 +6,10 @@ import { GameCoreService } from 'src/modules/game/core/game-core.service';
 import { TeamService } from 'src/modules/team/team.service';
 import { RankCoreService } from 'src/modules/rank/core/rank-core.service';
 import { SaveRegisteredGameDto } from '../dto/internal/save-registered-game.dto';
-import { RankingRedisService } from 'src/core/redis/ranking-redis.service';
+import { RankingRedisService } from 'src/modules/rank/core/ranking-redis.service';
 import { runOnTransactionCommit, Transactional } from 'typeorm-transactional';
 import { UpdateRegisteredGameDto } from '../dto/request/req-update-registered-game.dto';
-import { AwsS3Service } from 'src/core/aws-s3/aws-s3.service';
+import { AwsS3Service } from 'src/infra/aws-s3/aws-s3.service';
 import { DeleteRegisteredGameDto } from '../dto/internal/delete-registered-game.dto';
 
 @Injectable()
