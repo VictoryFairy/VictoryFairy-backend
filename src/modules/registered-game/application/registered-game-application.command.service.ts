@@ -3,7 +3,7 @@ import { RegisteredGameCoreService } from '../core/registered-game-core.service'
 import { RegisteredGameWithGameDto } from '../dto/internal/registered-game-with-game.dto';
 import { CreateRegisteredGameDto } from '../dto/request/req-create-registered-game.dto';
 import { GameCoreService } from 'src/modules/game/core/game-core.service';
-import { TeamService } from 'src/modules/team/team.service';
+import { TeamCoreService } from 'src/modules/team/core/team-core.service';
 import { RankCoreService } from 'src/modules/rank/core/rank-core.service';
 import { SaveRegisteredGameDto } from '../dto/internal/save-registered-game.dto';
 import { RankingRedisService } from 'src/modules/rank/core/ranking-redis.service';
@@ -17,7 +17,7 @@ export class RegisteredGameApplicationCommandService {
   constructor(
     private readonly registeredGameCoreService: RegisteredGameCoreService,
     private readonly gameCoreService: GameCoreService,
-    private readonly teamService: TeamService,
+    private readonly teamCoreService: TeamCoreService,
     private readonly rankCoreService: RankCoreService,
     private readonly rankingRedisService: RankingRedisService,
     private readonly awsS3Service: AwsS3Service,
@@ -30,7 +30,7 @@ export class RegisteredGameApplicationCommandService {
   ): Promise<RegisteredGameWithGameDto> {
     const { gameId, cheeringTeamId, ...rest } = registeredGameDto;
     const game = await this.gameCoreService.getOneWithTeams(gameId);
-    const getCheeringTeam = await this.teamService.findOne(cheeringTeamId);
+    const getCheeringTeam = await this.teamCoreService.findOne(cheeringTeamId);
 
     const newRegisteredGameDto = await SaveRegisteredGameDto.createAndValidate({
       ...rest,

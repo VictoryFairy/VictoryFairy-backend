@@ -8,7 +8,7 @@ import {
   PrimaryColumn,
   Unique,
 } from 'typeorm';
-import { Team } from 'src/modules/team/entities/team.entity';
+import { Team } from 'src/modules/team/core/domain/team.entity';
 import { Stadium } from 'src/modules/stadium/entities/stadium.entity';
 import { RegisteredGame } from 'src/modules/registered-game/core/domain/registered-game.entity';
 import { TGameStatus } from 'src/modules/game/application/util/crawling-game.type';

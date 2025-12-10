@@ -1,6 +1,6 @@
 import { BaseInternalDto } from 'src/shared/dto/base-internal.dto';
 import { RegisteredGameStatus } from '../../types/registered-game-status.type';
-import { TeamDto } from 'src/modules/team/dto/response/res-team.dto';
+import { TeamDto } from 'src/modules/team/application/dto/response/res-team.dto';
 import {
   IsEnum,
   IsNotEmpty,

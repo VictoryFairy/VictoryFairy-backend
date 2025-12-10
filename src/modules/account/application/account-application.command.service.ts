@@ -16,7 +16,7 @@ import { InsertRankDto } from 'src/modules/rank/dto/internal/insert-rank.dto';
 import { TermCoreService } from 'src/modules/term/core/term-core.service';
 import { CreateSocialAuthDto } from 'src/modules/auth/dto/internal/social-auth/create-social-auth.dto';
 import { AwsS3Service } from 'src/infra/aws-s3/aws-s3.service';
-import { TeamService } from 'src/modules/team/team.service';
+import { TeamCoreService } from 'src/modules/team/core/team-core.service';
 import { RankCoreService } from 'src/modules/rank/core/rank-core.service';
 import { RankingRedisService } from 'src/modules/rank/core/ranking-redis.service';
 
@@ -28,7 +28,7 @@ export class AccountApplicationCommandService {
     private readonly termCoreService: TermCoreService,
     private readonly userRedisService: UserRedisService,
     private readonly awsS3Service: AwsS3Service,
-    private readonly teamService: TeamService,
+    private readonly teamCoreService: TeamCoreService,
     private readonly rankCoreService: RankCoreService,
     private readonly rankingRedisService: RankingRedisService,
   ) {}
@@ -135,7 +135,7 @@ export class AccountApplicationCommandService {
 
   @Transactional()
   async deleteUser(userId: number): Promise<void> {
-    const teams = await this.teamService.findAll();
+    const teams = await this.teamCoreService.findAll();
     const { prevImage } = await this.accountCoreService.deleteUser(userId);
     if (prevImage) {
       await this.awsS3Service.deleteImage({ fileUrl: prevImage });

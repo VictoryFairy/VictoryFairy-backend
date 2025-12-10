@@ -6,7 +6,7 @@ import {
 import { InjectRepository } from '@nestjs/typeorm';
 import { TCheeringSongType } from 'src/shared/types/seed.type';
 import { Brackets, FindOptionsWhere, MoreThan, Repository } from 'typeorm';
-import { TeamService } from '../team/team.service';
+import { TeamCoreService } from '../team/core/team-core.service';
 import { LikeCheeringSong } from 'src/modules/cheering-song/entities/like-cheering-song.entity';
 import { User } from '../account/core/domain/user.entity';
 import { CursorPageCheeringSongDto } from 'src/shared/dto/cursor-page.dto';
@@ -19,7 +19,7 @@ export class CheeringSongService {
     private readonly cheeringSongRepository: Repository<CheeringSong>,
     @InjectRepository(LikeCheeringSong)
     private readonly likeCheeringSongRepository: Repository<LikeCheeringSong>,
-    private readonly teamService: TeamService,
+    private readonly teamCoreService: TeamCoreService,
   ) {}
 
   async findBySearchWithInfiniteScroll(
@@ -99,7 +99,7 @@ export class CheeringSongService {
   ): Promise<
     Omit<CursorPageCheeringSongDto, 'data'> & { data: CheeringSong[] }
   > {
-    const team = await this.teamService.findOne(teamId);
+    const team = await this.teamCoreService.findOne(teamId);
 
     const where: FindOptionsWhere<CheeringSong> = {
       team,

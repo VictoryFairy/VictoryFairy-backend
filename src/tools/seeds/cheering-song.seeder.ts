@@ -1,5 +1,5 @@
 import { Player } from 'src/modules/cheering-song/entities/player.entity';
-import { Team } from 'src/modules/team/entities/team.entity';
+import { Team } from 'src/modules/team/core/domain/team.entity';
 import { refinedCheeringSongs } from 'src/tools/seeds/data/cheering-song.seed';
 import { DataSource } from 'typeorm';
 import { Seeder } from 'typeorm-extension';

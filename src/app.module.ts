@@ -6,7 +6,7 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { getDatabaseConfig } from './config/database.config';
 import { StadiumModule } from './modules/stadium/stadium.module';
-import { TeamModule } from './modules/team/team.module';
+import { TeamApplicationModule } from './modules/team/application/team-application.module';
 import { RedisModule } from './infra/redis/redis.module';
 import { MailModule } from './infra/mail/mail.module';
 import { AwsS3Module } from './infra/aws-s3/aws-s3.module';
@@ -62,7 +62,7 @@ import { AuthModule } from './modules/auth/auth.module';
     RedisModule,
     ParkingInfoModule,
     StadiumModule,
-    TeamModule,
+    TeamApplicationModule,
     AccountApplicationModule,
     RankApplicationModule,
     GameApplicationModule,

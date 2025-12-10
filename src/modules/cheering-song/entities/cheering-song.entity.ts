@@ -1,4 +1,4 @@
-import { Team } from 'src/modules/team/entities/team.entity';
+import { Team } from 'src/modules/team/core/domain/team.entity';
 import {
   Column,
   Entity,

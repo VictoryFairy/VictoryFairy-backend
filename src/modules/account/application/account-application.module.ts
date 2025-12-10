@@ -6,7 +6,7 @@ import { AccountCoreModule } from '../core/account-core.module';
 import { TermCoreModule } from 'src/modules/term/core/term-core.module';
 import { AccountApplicationQueryService } from './account-application.query.service';
 import { AwsS3Module } from 'src/infra/aws-s3/aws-s3.module';
-import { TeamModule } from 'src/modules/team/team.module';
+import { TeamCoreModule } from 'src/modules/team/core/team-core.module';
 import { RankCoreModule } from 'src/modules/rank/core/rank-core.module';
 
 @Module({
@@ -15,7 +15,7 @@ import { RankCoreModule } from 'src/modules/rank/core/rank-core.module';
     AccountCoreModule,
     RankCoreModule,
     AwsS3Module,
-    TeamModule,
+    TeamCoreModule,
   ],
   providers: [AccountApplicationCommandService, AccountApplicationQueryService],
   exports: [],

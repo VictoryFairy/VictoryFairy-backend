@@ -2,7 +2,7 @@ import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { Exclude, Expose, Transform, Type } from 'class-transformer';
 import { IsNumber, IsString, ValidateNested } from 'class-validator';
 import { StadiumDto } from '../../stadium/dto/stadium.dto';
-import { TeamDto } from '../../team/dto/response/res-team.dto';
+import { TeamDto } from '../../team/application/dto/response/res-team.dto';
 import { getGameType } from 'src/common/utils/getGameType';
 
 @Exclude()

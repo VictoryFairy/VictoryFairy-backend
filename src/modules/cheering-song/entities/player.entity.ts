@@ -7,7 +7,7 @@ import {
   PrimaryGeneratedColumn,
   Unique,
 } from 'typeorm';
-import { Team } from '../../team/entities/team.entity';
+import { Team } from '../../team/core/domain/team.entity';
 import { CheeringSong } from './cheering-song.entity';
 
 @Entity()

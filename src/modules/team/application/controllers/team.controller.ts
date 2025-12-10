@@ -11,14 +11,18 @@ import { ApiOperation, ApiParam, ApiQuery, ApiTags } from '@nestjs/swagger';
 import { ApiOkResponse, ApiNotFoundResponse } from '@nestjs/swagger';
 import { plainToInstance } from 'class-transformer';
 import { JwtAuth } from 'src/common/decorators/jwt-token.decorator';
-import { TeamDto } from 'src/modules/team/dto/response/res-team.dto';
-import { TeamService } from 'src/modules/team/team.service';
+import { TeamDto } from '../dto/response/res-team.dto';
+import { TeamQueryService } from '../team-query.service';
+import { TeamCoreService } from '../../core/team-core.service';
 
 @ApiTags('Team')
 @Controller('teams')
 @JwtAuth('access')
 export class TeamController {
-  constructor(private readonly teamService: TeamService) {}
+  constructor(
+    private readonly teamQueryService: TeamQueryService,
+    private readonly teamCoreService: TeamCoreService,
+  ) {}
 
   @Get()
   @HttpCode(HttpStatus.OK)
@@ -31,7 +35,7 @@ export class TeamController {
   })
   @ApiOkResponse({ type: [TeamDto], description: '정보가 없어도 빈 배열 반환' })
   async findAll(@Query('name') name?: string): Promise<TeamDto[]> {
-    const teams = await this.teamService.findAll(name);
+    const teams = await this.teamQueryService.findAllByName(name);
     return plainToInstance(TeamDto, teams);
   }
 
@@ -46,7 +50,7 @@ export class TeamController {
   @ApiOkResponse({ type: TeamDto })
   @ApiNotFoundResponse({ description: '해당하는 ID의 팀이 없을 경우' })
   async findOne(@Param('id', ParseIntPipe) id: number): Promise<TeamDto> {
-    const team = await this.teamService.findOne(id);
+    const team = await this.teamCoreService.findOne(id);
     return plainToInstance(TeamDto, team);
   }
 }

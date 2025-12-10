@@ -10,7 +10,7 @@ import {
   UpdateDateColumn,
 } from 'typeorm';
 import { Rank } from 'src/modules/rank/core/domain/rank.entity';
-import { Team } from '../../../team/entities/team.entity';
+import { Team } from '../../../team/core/domain/team.entity';
 import { RegisteredGame } from 'src/modules/registered-game/core/domain/registered-game.entity';
 import { LikeCheeringSong } from 'src/modules/cheering-song/entities/like-cheering-song.entity';
 import { LocalAuth } from './local-auth.entity';
