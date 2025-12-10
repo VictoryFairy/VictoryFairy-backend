@@ -3,6 +3,7 @@ import {
   ConflictException,
   Injectable,
   InternalServerErrorException,
+  Logger,
   UnauthorizedException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -14,13 +15,43 @@ import { CreateLocalUserDto } from '../dto/request/req-create-local-user.dto';
 import { SocialProvider } from 'src/modules/auth/const/auth.const';
 import { CreateSocialAuthDto } from 'src/modules/auth/dto/internal/social-auth/create-social-auth.dto';
 import { DEFAULT_PROFILE_IMAGE } from 'src/modules/account/core/const/user.const';
+import { UserRedisService } from './user-redis.service';
+import { EventName } from 'src/shared/const/event.const';
+import { EventEmitter2, OnEvent } from '@nestjs/event-emitter';
 
 @Injectable()
 export class AccountCoreService {
+  private readonly logger = new Logger(AccountCoreService.name);
   constructor(
     @InjectRepository(User)
     private readonly userRepo: Repository<User>,
+    private readonly userRedisService: UserRedisService,
+    private readonly eventEmitter: EventEmitter2,
   ) {}
+
+  /** 처음 서버 시작 시 유저 프로필 미리 캐싱 */
+  @OnEvent(EventName.REDIS_CONNECT)
+  async initCacheUsers(): Promise<void> {
+    try {
+      const users = await this.userRepo.find();
+      if (!users.length) return;
+      const userIds = [];
+      const userInfos = users.map((user) => {
+        userIds.push(user.id);
+        return {
+          id: user.id,
+          nickname: user.nickname,
+          profileImage: user.profile_image,
+        };
+      });
+      await this.userRedisService.saveUsers(userInfos);
+      this.eventEmitter.emit(EventName.CACHED_USERS, userIds);
+      this.logger.log('유저 정보 레디스 초기 캐싱 완료');
+    } catch (error) {
+      this.logger.error(`유저 정보 레디스 초기 캐싱 실패 : ${error.message}`);
+      throw error;
+    }
+  }
 
   async findUserByEmail(email: string): Promise<User> {
     const user = await this.userRepo.findOne({

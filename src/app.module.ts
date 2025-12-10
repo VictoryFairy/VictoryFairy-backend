@@ -29,6 +29,7 @@ import { RankApplicationModule } from './modules/rank/application/rank-applicati
 import { GameApplicationModule } from './modules/game/application/game-application.module';
 import { RegisteredGameApplicationModule } from './modules/registered-game/application/registered-game-application.module';
 import { AuthModule } from './modules/auth/auth.module';
+import { ScheduleModule } from '@nestjs/schedule';
 
 @Module({
   imports: [
@@ -58,6 +59,7 @@ import { AuthModule } from './modules/auth/auth.module';
         storage: redisThrottlerStorage,
       }),
     }),
+    ScheduleModule.forRoot(),
     EventEmitterModule.forRoot({}),
     RedisModule,
     ParkingInfoModule,

@@ -1,4 +1,4 @@
-import { BadRequestException, Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Rank } from './domain/rank.entity';
@@ -7,14 +7,34 @@ import { RankingRedisService } from 'src/modules/rank/core/ranking-redis.service
 import { RankScoreVo } from './domain/vo/rank-score.vo';
 import { GameResultColumnMap } from '../types/game-result-column-map.type';
 import { RegisteredGameStatus } from 'src/modules/registered-game/types/registered-game-status.type';
+import { OnEvent } from '@nestjs/event-emitter';
+import { EventName } from 'src/shared/const/event.const';
 
 @Injectable()
 export class RankCoreService {
+  private readonly logger = new Logger(RankCoreService.name);
   constructor(
     @InjectRepository(Rank)
     private readonly rankRepo: Repository<Rank>,
     private readonly rankingRedisService: RankingRedisService,
   ) {}
+
+  /** 레디스 연결 시 랭킹 데이터 미리 저장 */
+  @OnEvent(EventName.CACHED_USERS)
+  async initRankCaching(userIdsArr: number[]): Promise<void> {
+    if (userIdsArr.length === 0) {
+      this.logger.log('빈 페이로드로 랭킹 레디스 초기 캐싱 스킵');
+      return;
+    }
+    const promises = userIdsArr.map(async (userId) => {
+      const data = await this.aggregateRankStatsByUserId(userId);
+      if (!data) return;
+      await this.rankingRedisService.updateRankings(userId, data);
+    });
+
+    await Promise.all(promises);
+    this.logger.log(`랭킹 레디스 초기 캐싱 완료`);
+  }
 
   async insertRankIfAbsent(dto: InsertRankDto): Promise<void> {
     const { team_id, user_id, active_year } = dto;
