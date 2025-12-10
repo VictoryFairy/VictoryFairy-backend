@@ -60,7 +60,6 @@ export class UserController {
   @ApiCreatedResponse({ description: '성공 시 데이터 없이 상태코드만 응답' })
   @ApiInternalServerErrorResponse({ description: 'DB 유저 저장 실패한 경우' })
   async signUp(@Body() body: CreateLocalUserDto) {
-    console.log('body', body);
     await this.accountApplicationCommandService.registerLocalUser(body);
   }
 

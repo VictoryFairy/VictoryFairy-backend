@@ -58,7 +58,6 @@ export class UserRedisService {
     string,
     { id: number; nickname: string; profile_image: string }
   > | null> {
-    console.log('userIds', userIds);
     const rawUserInfo = await this.redisClient.hmget(
       RedisKeys.USER_INFO,
       ...userIds.map((id) => id.toString()),
@@ -72,7 +71,6 @@ export class UserRedisService {
       const obj = JSON.parse(user);
       parsedInfo[obj.id] = obj;
     });
-    console.log('parsedInfo', parsedInfo);
     return parsedInfo;
   }
 }
