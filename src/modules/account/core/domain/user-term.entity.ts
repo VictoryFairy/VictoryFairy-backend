@@ -8,7 +8,7 @@ import {
   Unique,
   UpdateDateColumn,
 } from 'typeorm';
-import { Term } from 'src/modules/term/entities/term.entity';
+import { Term } from 'src/modules/term/core/domain/term.entity';
 import { User } from 'src/modules/account/core/domain/user.entity';
 import { InternalServerErrorException } from '@nestjs/common';
 

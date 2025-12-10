@@ -5,7 +5,7 @@ import {
   InternalServerErrorException,
   NotFoundException,
 } from '@nestjs/common';
-import { Term } from 'src/modules/term/entities/term.entity';
+import { Term } from 'src/modules/term/core/domain/term.entity';
 import { UserTerm } from '../core/domain/user-term.entity';
 import { InjectEntityManager } from '@nestjs/typeorm';
 import { User } from '../core/domain/user.entity';

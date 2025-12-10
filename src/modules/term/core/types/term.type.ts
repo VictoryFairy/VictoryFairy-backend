@@ -1,4 +1,4 @@
-import { Term } from 'src/modules/term/entities/term.entity';
+import { Term } from 'src/modules/term/core/domain/term.entity';
 
 export type CachedTermList = {
   required: Pick<Term, 'id'>[];

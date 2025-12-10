@@ -4,7 +4,7 @@ import { RedisKeys } from 'src/infra/redis/const/redis.const';
 import { InjectRedisClient } from 'src/common/decorators/redis-inject.decorator';
 import { UserTerm } from 'src/modules/account/core/domain/user-term.entity';
 import { CachedTermList } from 'src/modules/term/core/types/term.type';
-import { Term } from 'src/modules/term/entities/term.entity';
+import { Term } from 'src/modules/term/core/domain/term.entity';
 
 @Injectable()
 export class TermRedisService {
