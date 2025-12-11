@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { StadiumService } from '../stadium/stadium.service';
+import { StadiumCoreService } from '../stadium/core/stadium-core.service';
 import { parkingInfoSeeder } from 'src/tools/seeds/data/parking-info.seed';
 import { ParkingInfo } from './entities/parking-info.entity';
 
@@ -10,13 +10,13 @@ export class ParkingInfoService {
   constructor(
     @InjectRepository(ParkingInfo)
     private readonly parkingInfoRepository: Repository<ParkingInfo>,
-    private readonly stadiumService: StadiumService,
+    private readonly stadiumCoreService: StadiumCoreService,
   ) {}
 
   async seed() {
     await this.parkingInfoRepository.manager.transaction(async (manager) => {
       for (const seed of parkingInfoSeeder) {
-        const stadium = await this.stadiumService.findByName(seed.stadium);
+        const stadium = await this.stadiumCoreService.findByName(seed.stadium);
 
         await manager.getRepository(ParkingInfo).upsert(
           {
@@ -34,7 +34,7 @@ export class ParkingInfoService {
   }
 
   async findByStadiumId(stadiumId: number): Promise<ParkingInfo[]> {
-    const stadium = await this.stadiumService.findOne(stadiumId);
+    const stadium = await this.stadiumCoreService.findOne(stadiumId);
     const parkingInfos = await this.parkingInfoRepository.find({
       where: { stadium },
       relations: { stadium: true },

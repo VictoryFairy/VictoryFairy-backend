@@ -1,40 +1,34 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Stadium } from 'src/modules/stadium/entities/stadium.entity';
-import { EntityManager, Not, Repository } from 'typeorm';
+import { EntityManager, Repository } from 'typeorm';
+import { Stadium } from './domain/stadium.entity';
 
 @Injectable()
-export class StadiumService {
+export class StadiumCoreService {
   constructor(
     @InjectRepository(Stadium)
     private readonly stadiumRepository: Repository<Stadium>,
   ) {}
 
   async findOne(id: number): Promise<Stadium> {
-    const team = await this.stadiumRepository.findOne({
+    const stadium = await this.stadiumRepository.findOne({
       where: { id },
     });
-    if (!team) {
+    if (!stadium) {
       throw new NotFoundException(`Stadium with id ${id} is not found`);
     }
-    return team;
+    return stadium;
   }
 
-  async findAll(name?: string): Promise<Stadium[]> {
-    if (name) {
-      return await this.stadiumRepository.find({
-        where: { name, full_name: Not('등록되어 있지 않은 경기장') },
-      });
-    } else {
-      return await this.stadiumRepository.find({
-        where: { full_name: Not('등록되어 있지 않은 경기장') },
-      });
-    }
+  async findByName(name: string): Promise<Stadium | null> {
+    const stadium = await this.stadiumRepository.findOne({
+      where: { name },
+    });
+    return stadium;
   }
 
   async findByNameOrCreate(name: string): Promise<Stadium> {
     let stadium = await this.findByName(name);
-
     if (!stadium) {
       stadium = new Stadium();
       stadium.name = name;
@@ -43,18 +37,10 @@ export class StadiumService {
       stadium.longitude = 0;
       await this.stadiumRepository.save(stadium);
     }
-
     return stadium;
   }
 
-  async findByName(name: string): Promise<Stadium> {
-    const stadium = await this.stadiumRepository.findOne({
-      where: { name },
-    });
-    return stadium;
-  }
-
-  async save(name: string, em?: EntityManager): Promise<Stadium> {
+  async upsert(name: string, em?: EntityManager): Promise<Stadium> {
     const repo = em ? em.getRepository(Stadium) : this.stadiumRepository;
     await repo.upsert(
       {

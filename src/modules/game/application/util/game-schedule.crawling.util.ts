@@ -1,5 +1,5 @@
 import axios, { AxiosResponse } from 'axios';
-import { Stadium } from 'src/modules/stadium/entities/stadium.entity';
+import { Stadium } from 'src/modules/stadium/core/domain/stadium.entity';
 import { Team } from 'src/modules/team/core/domain/team.entity';
 import {
   IGameData,

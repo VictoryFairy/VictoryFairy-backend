@@ -1,4 +1,4 @@
-import { Stadium } from 'src/modules/stadium/entities/stadium.entity';
+import { Stadium } from 'src/modules/stadium/core/domain/stadium.entity';
 import { parkingInfoSeeder } from 'src/tools/seeds/data/parking-info.seed';
 import { DataSource } from 'typeorm';
 import { Seeder } from 'typeorm-extension';

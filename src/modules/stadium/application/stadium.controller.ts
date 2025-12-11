@@ -11,14 +11,18 @@ import { ApiOperation, ApiParam, ApiQuery, ApiTags } from '@nestjs/swagger';
 import { ApiOkResponse, ApiNotFoundResponse } from '@nestjs/swagger';
 import { plainToInstance } from 'class-transformer';
 import { JwtAuth } from 'src/common/decorators/jwt-token.decorator';
-import { StadiumDto } from 'src/modules/stadium/dto/stadium.dto';
-import { StadiumService } from 'src/modules/stadium/stadium.service';
+import { StadiumDto } from './dto/stadium.dto';
+import { StadiumApplicationQueryService } from './stadium-application.query.service';
+import { StadiumCoreService } from '../core/stadium-core.service';
 
 @ApiTags('Stadium')
 @Controller('stadiums')
 @JwtAuth('access')
 export class StadiumController {
-  constructor(private readonly stadiumService: StadiumService) {}
+  constructor(
+    private readonly stadiumQueryService: StadiumApplicationQueryService,
+    private readonly stadiumCoreService: StadiumCoreService,
+  ) {}
 
   @Get()
   @HttpCode(HttpStatus.OK)
@@ -34,7 +38,7 @@ export class StadiumController {
     description: '정보가 없어도 빈 배열 반환',
   })
   async findAll(@Query('name') name?: string): Promise<StadiumDto[]> {
-    const stadiums = await this.stadiumService.findAll(name);
+    const stadiums = await this.stadiumQueryService.findAll(name);
     return plainToInstance(StadiumDto, stadiums);
   }
 
@@ -49,7 +53,7 @@ export class StadiumController {
   @ApiOkResponse({ type: StadiumDto })
   @ApiNotFoundResponse({ description: '해당하는 ID의 경기장이 없을 경우' })
   async findOne(@Param('id', ParseIntPipe) id: number): Promise<StadiumDto> {
-    const stadium = await this.stadiumService.findOne(id);
+    const stadium = await this.stadiumCoreService.findOne(id);
     return plainToInstance(StadiumDto, stadium);
   }
 }

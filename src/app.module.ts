@@ -5,7 +5,7 @@ import { ParkingInfoModule } from './modules/parking-info/parking-info.module';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { getDatabaseConfig } from './config/database.config';
-import { StadiumModule } from './modules/stadium/stadium.module';
+import { StadiumApplicationModule } from './modules/stadium/application/stadium-application.module';
 import { TeamApplicationModule } from './modules/team/application/team-application.module';
 import { RedisModule } from './infra/redis/redis.module';
 import { MailModule } from './infra/mail/mail.module';
@@ -63,7 +63,7 @@ import { ScheduleModule } from '@nestjs/schedule';
     EventEmitterModule.forRoot({}),
     RedisModule,
     ParkingInfoModule,
-    StadiumModule,
+    StadiumApplicationModule,
     TeamApplicationModule,
     AccountApplicationModule,
     RankApplicationModule,
