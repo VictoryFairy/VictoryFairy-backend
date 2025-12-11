@@ -23,8 +23,9 @@ import {
 import { plainToInstance } from 'class-transformer';
 import { JwtAuth } from 'src/common/decorators/jwt-token.decorator';
 import { CurrentUser } from 'src/common/decorators/current-user.decorator';
-import { CheeringSongDetailedDto } from 'src/modules/cheering-song/dtos/cheering-song.dto';
-import { CheeringSongService } from 'src/modules/cheering-song/cheering-song.service';
+import { CheeringSongDetailedDto } from './dto/cheering-song.dto';
+import { CheeringSongApplicationCommandService } from './cheering-song-application.command.service';
+import { CheeringSongApplicationQueryService } from './cheering-song-application.query.service';
 import {
   CursorPageCheeringSongDto,
   CursorPageOptionDto,
@@ -38,7 +39,10 @@ import { TCheeringSongType } from 'src/shared/types/seed.type';
 export class CheeringSongController {
   private readonly logger = new Logger(CheeringSongController.name);
 
-  constructor(private readonly cheeringSongService: CheeringSongService) {}
+  constructor(
+    private readonly commandService: CheeringSongApplicationCommandService,
+    private readonly queryService: CheeringSongApplicationQueryService,
+  ) {}
 
   @Get('search')
   @HttpCode(HttpStatus.OK)
@@ -125,15 +129,13 @@ export class CheeringSongController {
     @CurrentUser('id') userId: number,
   ): Promise<CursorPageCheeringSongDto> {
     const { take, cursor, q } = cursorPageWithSearchOptionDto;
-
     const cheeringSongsWithCursorMeta =
-      await this.cheeringSongService.findBySearchWithInfiniteScroll(
+      await this.queryService.findBySearchWithInfiniteScroll(
         userId,
         take,
         cursor,
         q,
       );
-
     return plainToInstance(
       CursorPageCheeringSongDto,
       cheeringSongsWithCursorMeta,
@@ -241,15 +243,13 @@ export class CheeringSongController {
     @CurrentUser('id') userId: number,
   ): Promise<CursorPageCheeringSongDto> {
     const { take, cursor } = cursorPageOptionDto;
-
     const cheeringSongsWithCursorMeta =
-      await this.cheeringSongService.findByLikedWithInfiniteScroll(
+      await this.queryService.findByLikedWithInfiniteScroll(
         type,
         userId,
         take,
         cursor,
       );
-
     return plainToInstance(
       CursorPageCheeringSongDto,
       cheeringSongsWithCursorMeta,
@@ -270,8 +270,8 @@ export class CheeringSongController {
     @Param('id', ParseIntPipe) id: number,
     @CurrentUser('id') userId: number,
   ): Promise<CheeringSongDetailedDto> {
-    const cheeringSong = await this.cheeringSongService.findOne(id);
-    const { isLiked } = await this.cheeringSongService.getCheeringSongIsLiked(
+    const cheeringSong = await this.queryService.findOne(id);
+    const { isLiked } = await this.queryService.getCheeringSongIsLiked(
       id,
       userId,
     );
@@ -381,9 +381,8 @@ export class CheeringSongController {
     @Query() cursorPageOptionDto: CursorPageOptionDto,
   ): Promise<CursorPageCheeringSongDto> {
     const { take, cursor } = cursorPageOptionDto;
-
     const cheeringSongsWithCursorMeta =
-      await this.cheeringSongService.findByTeamIdAndTypeWithInfiniteScroll(
+      await this.queryService.findByTeamIdAndTypeWithInfiniteScroll(
         teamId,
         type,
         userId,
@@ -417,7 +416,7 @@ export class CheeringSongController {
     @Param('id', ParseIntPipe) cheeringSongId: number,
     @CurrentUser('id') userId: number,
   ): Promise<void> {
-    await this.cheeringSongService.likeCheerSong(cheeringSongId, userId);
+    await this.commandService.likeCheerSong(cheeringSongId, userId);
     return;
   }
 
@@ -439,7 +438,7 @@ export class CheeringSongController {
     @Param('id', ParseIntPipe) cheeringSongId: number,
     @CurrentUser('id') userId: number,
   ): Promise<void> {
-    await this.cheeringSongService.unlikeCheerSong(cheeringSongId, userId);
+    await this.commandService.unlikeCheerSong(cheeringSongId, userId);
     return;
   }
 }

@@ -7,9 +7,9 @@ import {
   IsUrl,
   ValidateNested,
 } from 'class-validator';
-import { TeamDto } from '../../team/application/dto/response/res-team.dto';
+import { TeamDto } from '../../../team/application/dto/response/res-team.dto';
 import { PlayerDto } from './player.dto';
-import { CheeringSong } from '../entities/cheering-song.entity';
+import { CheeringSong } from '../../core/domain/cheering-song.entity';
 
 @Exclude()
 export class CheeringSongDto {

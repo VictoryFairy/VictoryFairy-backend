@@ -11,7 +11,7 @@ import { RedisModule } from './infra/redis/redis.module';
 import { MailModule } from './infra/mail/mail.module';
 import { AwsS3Module } from './infra/aws-s3/aws-s3.module';
 import { SeederService } from './infra/seeder/seeder.service';
-import { CheeringSongModule } from './modules/cheering-song/cheering-song.module';
+import { CheeringSongApplicationModule } from './modules/cheering-song/application/cheering-song-application.module';
 import { EventEmitterModule } from '@nestjs/event-emitter';
 import { APP_FILTER, APP_GUARD } from '@nestjs/core';
 import { GlobalExceptionFilter } from './common/filters/global-exception.filter';
@@ -74,7 +74,7 @@ import { ScheduleModule } from '@nestjs/schedule';
     AwsS3Module,
     ExternalChannelModule,
     WorkerModule,
-    CheeringSongModule,
+    CheeringSongApplicationModule,
   ],
   controllers: [AppController],
   providers: [

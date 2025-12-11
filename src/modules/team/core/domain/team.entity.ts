@@ -6,9 +6,9 @@ import {
   Unique,
 } from 'typeorm';
 import { RegisteredGame } from '../../../registered-game/core/domain/registered-game.entity';
-import { Player } from '../../../cheering-song/entities/player.entity';
+import { Player } from '../../../cheering-song/core/domain/player.entity';
 import { User } from '../../../account/core/domain/user.entity';
-import { CheeringSong } from '../../../cheering-song/entities/cheering-song.entity';
+import { CheeringSong } from '../../../cheering-song/core/domain/cheering-song.entity';
 
 @Entity()
 @Unique(['name'])
