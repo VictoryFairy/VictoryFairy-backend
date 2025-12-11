@@ -1,7 +1,7 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { Exclude, Expose } from 'class-transformer';
 import { IsNumber, IsString, IsUrl } from 'class-validator';
-import { StadiumDto } from '../../stadium/application/dto/stadium.dto';
+import { StadiumDto } from '../../../stadium/application/dto/stadium.dto';
 
 @Exclude()
 export class ParkingInfoDto {

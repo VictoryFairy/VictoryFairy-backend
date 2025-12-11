@@ -1,7 +1,7 @@
 import { Module, NestModule, MiddlewareConsumer } from '@nestjs/common';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
-import { ParkingInfoModule } from './modules/parking-info/parking-info.module';
+import { ParkingInfoApplicationModule } from './modules/parking-info/application/parking-info-application.module';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { getDatabaseConfig } from './config/database.config';
@@ -62,7 +62,7 @@ import { ScheduleModule } from '@nestjs/schedule';
     ScheduleModule.forRoot(),
     EventEmitterModule.forRoot({}),
     RedisModule,
-    ParkingInfoModule,
+    ParkingInfoApplicationModule,
     StadiumApplicationModule,
     TeamApplicationModule,
     AccountApplicationModule,

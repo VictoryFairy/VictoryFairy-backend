@@ -5,7 +5,7 @@ import {
   PrimaryGeneratedColumn,
   Unique,
 } from 'typeorm';
-import { Stadium } from '../../stadium/core/domain/stadium.entity';
+import { Stadium } from '../../../stadium/core/domain/stadium.entity';
 
 @Entity()
 @Unique(['name'])

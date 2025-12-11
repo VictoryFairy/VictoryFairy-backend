@@ -15,14 +15,16 @@ import {
 } from '@nestjs/swagger';
 import { plainToInstance } from 'class-transformer';
 import { JwtAuth } from 'src/common/decorators/jwt-token.decorator';
-import { ParkingInfoService } from 'src/modules/parking-info/parking-info.service';
+import { ParkingInfoApplicationQueryService } from './parking-info-application.query.service';
 import { ParkingInfoDto } from './dto/parking-info.dto';
 
 @ApiTags('ParkingInfo')
 @Controller('parking-infos')
 @JwtAuth('access')
 export class ParkingInfoController {
-  constructor(private readonly parkingInfoService: ParkingInfoService) {}
+  constructor(
+    private readonly parkingInfoQueryService: ParkingInfoApplicationQueryService,
+  ) {}
 
   @Get('stadium/:id')
   @HttpCode(HttpStatus.OK)
@@ -38,7 +40,7 @@ export class ParkingInfoController {
   async findByStadiumId(
     @Param('id', ParseIntPipe) id: number,
   ): Promise<ParkingInfoDto[]> {
-    const parkingInfos = await this.parkingInfoService.findByStadiumId(id);
+    const parkingInfos = await this.parkingInfoQueryService.findByStadiumId(id);
     return plainToInstance(ParkingInfoDto, parkingInfos);
   }
 
@@ -50,7 +52,7 @@ export class ParkingInfoController {
     description: '주차장 정보가 없어도 빈 배열은 반환',
   })
   async findAll(): Promise<ParkingInfoDto[]> {
-    const parkingInfos = await this.parkingInfoService.findAll();
+    const parkingInfos = await this.parkingInfoQueryService.findAll();
     return plainToInstance(ParkingInfoDto, parkingInfos);
   }
 }
