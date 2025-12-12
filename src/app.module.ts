@@ -15,6 +15,7 @@ import { CheeringSongApplicationModule } from './modules/cheering-song/applicati
 import { EventEmitterModule } from '@nestjs/event-emitter';
 import { APP_FILTER, APP_GUARD } from '@nestjs/core';
 import { GlobalExceptionFilter } from './common/filters/global-exception.filter';
+import { DomainExceptionFilter } from './common/filters/domain-exception.filter';
 import { addTransactionalDataSource } from 'typeorm-transactional';
 import { DataSource } from 'typeorm';
 import { RequestMetaMiddleware } from './common/middleware/request-meta.middleware';
@@ -81,6 +82,7 @@ import { ScheduleModule } from '@nestjs/schedule';
     AppService,
     SeederService,
     { provide: APP_FILTER, useClass: GlobalExceptionFilter },
+    { provide: APP_FILTER, useClass: DomainExceptionFilter },
     { provide: APP_GUARD, useClass: CustomThrottlerGuard },
   ],
 })
