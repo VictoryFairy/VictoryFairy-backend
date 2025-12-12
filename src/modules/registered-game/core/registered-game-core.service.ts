@@ -1,8 +1,4 @@
-import {
-  ConflictException,
-  Injectable,
-  NotFoundException,
-} from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { FindOptionsWhere, Repository } from 'typeorm';
 import { RegisteredGame } from './domain/registered-game.entity';
@@ -10,6 +6,10 @@ import { SaveRegisteredGameDto } from '../dto/internal/save-registered-game.dto'
 import { UpdateRegisteredGameDto } from '../dto/request/req-update-registered-game.dto';
 import { RegisteredGameStatus } from '../types/registered-game-status.type';
 import { DeleteRegisteredGameDto } from '../dto/internal/delete-registered-game.dto';
+import {
+  RegisteredGameAlreadyRegisteredError,
+  RegisteredGameNotFoundError,
+} from './domain/error/registered-game.error';
 
 @Injectable()
 export class RegisteredGameCoreService {
@@ -40,7 +40,7 @@ export class RegisteredGameCoreService {
       where: { game: { id: game.id }, user: { id: user.id } },
     });
     if (isDuplicate) {
-      throw new ConflictException('이미 등록된 경기입니다');
+      throw new RegisteredGameAlreadyRegisteredError();
     }
 
     const newRegisteredGame = RegisteredGame.create({
@@ -91,9 +91,7 @@ export class RegisteredGameCoreService {
       },
     });
     if (!registeredGame) {
-      throw new NotFoundException(
-        '직관 경기가 존재하지 않아서 수정할 수 없습니다.',
-      );
+      throw new RegisteredGameNotFoundError();
     }
 
     const prevImage = registeredGame.image;
@@ -144,9 +142,7 @@ export class RegisteredGameCoreService {
     });
 
     if (!registeredGame) {
-      throw new NotFoundException(
-        '직관 경기가 존재하지 않아서 삭제할 수 없습니다.',
-      );
+      throw new RegisteredGameNotFoundError();
     }
 
     const prevImage = registeredGame.image;

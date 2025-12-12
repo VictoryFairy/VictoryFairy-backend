@@ -12,6 +12,14 @@ import { Team } from '../../../team/core/domain/team.entity';
 import { RegisteredGameStatus } from 'src/modules/registered-game/types/registered-game-status.type';
 import { Game } from 'src/modules/game/core/domain/game.entity';
 import { User } from 'src/modules/account/core/domain/user.entity';
+import {
+  RegisteredGameUserRequiredError,
+  RegisteredGameGameRequiredError,
+  RegisteredGameCheeringTeamRequiredError,
+  RegisteredGameSeatRequiredError,
+  RegisteredGameReviewRequiredError,
+  RegisteredGameInvalidCheeringTeamError,
+} from './error/registered-game.error';
 
 @Entity()
 @Unique(['game', 'user'])
@@ -144,19 +152,19 @@ export class RegisteredGame {
 
   private validateDomain() {
     if (!this.user) {
-      throw new Error('User is required');
+      throw new RegisteredGameUserRequiredError();
     }
     if (!this.game) {
-      throw new Error('Game is required');
+      throw new RegisteredGameGameRequiredError();
     }
     if (!this.cheering_team.id) {
-      throw new Error('Cheering team id is required');
+      throw new RegisteredGameCheeringTeamRequiredError();
     }
     if (!this.seat) {
-      throw new Error('Seat is required');
+      throw new RegisteredGameSeatRequiredError();
     }
     if (!this.review) {
-      throw new Error('Review is required');
+      throw new RegisteredGameReviewRequiredError();
     }
   }
 
@@ -168,7 +176,7 @@ export class RegisteredGame {
       this.cheering_team.id !== gameData.homeTeamId &&
       this.cheering_team.id !== gameData.awayTeamId
     ) {
-      throw new Error('Cheering team is not the home or away team of the game');
+      throw new RegisteredGameInvalidCheeringTeamError();
     }
   }
 }
