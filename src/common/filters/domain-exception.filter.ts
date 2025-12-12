@@ -11,6 +11,7 @@ import * as Sentry from '@sentry/node';
 import { SlackService } from 'src/infra/external-channel/slack.service';
 import { ConfigService } from '@nestjs/config';
 import { IDotenv } from 'src/config/dotenv.interface';
+import { STATUS_CODES } from 'http';
 
 @Catch(BaseDomainError)
 export class DomainExceptionFilter implements ExceptionFilter {
@@ -55,10 +56,10 @@ export class DomainExceptionFilter implements ExceptionFilter {
       const responseBody = {
         statusCode: httpStatus,
         message: exception.message,
-        error: exception.name,
+        error: STATUS_CODES[httpStatus],
       };
       this.logger.warn(
-        `${method} ${url} ${httpStatus} - Domain Error: [${exception.code}] ${exception.message}`,
+        `${method} ${url} ${httpStatus} - Domain Error: [${exception.code}]`,
       );
       response.status(httpStatus).json(responseBody);
       return;
