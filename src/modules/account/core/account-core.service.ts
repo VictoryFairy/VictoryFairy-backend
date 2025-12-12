@@ -275,6 +275,10 @@ export class AccountCoreService {
     userId: number,
     nickname: string,
   ): Promise<void> {
+    const isExist = await this.userRepo.findOne({ where: { nickname } });
+    if (isExist) {
+      throw new ConflictException('이미 존재하는 닉네임입니다.');
+    }
     const user = await this.userRepo.findOne({
       where: { id: userId },
       relations: { local_auth: true },
