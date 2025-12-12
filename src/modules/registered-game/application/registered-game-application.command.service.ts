@@ -29,7 +29,7 @@ export class RegisteredGameApplicationCommandService {
     userId: number,
   ): Promise<RegisteredGameWithGameDto> {
     const { gameId, cheeringTeamId, ...rest } = registeredGameDto;
-    const game = await this.gameCoreService.getOneWithTeams(gameId);
+    const game = await this.gameCoreService.getOneWithTeamAndStadium(gameId);
     const getCheeringTeam = await this.teamCoreService.findOne(cheeringTeamId);
 
     const newRegisteredGameDto = await SaveRegisteredGameDto.createAndValidate({
@@ -58,9 +58,20 @@ export class RegisteredGameApplicationCommandService {
       await this.rankingRedisService.updateRankings(userId, data);
     });
 
+    const { full_name: fullName, ...restStadium } = game.stadium;
     return await RegisteredGameWithGameDto.createAndValidate({
       id: saveRegisteredGame.id,
-      ...newRegisteredGameDto,
+      ...saveRegisteredGame,
+      game: {
+        id: game.id,
+        date: game.date,
+        time: game.time,
+        status: game.status,
+        stadium: {
+          ...restStadium,
+          fullName,
+        },
+      },
       cheering_team: getCheeringTeam,
     });
   }

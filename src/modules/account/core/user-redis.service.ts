@@ -13,7 +13,7 @@ export class UserRedisService {
   ) {}
 
   async saveUsers(
-    userInfos: { id: number; nickname: string; profileImage: string }[],
+    userInfos: { id: number; nickname: string; profile_image: string }[],
   ) {
     const pipelined = this.redisClient.pipeline();
     for (const userInfo of userInfos) {
@@ -58,19 +58,20 @@ export class UserRedisService {
     string,
     { id: number; nickname: string; profile_image: string }
   > | null> {
-    const rawUserInfo = await this.redisClient.hmget(
-      RedisKeys.USER_INFO,
-      ...userIds.map((id) => id.toString()),
-    );
-    if (rawUserInfo[0] === null || rawUserInfo.length === 0) {
-      return null;
-    }
+    const keys = userIds.map((id) => `${RedisKeys.USER_INFO}:${id.toString()}`);
 
-    const parsedInfo = {};
-    Object.values(rawUserInfo).forEach((user) => {
-      const obj = JSON.parse(user);
-      parsedInfo[obj.id] = obj;
-    });
+    const parsedInfo: Record<
+      string,
+      { id: number; nickname: string; profile_image: string }
+    > = {};
+    for (const key of keys) {
+      const rawUserInfo = await this.redisClient.hgetall(key);
+      parsedInfo[rawUserInfo.id.toString()] = {
+        id: Number(rawUserInfo.id),
+        nickname: rawUserInfo.nickname,
+        profile_image: rawUserInfo.profile_image,
+      };
+    }
     return parsedInfo;
   }
 }

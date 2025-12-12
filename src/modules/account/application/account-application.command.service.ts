@@ -87,7 +87,7 @@ export class AccountApplicationCommandService {
       try {
         const { id, nickname, profile_image } = createdUser;
         await this.userRedisService.saveUsers([
-          { id, nickname, profileImage: profile_image },
+          { id, nickname, profile_image },
         ]);
         const data = await this.rankCoreService.aggregateRankStatsByUserId(id);
         await this.rankingRedisService.updateRankings(id, data);
@@ -119,7 +119,7 @@ export class AccountApplicationCommandService {
       const { id, nickname, profile_image } = createdUser;
       try {
         await this.userRedisService.saveUsers([
-          { id, nickname, profileImage: profile_image },
+          { id, nickname, profile_image },
         ]);
         const data = await this.rankCoreService.aggregateRankStatsByUserId(
           createdUser.id,

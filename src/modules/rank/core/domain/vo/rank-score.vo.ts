@@ -29,7 +29,7 @@ export class RankScoreVo {
     return Math.floor(scoreNum / this.SCALE_FACTOR);
   }
 
-  add(...others: RankScoreVo[]): RankScoreVo {
+  add(others: RankScoreVo[]): RankScoreVo {
     let [newWin, newLose, newTie, newCancel] = [
       this.win,
       this.lose,

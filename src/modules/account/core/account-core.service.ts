@@ -38,11 +38,8 @@ export class AccountCoreService {
       const userIds = [];
       const userInfos = users.map((user) => {
         userIds.push(user.id);
-        return {
-          id: user.id,
-          nickname: user.nickname,
-          profileImage: user.profile_image,
-        };
+        const { id, nickname, profile_image } = user;
+        return { id, nickname, profile_image };
       });
       await this.userRedisService.saveUsers(userInfos);
       this.eventEmitter.emit(EventName.CACHED_USERS, userIds);

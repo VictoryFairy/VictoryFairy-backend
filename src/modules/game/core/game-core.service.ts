@@ -12,6 +12,22 @@ export class GameCoreService {
     private readonly gameRepo: Repository<Game>,
   ) {}
 
+  async getOneWithTeamAndStadium(gameId: string): Promise<Game> {
+    const game = await this.gameRepo.findOne({
+      where: { id: gameId },
+      relations: {
+        stadium: true,
+        home_team: true,
+        away_team: true,
+        winning_team: true,
+      },
+    });
+    if (!game) {
+      throw new NotFoundException(`해당 경기를 찾을 수 없습니다`);
+    }
+    return game;
+  }
+
   async getOneWithTeams(gameId: string): Promise<Game> {
     const game = await this.gameRepo.findOne({
       where: { id: gameId },

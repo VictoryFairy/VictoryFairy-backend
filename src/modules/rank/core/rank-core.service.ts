@@ -85,7 +85,7 @@ export class RankCoreService {
 
   async aggregateRankStatsByUserId(
     userId: number,
-  ): Promise<Record<string, RankScoreVo>> {
+  ): Promise<Record<string | 'total', RankScoreVo>> {
     const rawRanks = await this.rankRepo
       .createQueryBuilder('rank')
       .select('rank.team_id', 'team_id')
@@ -99,8 +99,8 @@ export class RankCoreService {
 
     if (!rawRanks.length) return;
 
-    const totalVo = RankScoreVo.from({ win: 0, lose: 0, tie: 0, cancel: 0 });
-    const teamVoMap: Record<string, RankScoreVo> = {};
+    const tempVoArr: RankScoreVo[] = [];
+    const teamVoMap: Record<string | 'total', RankScoreVo> = {};
     rawRanks.forEach(({ team_id, win, lose, tie, cancel }) => {
       const vo = RankScoreVo.from({
         win: Number(win),
@@ -108,13 +108,17 @@ export class RankCoreService {
         tie: Number(tie),
         cancel: Number(cancel),
       });
-      totalVo.add(vo);
+      tempVoArr.push(vo);
       teamVoMap[team_id.toString()] = vo;
     });
-    const data = { ...teamVoMap, total: totalVo };
+    teamVoMap['total'] = RankScoreVo.from({
+      win: 0,
+      lose: 0,
+      tie: 0,
+      cancel: 0,
+    }).add(tempVoArr);
 
-    return data;
-    // await this.rankingRedisService.updateRankings(userId, data);
+    return teamVoMap;
   }
 
   /**
