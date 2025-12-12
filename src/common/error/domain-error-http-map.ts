@@ -3,9 +3,13 @@ import {
   REGISTERED_GAME_ERROR_CODE,
   RegisteredGameErrorCode,
 } from 'src/modules/registered-game/core/domain/error/registered-game.error';
+import {
+  RANK_ERROR_CODE,
+  RankErrorCode,
+} from 'src/modules/rank/core/domain/error/rank.error';
 
 export const DOMAIN_ERROR_HTTP_MAP: Record<
-  RegisteredGameErrorCode,
+  RegisteredGameErrorCode | RankErrorCode,
   HttpStatus
 > = {
   // RegisteredGameError
@@ -17,5 +21,10 @@ export const DOMAIN_ERROR_HTTP_MAP: Record<
   [REGISTERED_GAME_ERROR_CODE.INVALID_CHEERING_TEAM]: HttpStatus.BAD_REQUEST,
   [REGISTERED_GAME_ERROR_CODE.ALREADY_REGISTERED]: HttpStatus.CONFLICT,
   [REGISTERED_GAME_ERROR_CODE.NOT_FOUND]: HttpStatus.NOT_FOUND,
-  // 다른 도메인
+  // RankError
+  [RANK_ERROR_CODE.RECORD_NOT_FOUND]: HttpStatus.BAD_REQUEST,
+  [RANK_ERROR_CODE.INVALID_RECORD_DECREASE]: HttpStatus.BAD_REQUEST,
+  [RANK_ERROR_CODE.INVALID_TEAM_ID]: HttpStatus.BAD_REQUEST,
+  [RANK_ERROR_CODE.INVALID_USER_ID]: HttpStatus.BAD_REQUEST,
+  [RANK_ERROR_CODE.INVALID_ACTIVE_YEAR]: HttpStatus.BAD_REQUEST,
 };

@@ -1,4 +1,4 @@
-import { BadRequestException, Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Rank } from './domain/rank.entity';
@@ -9,6 +9,7 @@ import { GameResultColumnMap } from '../types/game-result-column-map.type';
 import { RegisteredGameStatus } from 'src/modules/registered-game/types/registered-game-status.type';
 import { OnEvent } from '@nestjs/event-emitter';
 import { EventName } from 'src/shared/const/event.const';
+import { RankRecordNotFoundError } from './domain/error/rank.error';
 
 @Injectable()
 export class RankCoreService {
@@ -71,9 +72,7 @@ export class RankCoreService {
 
     if (!targetRankData) {
       if (!isAdd) {
-        throw new BadRequestException(
-          '제거하려는 랭킹 기록이 존재하지 않습니다.',
-        );
+        throw new RankRecordNotFoundError();
       }
       targetRankData = Rank.create({ teamId, userId, activeYear });
     }

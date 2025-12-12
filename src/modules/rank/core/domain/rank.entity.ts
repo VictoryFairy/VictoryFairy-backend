@@ -7,9 +7,14 @@ import {
   Unique,
   UpdateDateColumn,
 } from 'typeorm';
-import { BadRequestException } from '@nestjs/common';
 import { GameResultColumnMap } from 'src/modules/rank/types/game-result-column-map.type';
 import { User } from 'src/modules/account/core/domain/user.entity';
+import {
+  RankInvalidActiveYearError,
+  RankInvalidRecordDecreaseError,
+  RankInvalidTeamIdError,
+  RankInvalidUserIdError,
+} from './error/rank.error';
 
 @Entity()
 @Unique(['team_id', 'user', 'active_year'])
@@ -76,7 +81,7 @@ export class Rank {
   public adjustRecord(column: GameResultColumnMap, isAdd: boolean) {
     const amount = isAdd ? 1 : -1;
     if (!isAdd && this[column] === 0) {
-      throw new BadRequestException('유효하지 않은 요청입니다.');
+      throw new RankInvalidRecordDecreaseError();
     }
     this[column] += amount;
   }
@@ -94,13 +99,13 @@ export class Rank {
 
   private validateDomain() {
     if (!this.team_id || this.team_id === 0 || this.team_id > 10) {
-      throw new BadRequestException('유효하지 않은 팀 ID입니다.');
+      throw new RankInvalidTeamIdError();
     }
     if (!this.user || this.user.id === 0) {
-      throw new BadRequestException('유효하지 않은 유저 ID입니다.');
+      throw new RankInvalidUserIdError();
     }
     if (!this.active_year || this.active_year === 0) {
-      throw new BadRequestException('유효하지 않은 활성 연도입니다.');
+      throw new RankInvalidActiveYearError();
     }
   }
 }
