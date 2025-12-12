@@ -17,7 +17,17 @@ import { LocalAuth } from './local-auth.entity';
 import { SocialAuth } from './social-auth.entity';
 import { DEFAULT_PROFILE_IMAGE } from 'src/modules/account/core/const/user.const';
 import { SocialProvider } from 'src/modules/auth/const/auth.const';
-import { BadRequestException } from '@nestjs/common';
+import {
+  AccountNotLocalAccountError,
+  AccountAlreadyLinkedError,
+  AccountNoSocialLinkHistoryError,
+  AccountSocialPlatformNotFoundError,
+  AccountPrimarySocialCannotUnlinkError,
+  AccountAlreadyRegisteredError,
+  AccountInvalidTeamIdError,
+  AccountEmptyNicknameError,
+  AccountEmptyProfileImageError,
+} from './error/account.error';
 import { UserTerm } from './user-term.entity';
 
 @Entity()
@@ -138,14 +148,14 @@ export class User {
 
   public async changePassword(newPassword: string) {
     if (!this.local_auth) {
-      throw new BadRequestException('로컬 계정이 아닙니다.');
+      throw new AccountNotLocalAccountError();
     }
     await this.local_auth.changePassword(newPassword);
   }
 
   public async validatePassword(inputPassword: string): Promise<boolean> {
     if (!this.local_auth) {
-      throw new BadRequestException('로컬 계정이 아닙니다.');
+      throw new AccountNotLocalAccountError();
     }
     return this.local_auth.validatePassword(inputPassword);
   }
@@ -179,7 +189,7 @@ export class User {
         (auth) => auth.provider === props.provider && auth.sub === props.sub,
       )
     ) {
-      throw new BadRequestException('이미 연동된 계정입니다.');
+      throw new AccountAlreadyLinkedError();
     }
     const socialAuth = SocialAuth.create(props);
     if (!this.social_auths.length) {
@@ -192,7 +202,7 @@ export class User {
   public removeSocialAuth(props: { provider: SocialProvider }): void {
     // 소셜 계정 연동 내역이 없는 경우
     if (!this.social_auths.length)
-      throw new BadRequestException('소셜 계정 연동 내역이 없습니다.');
+      throw new AccountNoSocialLinkHistoryError();
 
     const targetSocialAuth = this.social_auths.find((socialAuth) => {
       socialAuth.provider === props.provider;
@@ -200,11 +210,11 @@ export class User {
 
     // 해당 플랫폼으로 연동된 계정이 없는 경우
     if (!targetSocialAuth) {
-      throw new BadRequestException('해당 플랫폼으로 연동된 계정이 없습니다.');
+      throw new AccountSocialPlatformNotFoundError();
     }
     // 첫 가입 플랫폼은 연동 해제 불가능
     if (targetSocialAuth.is_primary) {
-      throw new BadRequestException('첫 가입 플랫폼은 연동 해제 불가능합니다.');
+      throw new AccountPrimarySocialCannotUnlinkError();
     }
 
     // 해당 플랫폼으로 연동된 계정 제거
@@ -216,7 +226,7 @@ export class User {
 
   private async createLocalAuth(props: { password: string }): Promise<void> {
     if (this.local_auth) {
-      throw new BadRequestException('해당 아이디는 이미 가입되어 있습니다.');
+      throw new AccountAlreadyRegisteredError();
     }
     const localAuth = await LocalAuth.create(props.password);
     this.local_auth = localAuth;
@@ -224,21 +234,21 @@ export class User {
 
   public updateTeam(teamId: number): void {
     if (!teamId || teamId <= 0 || teamId > 10) {
-      throw new BadRequestException('유효하지 않은 팀 ID입니다.');
+      throw new AccountInvalidTeamIdError();
     }
     this.support_team = { id: teamId } as Team;
   }
 
   public updateNickname(nickname: string): void {
     if (!nickname || nickname.trim() === '') {
-      throw new BadRequestException('닉네임이 비어있습니다.');
+      throw new AccountEmptyNicknameError();
     }
     this.nickname = nickname;
   }
 
   public updateProfileImage(imageUrl: string): void {
     if (!imageUrl || imageUrl.trim() === '') {
-      throw new BadRequestException('업데이트할 프로필 이미지가 비어있습니다.');
+      throw new AccountEmptyProfileImageError();
     }
     this.profile_image = imageUrl;
   }

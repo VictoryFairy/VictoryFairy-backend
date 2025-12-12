@@ -10,7 +10,7 @@ import {
 } from 'typeorm';
 import { Term } from 'src/modules/term/core/domain/term.entity';
 import { User } from 'src/modules/account/core/domain/user.entity';
-import { InternalServerErrorException } from '@nestjs/common';
+import { AccountEmptyTermIdError } from './error/account.error';
 
 @Entity()
 @Unique(['user_id', 'term_id'])
@@ -42,7 +42,7 @@ export class UserTerm {
 
   static create(termId: string): UserTerm {
     if (!termId) {
-      throw new InternalServerErrorException('약관 아이디가 없습니다.');
+      throw new AccountEmptyTermIdError();
     }
     const userTerm = new UserTerm();
     userTerm.term_id = termId;

@@ -1,12 +1,12 @@
-import {
-  BadRequestException,
-  ConflictException,
-  Injectable,
-  InternalServerErrorException,
-  Logger,
-  UnauthorizedException,
-} from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
+import {
+  AccountUserNotFoundError,
+  AccountEmailAlreadyExistsError,
+  AccountInvalidCredentialsError,
+  AccountNicknameAlreadyExistsError,
+  AccountNicknameGenerationFailedError,
+} from './domain/error/account.error';
 import { User } from './domain/user.entity';
 import { Repository } from 'typeorm';
 import { LoginLocalUserDto } from '../dto/request/req-login-local-user.dto';
@@ -55,7 +55,7 @@ export class AccountCoreService {
       where: { email },
       relations: { support_team: true, local_auth: true },
     });
-    if (!user) throw new BadRequestException('존재하지 않는 유저입니다.');
+    if (!user) throw new AccountUserNotFoundError();
     return user;
   }
 
@@ -95,7 +95,7 @@ export class AccountCoreService {
     }
 
     // 여기까지 왔다면, 이메일만 같은 다른 계정이 있음
-    throw new ConflictException('이미 가입된 이메일입니다.');
+    throw new AccountEmailAlreadyExistsError();
   }
 
   async verifyLocalAuth(userId: number, password: string): Promise<boolean> {
@@ -118,7 +118,7 @@ export class AccountCoreService {
 
     const isVerified = await user.validatePassword(password);
     if (!isVerified) {
-      throw new UnauthorizedException('이메일 또는 비밀번호가 틀렸습니다.');
+      throw new AccountInvalidCredentialsError();
     }
     return user;
   }
@@ -277,7 +277,7 @@ export class AccountCoreService {
   ): Promise<void> {
     const isExist = await this.userRepo.findOne({ where: { nickname } });
     if (isExist) {
-      throw new ConflictException('이미 존재하는 닉네임입니다.');
+      throw new AccountNicknameAlreadyExistsError();
     }
     const user = await this.userRepo.findOne({
       where: { id: userId },
@@ -318,7 +318,7 @@ export class AccountCoreService {
       }
       retryCount++;
       if (retryCount >= MAX_RETRIES) {
-        throw new InternalServerErrorException('닉네임 생성 실패');
+        throw new AccountNicknameGenerationFailedError();
       }
     }
   }

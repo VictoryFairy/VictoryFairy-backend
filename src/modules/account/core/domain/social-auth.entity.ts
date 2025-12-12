@@ -12,7 +12,10 @@ import {
 import { SocialProvider } from 'src/modules/auth/const/auth.const';
 import { User } from 'src/modules/account/core/domain/user.entity';
 import { CreateSocialAuthDto } from 'src/modules/auth/dto/internal/social-auth/create-social-auth.dto';
-import { BadRequestException } from '@nestjs/common';
+import {
+  AccountInvalidSocialAuthDataError,
+  AccountInvalidProviderError,
+} from './error/account.error';
 
 @Entity()
 @Unique(['sub', 'provider']) // 복합 유니크 인덱스
@@ -55,10 +58,10 @@ export class SocialAuth {
       !props.provider ||
       !props.isPrimary
     ) {
-      throw new BadRequestException('SocialAuth create error');
+      throw new AccountInvalidSocialAuthDataError();
     }
     if (!Object.values(SocialProvider).includes(props.provider)) {
-      throw new BadRequestException('소셜 로그인 제공하는 플랫폼이 아닙니다.');
+      throw new AccountInvalidProviderError();
     }
     const socialAuth = new SocialAuth();
     socialAuth.provider = props.provider;
