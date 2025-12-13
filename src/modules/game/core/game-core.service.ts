@@ -1,8 +1,9 @@
-import { Injectable, Logger, NotFoundException } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Game } from './domain/game.entity';
 import { Repository } from 'typeorm';
 import { BatchUpdateGameDto } from '../dto/batch-update-game.dto';
+import { GameNotFoundError } from './domain/error/game.error';
 
 @Injectable()
 export class GameCoreService {
@@ -23,7 +24,7 @@ export class GameCoreService {
       },
     });
     if (!game) {
-      throw new NotFoundException(`해당 경기를 찾을 수 없습니다`);
+      throw new GameNotFoundError();
     }
     return game;
   }
@@ -34,7 +35,7 @@ export class GameCoreService {
       relations: { home_team: true, away_team: true, winning_team: true },
     });
     if (!game) {
-      throw new NotFoundException(`해당 경기를 찾을 수 없습니다`);
+      throw new GameNotFoundError();
     }
     return game;
   }

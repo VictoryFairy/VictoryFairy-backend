@@ -12,6 +12,12 @@ import { Team } from 'src/modules/team/core/domain/team.entity';
 import { Stadium } from 'src/modules/stadium/core/domain/stadium.entity';
 import { RegisteredGame } from 'src/modules/registered-game/core/domain/registered-game.entity';
 import { TGameStatus } from 'src/modules/game/application/util/crawling-game.type';
+import {
+  GameInvalidFinishedGameHasWinnerError,
+  GameInvalidFinishedGameNoWinnerError,
+  GameInvalidPreGameWinnerError,
+  GameSameHomeAwayTeamError,
+} from './error/game.error';
 
 @Entity()
 @Unique(['date', 'time', 'stadium'])
@@ -142,11 +148,11 @@ export class Game {
 
   private validateDomain(): void {
     if (this.home_team.id === this.away_team.id) {
-      throw new Error('홈 팀과 원정 팀은 같을 수 없습니다.');
+      throw new GameSameHomeAwayTeamError();
     }
     if (this.status === '경기전' && Boolean(this.winning_team)) {
-      throw new Error(
-        `경기 전 상태에서는 승리 팀이 반드시 없어야 합니다. ${this.id} ${this.winning_team} `,
+      throw new GameInvalidPreGameWinnerError(
+        `경기 전 상태에서는 승리 팀이 반드시 없어야 합니다. ${this.id} ${this.winning_team}`,
       );
     }
     if (
@@ -156,11 +162,8 @@ export class Game {
       this.home_team_score !== this.away_team_score &&
       !this.winning_team
     ) {
-      throw new Error(
-        '경기 종료 상태이고 동점이 아니면 승리 팀이 반드시 존재해야 합니다.',
-      );
+      throw new GameInvalidFinishedGameNoWinnerError();
     }
-
     if (
       this.status === '경기종료' &&
       this.home_team_score === null &&
@@ -168,9 +171,7 @@ export class Game {
       this.home_team_score === this.away_team_score &&
       this.winning_team
     ) {
-      throw new Error(
-        '경기 종료 상태이고 동점이면 승리 팀이 반드시 없어야 합니다.',
-      );
+      throw new GameInvalidFinishedGameHasWinnerError();
     }
   }
 }

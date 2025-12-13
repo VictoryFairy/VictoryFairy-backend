@@ -11,9 +11,13 @@ import {
   ACCOUNT_ERROR_CODE,
   AccountErrorCode,
 } from 'src/modules/account/core/domain/error/account.error';
+import {
+  GAME_ERROR_CODE,
+  GameErrorCode,
+} from 'src/modules/game/core/domain/error/game.error';
 
 export const DOMAIN_ERROR_HTTP_MAP: Record<
-  RegisteredGameErrorCode | RankErrorCode | AccountErrorCode,
+  RegisteredGameErrorCode | RankErrorCode | AccountErrorCode | GameErrorCode,
   HttpStatus
 > = {
   // RegisteredGameError
@@ -50,4 +54,10 @@ export const DOMAIN_ERROR_HTTP_MAP: Record<
   [ACCOUNT_ERROR_CODE.INVALID_SOCIAL_AUTH_DATA]: HttpStatus.BAD_REQUEST,
   [ACCOUNT_ERROR_CODE.INVALID_PROVIDER]: HttpStatus.BAD_REQUEST,
   [ACCOUNT_ERROR_CODE.EMPTY_TERM_ID]: HttpStatus.INTERNAL_SERVER_ERROR,
+  // GameError
+  [GAME_ERROR_CODE.NOT_FOUND]: HttpStatus.NOT_FOUND,
+  [GAME_ERROR_CODE.SAME_HOME_AWAY_TEAM]: HttpStatus.BAD_REQUEST,
+  [GAME_ERROR_CODE.INVALID_PRE_GAME_WINNER]: HttpStatus.BAD_REQUEST,
+  [GAME_ERROR_CODE.INVALID_FINISHED_GAME_NO_WINNER]: HttpStatus.BAD_REQUEST,
+  [GAME_ERROR_CODE.INVALID_FINISHED_GAME_HAS_WINNER]: HttpStatus.BAD_REQUEST,
 };
