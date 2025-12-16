@@ -1,12 +1,12 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { Exclude, Expose, Transform, Type } from 'class-transformer';
 import { IsNumber, IsString, ValidateNested } from 'class-validator';
-import { StadiumDto } from '../../stadium/application/dto/stadium.dto';
-import { TeamDto } from '../../team/application/dto/response/res-team.dto';
+import { StadiumDto } from 'src/modules/stadium/application/dto/stadium.dto';
+import { TeamDto } from 'src/modules/team/application/dto/response/res-team.dto';
 import { getGameType } from 'src/common/utils/getGameType';
 
 @Exclude()
-export class GameDto {
+export class GameResDto {
   @ApiProperty({
     description: '경기 ID',
     example: '20240801SSLG0',
@@ -118,18 +118,4 @@ export class GameDto {
   @Expose()
   @Transform(({ obj }) => obj.winning_team)
   winningTeam?: TeamDto;
-}
-
-export class FindAllDailyQueryDto {
-  @ApiProperty()
-  @IsNumber()
-  year: number;
-
-  @ApiProperty()
-  @IsNumber()
-  month: number;
-
-  @ApiProperty()
-  @IsNumber()
-  day: number;
 }

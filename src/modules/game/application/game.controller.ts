@@ -16,8 +16,9 @@ import {
   ApiTags,
 } from '@nestjs/swagger';
 import { JwtAuth } from 'src/common/decorators/jwt-token.decorator';
-import { FindAllDailyQueryDto, GameDto } from '../dto/game.dto';
-import { ResGameDailyDto } from '../dto/response/res-game-daily.dto';
+import { GameDailyReqDto } from './dto/request/game-daily-req.dto';
+import { GameResDto } from './dto/response/game-res.dto';
+import { GameDailyResDto } from './dto/response/game-daily-res.dto';
 import { CurrentUser } from 'src/common/decorators/current-user.decorator';
 import * as moment from 'moment';
 import { GameApplicationQueryService } from './game-application-query.service';
@@ -37,7 +38,7 @@ export class GameController {
   @ApiQuery({ name: 'month', type: Number, description: '월', example: 8 })
   @ApiQuery({ name: 'day', type: Number, description: '일', example: 1 })
   @ApiOkResponse({
-    type: ResGameDailyDto,
+    type: GameDailyResDto,
     description: [
       'games: 해당 날짜의 경기를 팀별로 그룹화한 데이터',
       '',
@@ -46,7 +47,7 @@ export class GameController {
     examples: {
       example1: {
         summary: '게임 있는 경우',
-        value: ResGameDailyDto.swaggerExample(),
+        value: GameDailyResDto.swaggerExample(),
       },
       example2: {
         summary: '게임 없는 경우',
@@ -56,17 +57,16 @@ export class GameController {
   })
   async findAllDaily(
     @CurrentUser('id') userId: number,
-    @Query() query: FindAllDailyQueryDto,
-  ): Promise<ResGameDailyDto> {
+    @Query() query: GameDailyReqDto,
+  ): Promise<GameDailyResDto> {
     const { year, month, day } = query;
     const result =
-      await this.gameApplicationQueryService.GetDailyGamesWithUserRegistration({
+      await this.gameApplicationQueryService.getDailyGamesWithUserRegistration({
         year,
         month,
         day,
         userId,
       });
-
     return result;
   }
 
@@ -76,11 +76,11 @@ export class GameController {
     summary: '오늘 경기 목록 반환, 경기가 없는 경우 빈배열 반환',
   })
   @ApiOkResponse({
-    type: [GameDto],
+    type: [GameResDto],
     description: '오늘 경기 목록',
   })
   @ApiInternalServerErrorResponse({ description: '서버 오류 발생 시' })
-  async findToday(): Promise<GameDto[]> {
+  async findToday(): Promise<GameResDto[]> {
     const today = moment().tz('Asia/Seoul');
     const [year, month, day] = [today.year(), today.month() + 1, today.date()];
     const games = await this.gameApplicationQueryService.getTodayGames({
@@ -101,11 +101,11 @@ export class GameController {
     example: '20240801SSLG0',
   })
   @ApiOkResponse({
-    type: GameDto,
+    type: GameResDto,
     description: '[gameType] - 0: 일반 / 1: DH1 / 2: DH2',
   })
   @ApiNotFoundResponse({ description: '해당 ID의 경기가 없을 경우' })
-  async findOne(@Param('id') id: string): Promise<GameDto> {
+  async findOne(@Param('id') id: string): Promise<GameResDto> {
     const game = await this.gameApplicationQueryService.getGameById(id);
     return game;
   }

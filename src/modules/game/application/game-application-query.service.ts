@@ -1,11 +1,11 @@
 import { Injectable } from '@nestjs/common';
 import { InjectEntityManager } from '@nestjs/typeorm';
 import { EntityManager } from 'typeorm';
-import { ResGameDailyDto } from '../dto/response/res-game-daily.dto';
+import { GameDailyResDto } from './dto/response/game-daily-res.dto';
+import { GameResDto } from './dto/response/game-res.dto';
 import { Game } from '../core/domain/game.entity';
 import { RegisteredGame } from 'src/modules/registered-game/core/domain/registered-game.entity';
 import { plainToInstance } from 'class-transformer';
-import { GameDto } from '../dto/game.dto';
 
 @Injectable()
 export class GameApplicationQueryService {
@@ -14,15 +14,14 @@ export class GameApplicationQueryService {
     private readonly em: EntityManager,
   ) {}
 
-  async GetDailyGamesWithUserRegistration(data: {
+  async getDailyGamesWithUserRegistration(data: {
     year: number;
     month: number;
     day: number;
     userId: number;
-  }): Promise<ResGameDailyDto> {
+  }): Promise<GameDailyResDto> {
     const { year, month, day, userId } = data;
     const date = this.getDateString(year, month, day);
-
     const result = (await this.em
       .createQueryBuilder(Game, 'g')
       .leftJoinAndSelect('g.home_team', 'home_team')
@@ -36,14 +35,11 @@ export class GameApplicationQueryService {
         'rg.game_id = g.id AND rg.user_id = :userId',
         { userId },
       )
-
       .where('g.date = :date', { date })
       .getMany()) as unknown as (Game & {
       isAlreadyRegistered: RegisteredGame;
     })[];
-
-    const gamesDto = plainToInstance(GameDto, result);
-
+    const gamesDto = plainToInstance(GameResDto, result);
     const groupedGames = this.groupGamesByTeam(gamesDto);
     const registeredGameIds = result
       .filter((game) => game.isAlreadyRegistered)
@@ -54,7 +50,7 @@ export class GameApplicationQueryService {
     };
   }
 
-  async getGameById(gameId: string): Promise<GameDto | null> {
+  async getGameById(gameId: string): Promise<GameResDto | null> {
     const game = await this.em.findOne(Game, {
       where: { id: gameId },
       relations: {
@@ -64,14 +60,14 @@ export class GameApplicationQueryService {
         stadium: true,
       },
     });
-
-    return game ? plainToInstance(GameDto, game) : null;
+    return game ? plainToInstance(GameResDto, game) : null;
   }
+
   async getTodayGames(data: {
     year: number;
     month: number;
     day: number;
-  }): Promise<GameDto[]> {
+  }): Promise<GameResDto[]> {
     const { year, month, day } = data;
     const dateString = `${year}-${month.toString().padStart(2, '0')}-${day.toString().padStart(2, '0')}`;
     const games = await this.em.find(Game, {
@@ -83,7 +79,7 @@ export class GameApplicationQueryService {
         stadium: true,
       },
     });
-    return games ? plainToInstance(GameDto, games) : [];
+    return games ? plainToInstance(GameResDto, games) : [];
   }
 
   private getDateString(year: number, month: number, day: number): string {
@@ -93,19 +89,15 @@ export class GameApplicationQueryService {
     return `${y}-${m}-${d}`;
   }
 
-  private groupGamesByTeam(games: GameDto[]): Record<string, GameDto[]> {
-    const map: Record<string, GameDto[]> = {};
-
+  private groupGamesByTeam(games: GameResDto[]): Record<string, GameResDto[]> {
+    const map: Record<string, GameResDto[]> = {};
     for (const game of games) {
       const key = game.id.slice(8, -1);
-
       if (!map[key]) {
         map[key] = [];
       }
-
       map[key].push(game);
     }
-
     return map;
   }
 }

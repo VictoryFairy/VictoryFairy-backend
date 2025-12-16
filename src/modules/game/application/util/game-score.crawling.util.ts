@@ -1,7 +1,7 @@
 import parse from 'node-html-parser';
 import axios from 'axios';
 import { isNumber } from 'src/common/utils/is-number.util';
-import { BatchUpdateGameDto } from 'src/modules/game/dto/batch-update-game.dto';
+import { UpdateGameScoreInput } from 'src/modules/game/core/types/game.interface';
 
 /**
  * 현재 진행 중인 게임의 점수와 상태를 크롤링합니다.
@@ -16,14 +16,12 @@ export async function getCurrentGameStatus(
   seriesId: number,
   gameId: string,
   gyear: number,
-): Promise<BatchUpdateGameDto> {
+): Promise<UpdateGameScoreInput> {
   const extractStatus = (htmlString: string) => {
     const root = parse(htmlString);
     const statusElement = root.querySelector('span.date');
-
     const status: string | null =
       (statusElement?.innerText?.match(/\[(.*?)\]/) || [])[1] ?? null;
-
     return {
       status,
     };
@@ -33,7 +31,6 @@ export async function getCurrentGameStatus(
     const root = parse(htmlString);
     const homeScoreElement = root.querySelector('.teamHome em');
     const awayScoreElement = root.querySelector('.teamAway em');
-
     const homeScore: number | null =
       homeScoreElement && isNumber(homeScoreElement.innerText)
         ? parseInt(homeScoreElement.innerText)
@@ -42,7 +39,6 @@ export async function getCurrentGameStatus(
       awayScoreElement && isNumber(awayScoreElement.innerText)
         ? parseInt(awayScoreElement.innerText)
         : null;
-
     return {
       homeScore: homeScore,
       awayScore: awayScore,

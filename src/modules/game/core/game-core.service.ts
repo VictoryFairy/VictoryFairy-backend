@@ -2,8 +2,12 @@ import { Injectable, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Game } from './domain/game.entity';
 import { Repository } from 'typeorm';
-import { BatchUpdateGameDto } from '../dto/batch-update-game.dto';
 import { GameNotFoundError } from './domain/error/game.error';
+import {
+  GameWithTeams,
+  GameWithTeamsAndStadium,
+  UpdateGameScoreInput,
+} from './types/game.interface';
 
 @Injectable()
 export class GameCoreService {
@@ -13,7 +17,9 @@ export class GameCoreService {
     private readonly gameRepo: Repository<Game>,
   ) {}
 
-  async getOneWithTeamAndStadium(gameId: string): Promise<Game> {
+  async getOneWithTeamAndStadium(
+    gameId: string,
+  ): Promise<GameWithTeamsAndStadium> {
     const game = await this.gameRepo.findOne({
       where: { id: gameId },
       relations: {
@@ -26,10 +32,10 @@ export class GameCoreService {
     if (!game) {
       throw new GameNotFoundError();
     }
-    return game;
+    return game as GameWithTeamsAndStadium;
   }
 
-  async getOneWithTeams(gameId: string): Promise<Game> {
+  async getOneWithTeams(gameId: string): Promise<GameWithTeams> {
     const game = await this.gameRepo.findOne({
       where: { id: gameId },
       relations: { home_team: true, away_team: true, winning_team: true },
@@ -37,7 +43,7 @@ export class GameCoreService {
     if (!game) {
       throw new GameNotFoundError();
     }
-    return game;
+    return game as GameWithTeams;
   }
 
   async findGamesByDate(date: string): Promise<Game[]> {
@@ -46,37 +52,35 @@ export class GameCoreService {
 
   async updateInProgressGame(
     gameId: string,
-    currentStatus: BatchUpdateGameDto,
-  ) {
-    if (currentStatus.awayScore === null || currentStatus.homeScore === null)
-      return;
+    input: UpdateGameScoreInput,
+  ): Promise<void> {
+    if (input.awayScore === null || input.homeScore === null) return;
     try {
-      const { homeScore, awayScore, status } = currentStatus;
+      const { homeScore, awayScore, status } = input;
       const game = await this.gameRepo.findOne({
         where: { id: gameId },
         relations: { home_team: true, away_team: true, winning_team: true },
       });
-
       game.updateInProgressMatch({ status, homeScore, awayScore });
-
       await this.gameRepo.save(game);
     } catch (error) {
       this.logger.log(
-        `Score for Game ${gameId} updated. homeScore: ${currentStatus.homeScore}, awayScore: ${currentStatus.awayScore}, status: ${currentStatus.status}`,
+        `Score for Game ${gameId} updated. homeScore: ${input.homeScore}, awayScore: ${input.awayScore}, status: ${input.status}`,
       );
     }
   }
 
-  async updateFinishedMatch(gameId: string, currentStatus: BatchUpdateGameDto) {
-    if (currentStatus.awayScore === null || currentStatus.homeScore === null)
-      return;
-    const { homeScore, awayScore, status } = currentStatus;
+  async updateFinishedMatch(
+    gameId: string,
+    input: UpdateGameScoreInput,
+  ): Promise<void> {
+    if (input.awayScore === null || input.homeScore === null) return;
+    const { homeScore, awayScore, status } = input;
     const game = await this.gameRepo.findOne({
       where: { id: gameId },
       relations: { home_team: true, away_team: true, winning_team: true },
     });
     game.updateFinishedMatch({ status, homeScore, awayScore });
-
     await this.gameRepo.save(game);
   }
 }

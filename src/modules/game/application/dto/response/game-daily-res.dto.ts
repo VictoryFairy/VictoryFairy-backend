@@ -1,8 +1,9 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { GameDto } from '../game.dto';
+import { GameResDto } from './game-res.dto';
 
-export class ResGameDailyDto {
-  @ApiProperty({ description: '경기 데이터' }) games: Record<string, GameDto[]>;
+export class GameDailyResDto {
+  @ApiProperty({ description: '경기 데이터' })
+  games: Record<string, GameResDto[]>;
 
   @ApiProperty({ description: '유저가 등록한 경기 ID 목록' })
   registeredGameIds: string[];

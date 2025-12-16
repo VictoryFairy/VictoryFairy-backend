@@ -8,7 +8,7 @@ import {
   IsString,
 } from 'class-validator';
 import { Expose, Type } from 'class-transformer';
-import { GameDto } from 'src/modules/game/dto/game.dto';
+import { GameResDto } from 'src/modules/game/application/dto/response/game-res.dto';
 
 export class RegisteredGameWithGameResponseDto {
   @Expose()
@@ -36,11 +36,11 @@ export class RegisteredGameWithGameResponseDto {
 
   @Expose()
   @IsNotEmpty()
-  @Type(() => GameDto)
-  game: GameDto;
+  @Type(() => GameResDto)
+  game: GameResDto;
 
-  @Expose({ name: 'cheering_team' })
   @IsNotEmpty()
+  @Expose({ name: 'cheering_team' })
   @Type(() => TeamDto)
   cheeringTeam: TeamDto;
 }
