@@ -1,10 +1,10 @@
 import { Type } from 'class-transformer';
-import { ResRankDto } from './res-rank.dto';
+import { RankResDto } from './rank-res.dto';
 import { ApiProperty } from '@nestjs/swagger';
 
-export class ResRankTopThreeDto {
+export class RankTopThreeResDto {
   @ApiProperty({
-    type: [ResRankDto],
+    type: [RankResDto],
     example: [
       {
         rank: 1,
@@ -29,6 +29,7 @@ export class ResRankTopThreeDto {
       },
     ],
   })
-  @Type(() => ResRankDto)
-  top: ResRankDto[];
+  @Type(() => RankResDto)
+  top: RankResDto[];
 }
+

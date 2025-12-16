@@ -2,14 +2,18 @@ import { Injectable, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Rank } from './domain/rank.entity';
-import { InsertRankDto } from '../dto/internal/insert-rank.dto';
 import { RankingRedisService } from 'src/modules/rank/core/ranking-redis.service';
 import { RankScoreVo } from './domain/vo/rank-score.vo';
-import { GameResultColumnMap } from '../types/game-result-column-map.type';
+import { GameResultColumnMap } from './types/game-result-column-map.type';
 import { RegisteredGameStatus } from 'src/modules/registered-game/core/types/registered-game-status.type';
 import { OnEvent } from '@nestjs/event-emitter';
 import { EventName } from 'src/shared/const/event.const';
 import { RankRecordNotFoundError } from './domain/error/rank.error';
+import {
+  InsertRankInput,
+  RefinedRankData,
+  AggregatedRankStats,
+} from './types/rank.interface';
 
 @Injectable()
 export class RankCoreService {
@@ -37,17 +41,17 @@ export class RankCoreService {
     this.logger.log(`랭킹 레디스 초기 캐싱 완료`);
   }
 
-  async insertRankIfAbsent(dto: InsertRankDto): Promise<void> {
-    const { team_id, user_id, active_year } = dto;
+  async insertRankIfAbsent(input: InsertRankInput): Promise<void> {
+    const { teamId, userId, activeYear } = input;
     const foundRankData = await this.rankRepo.findOne({
-      where: { user: { id: user_id }, active_year, team_id },
+      where: { user: { id: userId }, active_year: activeYear, team_id: teamId },
     });
 
     if (!foundRankData) {
       const createRank = Rank.create({
-        teamId: team_id,
-        userId: user_id,
-        activeYear: active_year,
+        teamId,
+        userId,
+        activeYear,
       });
       await this.rankRepo.save(createRank);
       return;
@@ -84,7 +88,7 @@ export class RankCoreService {
 
   async aggregateRankStatsByUserId(
     userId: number,
-  ): Promise<Record<string | 'total', RankScoreVo>> {
+  ): Promise<AggregatedRankStats | undefined> {
     const rawRanks = await this.rankRepo
       .createQueryBuilder('rank')
       .select('rank.team_id', 'team_id')
@@ -99,7 +103,7 @@ export class RankCoreService {
     if (!rawRanks.length) return;
 
     const tempVoArr: RankScoreVo[] = [];
-    const teamVoMap: Record<string | 'total', RankScoreVo> = {};
+    const teamVoMap: AggregatedRankStats = {} as AggregatedRankStats;
     rawRanks.forEach(({ team_id, win, lose, tie, cancel }) => {
       const vo = RankScoreVo.from({
         win: Number(win),
@@ -130,13 +134,13 @@ export class RankCoreService {
     start: number,
     end: number,
     teamId: number | 'total',
-  ): Promise<{ rank: number; userId: number; score: number }[]> {
+  ): Promise<RefinedRankData[]> {
     const rankList = await this.rankingRedisService.getRankingList(
       teamId,
       start,
       end,
     );
-    const refinedRankData = [];
+    const refinedRankData: RefinedRankData[] = [];
     for (let i = 0; i < rankList.length; i += 2) {
       const userId = Number(rankList[i]);
       const score = RankScoreVo.toDisplayScore(rankList[i + 1]);

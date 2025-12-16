@@ -11,7 +11,7 @@ import * as moment from 'moment';
 import { LoginLocalUserDto } from './dto/request/req-login-local-user.dto';
 import { runOnTransactionCommit, Transactional } from 'typeorm-transactional';
 import { SocialProvider } from 'src/modules/auth/const/auth.const';
-import { InsertRankDto } from 'src/modules/rank/dto/internal/insert-rank.dto';
+import { InsertRankInput } from 'src/modules/rank/core/types/rank.interface';
 import { TermCoreService } from 'src/modules/term/core/term-core.service';
 import { AwsS3Service } from 'src/infra/aws-s3/aws-s3.service';
 import { TeamCoreService } from 'src/modules/team/core/team-core.service';
@@ -76,12 +76,12 @@ export class AccountApplicationCommandService {
     );
 
     // 유저 생성에 따른 랭킹 테이블 기본 데이터 생성
-    const insertRankDto = await InsertRankDto.createAndValidate({
-      team_id: createdUser.support_team.id,
-      user_id: createdUser.id,
-      active_year: moment().utc().year(),
-    });
-    await this.rankCoreService.insertRankIfAbsent(insertRankDto);
+    const insertRankInput: InsertRankInput = {
+      teamId: createdUser.support_team.id,
+      userId: createdUser.id,
+      activeYear: moment().utc().year(),
+    };
+    await this.rankCoreService.insertRankIfAbsent(insertRankInput);
 
     // 유저 생성으로 유저 프로필, 랭킹 레디스 캐싱
     runOnTransactionCommit(async () => {
@@ -106,12 +106,12 @@ export class AccountApplicationCommandService {
       dto,
       requiredTermIds,
     );
-    const insertRankDto = await InsertRankDto.createAndValidate({
-      team_id: dto.teamId,
-      user_id: createdUser.id,
-      active_year: moment().utc().year(),
-    });
-    await this.rankCoreService.insertRankIfAbsent(insertRankDto);
+    const insertRankInput: InsertRankInput = {
+      teamId: dto.teamId,
+      userId: createdUser.id,
+      activeYear: moment().utc().year(),
+    };
+    await this.rankCoreService.insertRankIfAbsent(insertRankInput);
 
     runOnTransactionCommit(async () => {
       const { id, nickname, profile_image } = createdUser;
@@ -208,12 +208,12 @@ export class AccountApplicationCommandService {
 
     if (field === 'teamId') {
       await this.accountCoreService.updateUserProfileTeamId(userId, value);
-      const insertRankDto = await InsertRankDto.createAndValidate({
-        team_id: value,
-        user_id: userId,
-        active_year: moment().utc().year(),
-      });
-      await this.rankCoreService.insertRankIfAbsent(insertRankDto); // 랭킹 테이블 기본 데이터 생성
+      const insertRankInput: InsertRankInput = {
+        teamId: value,
+        userId,
+        activeYear: moment().utc().year(),
+      };
+      await this.rankCoreService.insertRankIfAbsent(insertRankInput); // 랭킹 테이블 기본 데이터 생성
       const data =
         await this.rankCoreService.aggregateRankStatsByUserId(userId);
       await this.rankingRedisService.updateRankings(userId, data);

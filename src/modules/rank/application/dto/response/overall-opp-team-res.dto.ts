@@ -1,6 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
 
-export class OppTeamDto {
+class OppTeamResDto {
   @ApiProperty({ example: 1 })
   total: number;
 
@@ -8,7 +8,7 @@ export class OppTeamDto {
   win: number;
 }
 
-export class ResOverallOppTeamDto {
+export class OverallOppTeamResDto {
   @ApiProperty({ example: 5 })
   totalWin: number;
 
@@ -29,5 +29,6 @@ export class ResOverallOppTeamDto {
       '5': { total: 1, win: 1 },
     },
   })
-  oppTeam: Record<string, OppTeamDto>;
+  oppTeam: Record<string, OppTeamResDto>;
 }
+

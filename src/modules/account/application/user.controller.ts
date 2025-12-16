@@ -34,7 +34,7 @@ import { PatchUserProfileDto } from './dto/request/req-patch-user-profile.dto';
 import { UserMyPageDto } from './dto/response/res-user-mypage.dto';
 import { ResCheckPwDto } from './dto/response/res-check-pw.dto';
 import { TermAgreementDto } from 'src/modules/term/dto/request/term-argreement.dto';
-import { ResOverallOppTeamDto } from 'src/modules/rank/dto/response/res-overall-opp-team.dto';
+import { OverallOppTeamResDto } from 'src/modules/rank/application/dto/response/overall-opp-team-res.dto';
 import { IDotenv } from 'src/config/dotenv.interface';
 import { AccountApplicationQueryService } from './account-application.query.service';
 import { AccountApplicationCommandService } from './account-application.command.service';
@@ -162,14 +162,14 @@ export class UserController {
   @Get('me/versus-record')
   @JwtAuth('access')
   @ApiOkResponse({
-    type: ResOverallOppTeamDto,
+    type: OverallOppTeamResDto,
     description: 'oppTeam의 key는 팀의 아이디',
   })
   @ApiOperation({ summary: '해당 유저의 상대 팀 전적 및 승리 중 홈 비율 기록' })
   async getUserStats(@CurrentUser('id') userId: number) {
     const result =
       await this.accountApplicationQueryService.getUserVersusTeamStats(userId);
-    return plainToInstance(ResOverallOppTeamDto, result);
+    return plainToInstance(OverallOppTeamResDto, result);
   }
 
   /** 해당 유저의 간단한 정보와 직관 전적 가져오기 */

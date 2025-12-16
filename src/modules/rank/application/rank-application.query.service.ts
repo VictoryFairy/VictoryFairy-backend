@@ -2,8 +2,11 @@ import { Injectable } from '@nestjs/common';
 import { RankingRedisService } from 'src/modules/rank/core/ranking-redis.service';
 import { UserRedisService } from 'src/modules/account/core/user-redis.service';
 import { RankCoreService } from '../core/rank-core.service';
-import { IRefinedRankData } from '../types/rank.type';
-import { ResNearByDto } from '../dto/response/res-nearby.dto';
+import {
+  RefinedRankData,
+  RefinedRankDataWithProfile,
+} from '../core/types/rank.interface';
+import { RankNearbyResDto } from './dto/response/rank-nearby-res.dto';
 import { plainToInstance } from 'class-transformer';
 
 @Injectable()
@@ -18,7 +21,7 @@ export class RankApplicationQueryService {
     start: number,
     end: number,
     teamId: number | 'total',
-  ): Promise<IRefinedRankData[]> {
+  ): Promise<RefinedRankDataWithProfile[]> {
     const refinedRankData =
       await this.rankCoreService.getRefinedRankDataFromRedis(
         start,
@@ -34,7 +37,7 @@ export class RankApplicationQueryService {
   async getUserNearByWithUserStats(
     userId: number,
     teamId: number | 'total',
-  ): Promise<ResNearByDto> {
+  ): Promise<RankNearbyResDto | null> {
     const userRank = await this.rankingRedisService.getUserRankByUserId(
       userId,
       teamId,
@@ -54,7 +57,7 @@ export class RankApplicationQueryService {
       this.concatRankDataWithUserProfile(refinedRankData),
       this.rankCoreService.aggregateRankStatsByUserId(userId),
     ]);
-    return plainToInstance(ResNearByDto, {
+    return plainToInstance(RankNearbyResDto, {
       nearBy,
       user: {
         userId: userId,
@@ -65,19 +68,19 @@ export class RankApplicationQueryService {
   }
 
   private async concatRankDataWithUserProfile(
-    rankData: { rank: number; userId: number; score: number }[],
-  ): Promise<IRefinedRankData[]> {
+    rankData: RefinedRankData[],
+  ): Promise<RefinedRankDataWithProfile[]> {
     const userIds = rankData.map((data) => data.userId);
     const userHashmap = await this.userRedisService.getUserInfoByIds(userIds);
-    const rankDataWithUserProfile: IRefinedRankData[] = [];
+    const rankDataWithUserProfile: RefinedRankDataWithProfile[] = [];
     rankData.forEach(({ rank, score, userId }) => {
       const { nickname, profile_image } = userHashmap[userId.toString()];
       rankDataWithUserProfile.push({
         rank,
         score,
-        user_id: userId,
+        userId,
         nickname,
-        profile_image,
+        profileImage: profile_image,
       });
     });
     return rankDataWithUserProfile;

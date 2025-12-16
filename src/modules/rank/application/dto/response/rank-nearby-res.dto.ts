@@ -1,7 +1,8 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { ResRankDto } from './res-rank.dto';
+import { RankResDto } from './rank-res.dto';
 import { Type } from 'class-transformer';
-class UserStatsDto {
+
+class UserStatsResDto {
   @ApiProperty({ example: 2 })
   userId: number;
 
@@ -12,9 +13,9 @@ class UserStatsDto {
   win: number;
 }
 
-export class ResNearByDto {
+export class RankNearbyResDto {
   @ApiProperty({
-    type: ResRankDto,
+    type: RankResDto,
     example: [
       {
         rank: 1,
@@ -32,12 +33,13 @@ export class ResNearByDto {
       },
     ],
   })
-  @Type(() => ResRankDto)
-  nearBy: ResRankDto[];
+  @Type(() => RankResDto)
+  nearBy: RankResDto[];
 
   @ApiProperty({
-    type: UserStatsDto,
+    type: UserStatsResDto,
     example: { userId: 2, totalGames: 8, win: 6 },
   })
-  user: UserStatsDto;
+  user: UserStatsResDto;
 }
+

@@ -1,6 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { UserMeResDto } from './res-user-me.dto';
-import { ResRankRecordDto } from 'src/modules/rank/dto/response/res-rank-record.dto';
+import { RankRecordResDto } from 'src/modules/rank/application/dto/response/rank-record-res.dto';
 
 export class UserMyPageDto {
   @ApiProperty({
@@ -16,9 +16,9 @@ export class UserMyPageDto {
   user: UserMeResDto;
 
   @ApiProperty()
-  record: ResRankRecordDto;
+  record: RankRecordResDto;
 
-  constructor(userResDto: UserMeResDto, record: ResRankRecordDto) {
+  constructor(userResDto: UserMeResDto, record: RankRecordResDto) {
     this.user = userResDto;
     this.record = record;
   }

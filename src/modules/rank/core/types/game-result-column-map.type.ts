@@ -7,3 +7,4 @@ export const GameResultColumnMap = {
 
 export type GameResultColumnMap =
   (typeof GameResultColumnMap)[keyof typeof GameResultColumnMap];
+

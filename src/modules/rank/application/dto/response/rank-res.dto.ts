@@ -2,7 +2,7 @@ import { ApiProperty } from '@nestjs/swagger';
 import { Exclude, Expose, Transform } from 'class-transformer';
 
 @Exclude()
-export class ResRankDto {
+export class RankResDto {
   @ApiProperty({ example: 1 })
   @Expose()
   rank: number;
@@ -13,7 +13,7 @@ export class ResRankDto {
 
   @ApiProperty({ example: 'imagefadfafa' })
   @Expose()
-  @Transform(({ obj }) => obj.profile_image ?? obj.image)
+  @Transform(({ obj }) => obj.profileImage ?? obj.image)
   image: string;
 
   @ApiProperty({ example: 'test1' })
@@ -22,6 +22,6 @@ export class ResRankDto {
 
   @ApiProperty({ example: 2 })
   @Expose()
-  @Transform(({ obj }) => obj.user_id ?? obj.userId)
   userId: number;
 }
+

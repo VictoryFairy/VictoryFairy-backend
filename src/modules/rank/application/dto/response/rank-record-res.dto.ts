@@ -1,6 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
 
-export class ResRankRecordDto {
+export class RankRecordResDto {
   @ApiProperty({ example: 1 })
   win: number;
 
@@ -19,3 +19,4 @@ export class ResRankRecordDto {
   @ApiProperty({ example: 1005 })
   score: number;
 }
+
