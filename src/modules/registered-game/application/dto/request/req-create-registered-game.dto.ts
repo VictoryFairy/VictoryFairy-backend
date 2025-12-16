@@ -46,3 +46,4 @@ export class CreateRegisteredGameDto {
   @Expose()
   cheeringTeamId: number;
 }
+

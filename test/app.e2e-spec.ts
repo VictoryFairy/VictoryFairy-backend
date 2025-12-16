@@ -10,7 +10,7 @@ import {
   correctDailyGameListExample,
   correctGameExample,
 } from './mock/data/correct-game-example';
-import { RegisteredGameStatus } from 'src/modules/registered-game/types/registered-game-status.type';
+import { RegisteredGameStatus } from 'src/modules/registered-game/core/types/registered-game-status.type';
 import { getTestUsers } from './mock/data/mock-users';
 import { getGameType } from 'src/common/utils/getGameType';
 

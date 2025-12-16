@@ -16,3 +16,4 @@ export class FindAllMonthlyQueryDto {
   @IsNumber()
   month: number;
 }
+

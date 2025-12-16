@@ -1,16 +1,16 @@
 import { Injectable } from '@nestjs/common';
+import { plainToInstance } from 'class-transformer';
 import { RegisteredGameCoreService } from '../core/registered-game-core.service';
-import { RegisteredGameWithGameDto } from '../dto/internal/registered-game-with-game.dto';
-import { CreateRegisteredGameDto } from '../dto/request/req-create-registered-game.dto';
+import { CreateRegisteredGameDto } from './dto/request/req-create-registered-game.dto';
+import { UpdateRegisteredGameDto } from './dto/request/req-update-registered-game.dto';
+import { RegisteredGameWithGameResponseDto } from './dto/response/res-registered-game-with-game.dto';
 import { GameCoreService } from 'src/modules/game/core/game-core.service';
 import { TeamCoreService } from 'src/modules/team/core/team-core.service';
 import { RankCoreService } from 'src/modules/rank/core/rank-core.service';
-import { SaveRegisteredGameDto } from '../dto/internal/save-registered-game.dto';
 import { RankingRedisService } from 'src/modules/rank/core/ranking-redis.service';
 import { runOnTransactionCommit, Transactional } from 'typeorm-transactional';
-import { UpdateRegisteredGameDto } from '../dto/request/req-update-registered-game.dto';
 import { AwsS3Service } from 'src/infra/aws-s3/aws-s3.service';
-import { DeleteRegisteredGameDto } from '../dto/internal/delete-registered-game.dto';
+import { SaveRegisteredGameInput } from '../core/types/registered-game.interface';
 
 @Injectable()
 export class RegisteredGameApplicationCommandService {
@@ -25,28 +25,36 @@ export class RegisteredGameApplicationCommandService {
 
   @Transactional()
   async register(
-    registeredGameDto: CreateRegisteredGameDto,
+    dto: CreateRegisteredGameDto,
     userId: number,
-  ): Promise<RegisteredGameWithGameDto> {
-    const { gameId, cheeringTeamId, ...rest } = registeredGameDto;
+  ): Promise<RegisteredGameWithGameResponseDto> {
+    const { gameId, cheeringTeamId, image, seat, review } = dto;
     const game = await this.gameCoreService.getOneWithTeamAndStadium(gameId);
-    const getCheeringTeam = await this.teamCoreService.findOne(cheeringTeamId);
+    const cheeringTeam = await this.teamCoreService.findOne(cheeringTeamId);
 
-    const newRegisteredGameDto = await SaveRegisteredGameDto.createAndValidate({
-      ...rest,
-      game,
-      cheeringTeam: getCheeringTeam,
-      user: { id: userId },
-    });
-    const saveRegisteredGame =
-      await this.registeredGameCoreService.save(newRegisteredGameDto);
+    const saveInput: SaveRegisteredGameInput = {
+      image: image ?? null,
+      seat,
+      review,
+      game: {
+        id: game.id,
+        status: game.status,
+        homeTeam: { id: game.home_team.id },
+        awayTeam: { id: game.away_team.id },
+      },
+      cheeringTeam: { id: cheeringTeam.id },
+      userId,
+    };
 
-    if (saveRegisteredGame.status !== null) {
+    const savedRegisteredGame =
+      await this.registeredGameCoreService.save(saveInput);
+
+    if (savedRegisteredGame.status !== null) {
       await this.rankCoreService.updateRankRecord(
         {
-          teamId: newRegisteredGameDto.cheeringTeam.id,
+          teamId: cheeringTeam.id,
           userId,
-          status: saveRegisteredGame.status,
+          status: savedRegisteredGame.status,
           activeYear: new Date(game.date).getFullYear(),
         },
         true,
@@ -58,33 +66,42 @@ export class RegisteredGameApplicationCommandService {
       await this.rankingRedisService.updateRankings(userId, data);
     });
 
-    const { full_name: fullName, ...restStadium } = game.stadium;
-    return await RegisteredGameWithGameDto.createAndValidate({
-      id: saveRegisteredGame.id,
-      ...saveRegisteredGame,
+    const { full_name, ...restStadium } = game.stadium;
+    const responseData = {
+      id: savedRegisteredGame.id,
+      image: savedRegisteredGame.image,
+      seat: savedRegisteredGame.seat,
+      review: savedRegisteredGame.review,
+      status: savedRegisteredGame.status,
       game: {
         id: game.id,
         date: game.date,
         time: game.time,
         status: game.status,
-        stadium: {
-          ...restStadium,
-          fullName,
-        },
+        stadium: { ...restStadium, fullName: full_name },
       },
-      cheering_team: getCheeringTeam,
+      cheering_team: cheeringTeam,
+    };
+
+    return plainToInstance(RegisteredGameWithGameResponseDto, responseData, {
+      excludeExtraneousValues: true,
     });
   }
 
   @Transactional()
   async update(
     id: number,
-    updateRegisteredGameDto: UpdateRegisteredGameDto,
+    dto: UpdateRegisteredGameDto,
     userId: number,
   ): Promise<void> {
     const { imageCtx, teamCtx } = await this.registeredGameCoreService.update(
       id,
-      updateRegisteredGameDto,
+      {
+        cheeringTeamId: dto.cheeringTeamId,
+        seat: dto.seat,
+        review: dto.review,
+        image: dto.image,
+      },
       userId,
     );
     if (teamCtx.isChanged) {
@@ -119,7 +136,10 @@ export class RegisteredGameApplicationCommandService {
   }
 
   @Transactional()
-  async delete(dto: DeleteRegisteredGameDto): Promise<void> {
+  async delete(dto: {
+    registeredGameId: number;
+    userId: number;
+  }): Promise<void> {
     const { userId } = dto;
     const { imageCtx, gameCtx } =
       await this.registeredGameCoreService.delete(dto);

@@ -23,11 +23,10 @@ import {
 } from '@nestjs/swagger';
 import { JwtAuth } from 'src/common/decorators/jwt-token.decorator';
 import { CurrentUser } from 'src/common/decorators/current-user.decorator';
-import { CreateRegisteredGameDto } from '../dto/request/req-create-registered-game.dto';
-import { UpdateRegisteredGameDto } from '../dto/request/req-update-registered-game.dto';
-import { RegisteredGameWithGameDto } from '../dto/internal/registered-game-with-game.dto';
-import { FindAllMonthlyQueryDto } from '../dto/request/req-findall-monthly-query.dto';
-import { DeleteRegisteredGameDto } from '../dto/internal/delete-registered-game.dto';
+import { CreateRegisteredGameDto } from './dto/request/req-create-registered-game.dto';
+import { UpdateRegisteredGameDto } from './dto/request/req-update-registered-game.dto';
+import { FindAllMonthlyQueryDto } from './dto/request/req-findall-monthly-query.dto';
+import { RegisteredGameWithGameResponseDto } from './dto/response/res-registered-game-with-game.dto';
 import { RegisteredGameApplicationCommandService } from './registered-game-application.command.service';
 import { RegisteredGameApplicationQueryService } from './registered-game-application.query.service';
 
@@ -44,13 +43,13 @@ export class RegisteredGameController {
   @HttpCode(HttpStatus.CREATED)
   @ApiOperation({ summary: '직관 경기 등록' })
   @ApiCreatedResponse({
-    type: RegisteredGameWithGameDto,
+    type: RegisteredGameWithGameResponseDto,
     description: '등록한 직관 경기의 정보',
   })
   async create(
     @Body() createRegisteredGameDto: CreateRegisteredGameDto,
     @CurrentUser('id') userId: number,
-  ): Promise<RegisteredGameWithGameDto> {
+  ): Promise<RegisteredGameWithGameResponseDto> {
     const registeredGame =
       await this.registeredGameApplicationCommandService.register(
         createRegisteredGameDto,
@@ -75,14 +74,14 @@ export class RegisteredGameController {
     example: 8,
   })
   @ApiOkResponse({
-    type: [RegisteredGameWithGameDto],
+    type: [RegisteredGameWithGameResponseDto],
     description:
       '해당 달에 유저가 등록한 직관 경기가 없을 경우에는 빈 배열 반환',
   })
   async findAllMonthly(
     @Query() query: FindAllMonthlyQueryDto,
     @CurrentUser('id') userId: number,
-  ): Promise<RegisteredGameWithGameDto[]> {
+  ): Promise<RegisteredGameWithGameResponseDto[]> {
     const { year, month } = query;
     const registeredGames =
       await this.registeredGameApplicationQueryService.getAllMonthly(
@@ -101,7 +100,7 @@ export class RegisteredGameController {
     example: 1,
   })
   @ApiOkResponse({
-    type: RegisteredGameWithGameDto,
+    type: RegisteredGameWithGameResponseDto,
     description: '요청한 ID의 직관 경기',
   })
   @ApiNotFoundResponse({
@@ -110,7 +109,7 @@ export class RegisteredGameController {
   async findOne(
     @Param('id', ParseIntPipe) id: number,
     @CurrentUser('id') userId: number,
-  ): Promise<RegisteredGameWithGameDto> {
+  ): Promise<RegisteredGameWithGameResponseDto> {
     const registeredGame =
       await this.registeredGameApplicationQueryService.getOne(id, userId);
     return registeredGame;
@@ -160,10 +159,9 @@ export class RegisteredGameController {
     @Param('id', ParseIntPipe) id: number,
     @CurrentUser('id') userId: number,
   ): Promise<void> {
-    const dto = await DeleteRegisteredGameDto.createAndValidate({
-      RegisteredGameId: id,
+    await this.registeredGameApplicationCommandService.delete({
+      registeredGameId: id,
       userId,
     });
-    await this.registeredGameApplicationCommandService.delete(dto);
   }
 }

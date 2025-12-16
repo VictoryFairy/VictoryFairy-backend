@@ -6,7 +6,7 @@ import { InsertRankDto } from '../dto/internal/insert-rank.dto';
 import { RankingRedisService } from 'src/modules/rank/core/ranking-redis.service';
 import { RankScoreVo } from './domain/vo/rank-score.vo';
 import { GameResultColumnMap } from '../types/game-result-column-map.type';
-import { RegisteredGameStatus } from 'src/modules/registered-game/types/registered-game-status.type';
+import { RegisteredGameStatus } from 'src/modules/registered-game/core/types/registered-game-status.type';
 import { OnEvent } from '@nestjs/event-emitter';
 import { EventName } from 'src/shared/const/event.const';
 import { RankRecordNotFoundError } from './domain/error/rank.error';

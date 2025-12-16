@@ -2,14 +2,20 @@ import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { FindOptionsWhere, Repository } from 'typeorm';
 import { RegisteredGame } from './domain/registered-game.entity';
-import { SaveRegisteredGameDto } from '../dto/internal/save-registered-game.dto';
-import { UpdateRegisteredGameDto } from '../dto/request/req-update-registered-game.dto';
-import { RegisteredGameStatus } from '../types/registered-game-status.type';
-import { DeleteRegisteredGameDto } from '../dto/internal/delete-registered-game.dto';
+import { RegisteredGameStatus } from './types/registered-game-status.type';
 import {
   RegisteredGameAlreadyRegisteredError,
   RegisteredGameNotFoundError,
 } from './domain/error/registered-game.error';
+import {
+  DeleteRegisteredGameInput,
+  DeleteRegisteredGameResult,
+  RegisteredGameWithGameAndTeam,
+  RegisteredGameWithRelations,
+  SaveRegisteredGameInput,
+  UpdateRegisteredGameInput,
+  UpdateRegisteredGameResult,
+} from './types/registered-game.interface';
 
 @Injectable()
 export class RegisteredGameCoreService {
@@ -18,8 +24,11 @@ export class RegisteredGameCoreService {
     private readonly registeredGameRepo: Repository<RegisteredGame>,
   ) {}
 
-  async getByGameId(gameId: string, where?: FindOptionsWhere<RegisteredGame>) {
-    const registeredGame = await this.registeredGameRepo.find({
+  async getByGameId(
+    gameId: string,
+    where?: FindOptionsWhere<RegisteredGame>,
+  ): Promise<RegisteredGameWithRelations[]> {
+    const registeredGames = await this.registeredGameRepo.find({
       where: { game: { id: gameId }, ...where },
       relations: {
         game: { home_team: true, away_team: true, winning_team: true },
@@ -27,17 +36,19 @@ export class RegisteredGameCoreService {
         user: true,
       },
     });
-    return registeredGame;
+    return registeredGames as RegisteredGameWithRelations[];
   }
-  async saveBulk(data: RegisteredGame[]) {
+
+  async saveBulk(data: RegisteredGame[]): Promise<RegisteredGame[]> {
     const savedRegisteredGames = await this.registeredGameRepo.save(data);
     return savedRegisteredGames;
   }
-  async save(data: SaveRegisteredGameDto): Promise<RegisteredGame> {
-    const { image, seat, review, game, cheeringTeam, user } = data;
+
+  async save(data: SaveRegisteredGameInput): Promise<RegisteredGame> {
+    const { image, seat, review, game, cheeringTeam, userId } = data;
 
     const isDuplicate = await this.registeredGameRepo.findOne({
-      where: { game: { id: game.id }, user: { id: user.id } },
+      where: { game: { id: game.id }, user: { id: userId } },
     });
     if (isDuplicate) {
       throw new RegisteredGameAlreadyRegisteredError();
@@ -47,7 +58,7 @@ export class RegisteredGameCoreService {
       image,
       seat,
       review,
-      userId: user.id,
+      userId,
       cheeringTeamId: cheeringTeam.id,
       gameMetaData: {
         gameId: game.id,
@@ -65,38 +76,26 @@ export class RegisteredGameCoreService {
 
   async update(
     id: number,
-    dto: UpdateRegisteredGameDto,
+    data: UpdateRegisteredGameInput,
     userId: number,
-  ): Promise<{
-    imageCtx: {
-      isChanged: boolean;
-      prevImage: string | null;
-    };
-    teamCtx: {
-      isChanged: boolean;
-      prevTeamId: number;
-      newTeamId: number;
-      prevStatus: RegisteredGameStatus | null;
-      changedStatus: RegisteredGameStatus | null;
-      year: number;
-    };
-  }> {
-    const { cheeringTeamId, seat, review, image } = dto;
+  ): Promise<UpdateRegisteredGameResult> {
+    const { cheeringTeamId, seat, review, image } = data;
 
-    const registeredGame = await this.registeredGameRepo.findOne({
+    const registeredGame = (await this.registeredGameRepo.findOne({
       where: { id, user: { id: userId } },
       relations: {
         game: { home_team: true, away_team: true },
         cheering_team: true,
       },
-    });
+    })) as RegisteredGameWithGameAndTeam | null;
+
     if (!registeredGame) {
       throw new RegisteredGameNotFoundError();
     }
 
     const prevImage = registeredGame.image;
     const prevTeamId = registeredGame.cheering_team.id;
-    const prevStatus = registeredGame.status;
+    const prevStatus = registeredGame.status as RegisteredGameStatus | null;
 
     registeredGame.updateImage(image);
     registeredGame.updateReviewAndSeat(review, seat);
@@ -107,14 +106,14 @@ export class RegisteredGameCoreService {
     });
     await this.registeredGameRepo.save(registeredGame);
 
-    const result = {
+    const result: UpdateRegisteredGameResult = {
       imageCtx: { isChanged: prevImage !== image, prevImage },
       teamCtx: {
         isChanged: prevTeamId !== cheeringTeamId,
         prevTeamId: prevTeamId,
         newTeamId: cheeringTeamId,
         prevStatus,
-        changedStatus: registeredGame.status,
+        changedStatus: registeredGame.status as RegisteredGameStatus | null,
         year: new Date(registeredGame.game.date).getFullYear(),
       },
     };
@@ -122,24 +121,17 @@ export class RegisteredGameCoreService {
     return result;
   }
 
-  async delete(dto: DeleteRegisteredGameDto): Promise<{
-    imageCtx: {
-      prevImage: string | null;
-    };
-    gameCtx: {
-      status: RegisteredGameStatus | null;
-      teamId: number;
-      year: number;
-    };
-  }> {
-    const { RegisteredGameId, userId } = dto;
-    const registeredGame = await this.registeredGameRepo.findOne({
-      where: { id: RegisteredGameId, user: { id: userId } },
+  async delete(
+    data: DeleteRegisteredGameInput,
+  ): Promise<DeleteRegisteredGameResult> {
+    const { registeredGameId, userId } = data;
+    const registeredGame = (await this.registeredGameRepo.findOne({
+      where: { id: registeredGameId, user: { id: userId } },
       relations: {
         game: { home_team: true, away_team: true },
         cheering_team: true,
       },
-    });
+    })) as RegisteredGameWithGameAndTeam | null;
 
     if (!registeredGame) {
       throw new RegisteredGameNotFoundError();
@@ -147,7 +139,7 @@ export class RegisteredGameCoreService {
 
     const prevImage = registeredGame.image;
     const gameCtx = {
-      status: registeredGame.status,
+      status: registeredGame.status as RegisteredGameStatus | null,
       teamId: registeredGame.cheering_team.id,
       year: new Date(registeredGame.game.date).getFullYear(),
     };

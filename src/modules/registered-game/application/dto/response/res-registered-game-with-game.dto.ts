@@ -1,5 +1,4 @@
-import { BaseInternalDto } from 'src/shared/dto/base-internal.dto';
-import { RegisteredGameStatus } from '../../types/registered-game-status.type';
+import { RegisteredGameStatus } from '../../../core/types/registered-game-status.type';
 import { TeamDto } from 'src/modules/team/application/dto/response/res-team.dto';
 import {
   IsEnum,
@@ -11,31 +10,37 @@ import {
 import { Expose, Type } from 'class-transformer';
 import { GameDto } from 'src/modules/game/dto/game.dto';
 
-export class RegisteredGameWithGameDto extends BaseInternalDto {
+export class RegisteredGameWithGameResponseDto {
+  @Expose()
   @IsNotEmpty()
   @IsNumber()
   id: number;
 
+  @Expose()
   @IsOptional()
   @IsString()
   image?: string;
 
+  @Expose()
   @IsString()
   seat: string;
 
+  @Expose()
   @IsString()
   review: string;
 
+  @Expose()
   @IsOptional()
   @IsEnum(RegisteredGameStatus)
   status?: RegisteredGameStatus;
 
+  @Expose()
   @IsNotEmpty()
   @Type(() => GameDto)
   game: GameDto;
 
-  @IsNotEmpty()
   @Expose({ name: 'cheering_team' })
+  @IsNotEmpty()
   @Type(() => TeamDto)
   cheeringTeam: TeamDto;
 }

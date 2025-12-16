@@ -13,7 +13,7 @@ import { UserMeResDto } from './dto/response/res-user-me.dto';
 import { UserMyPageDto } from './dto/response/res-user-mypage.dto';
 import { rankScoreWithDecimal } from 'src/common/utils/calculateRankScore.util';
 import { ResOverallOppTeamDto } from 'src/modules/rank/dto/response/res-overall-opp-team.dto';
-import { RegisteredGameStatus } from 'src/modules/registered-game/types/registered-game-status.type';
+import { RegisteredGameStatus } from 'src/modules/registered-game/core/types/registered-game-status.type';
 import { UserWithTeamDto } from './dto/response/res-user-with-team.dto';
 import { plainToInstance } from 'class-transformer';
 
