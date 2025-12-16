@@ -42,17 +42,14 @@ import { SocialAuthGuard } from 'src/common/guard/social-auth.guard';
 import { SocialPostGuard } from 'src/common/guard/social-post.guard';
 import { AccessTokenGuard } from 'src/common/guard/access-token.guard';
 import { Throttle } from '@nestjs/throttler';
-import { PidReqDto } from 'src/modules/auth/dto/request/req-pid.dto';
-import { CreateSocialAuthDto } from 'src/modules/auth/dto/internal/social-auth/create-social-auth.dto';
-import { AccessTokenResDto } from 'src/modules/auth/dto/response/res-aceess-token.dto';
-import { LoginLocalUserDto } from '../../../dto/request/req-login-local-user.dto';
-import {
-  EmailDto,
-  EmailWithCodeDto,
-} from '../../../dto/request/req-email-user.dto';
+import { PidReqDto } from 'src/modules/account/application/dto/request/req-pid.dto';
+import { AccessTokenResDto } from 'src/modules/account/application/dto/response/res-aceess-token.dto';
+import { LoginLocalUserDto } from './dto/request/req-login-local-user.dto';
+import { EmailDto, EmailWithCodeDto } from './dto/request/req-email-user.dto';
 import { IDotenv } from 'src/config/dotenv.interface';
-import { AccountApplicationCommandService } from '../../account-application.command.service';
-import { AccountApplicationQueryService } from '../../account-application.query.service';
+import { AccountApplicationCommandService } from './account-application.command.service';
+import { AccountApplicationQueryService } from './account-application.query.service';
+import { CreateSocialUserDto } from './dto/request/req-create-scoial-user.dto';
 
 @ApiTags('Auth')
 @Controller('auth')
@@ -284,13 +281,13 @@ export class AuthController {
       throw new BadRequestException('소셜 유저 정보 없음');
     }
     const { sub, email: providerEmail } = req.socialUserInfo;
-    const socialAuthData = await CreateSocialAuthDto.createAndValidate({
+    const socialAuthData: CreateSocialUserDto = {
       sub,
       provider,
       userId,
       providerEmail,
       isPrimary: false,
-    });
+    };
     await this.accountApplicationCommandService.linkSocial(socialAuthData);
   }
 

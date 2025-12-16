@@ -1,15 +1,13 @@
 import {
   IsBoolean,
-  IsEmail,
   IsEnum,
   IsNotEmpty,
   IsNumber,
   IsString,
 } from 'class-validator';
 import { SocialProvider } from 'src/modules/auth/const/auth.const';
-import { BaseInternalDto } from 'src/shared/dto/base-internal.dto';
 
-export class CreateSocialAuthDto extends BaseInternalDto {
+export class CreateSocialUserDto {
   @IsNotEmpty()
   @IsString()
   sub: string;
@@ -24,7 +22,6 @@ export class CreateSocialAuthDto extends BaseInternalDto {
 
   @IsNotEmpty()
   @IsString()
-  @IsEmail()
   providerEmail: string;
 
   @IsNotEmpty()

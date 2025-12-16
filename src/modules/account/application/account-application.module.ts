@@ -1,6 +1,6 @@
 import { Module } from '@nestjs/common';
-import { AuthController } from './infra/controller/auth.controller';
-import { UserController } from './infra/controller/user.controller';
+import { AuthController } from './auth.controller';
+import { UserController } from './user.controller';
 import { AccountApplicationCommandService } from './account-application.command.service';
 import { AccountCoreModule } from '../core/account-core.module';
 import { TermCoreModule } from 'src/modules/term/core/term-core.module';

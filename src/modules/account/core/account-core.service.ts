@@ -3,21 +3,23 @@ import { InjectRepository } from '@nestjs/typeorm';
 import {
   AccountUserNotFoundError,
   AccountEmailAlreadyExistsError,
-  AccountInvalidCredentialsError,
   AccountNicknameAlreadyExistsError,
   AccountNicknameGenerationFailedError,
 } from './domain/error/account.error';
 import { User } from './domain/user.entity';
 import { Repository } from 'typeorm';
-import { LoginLocalUserDto } from '../dto/request/req-login-local-user.dto';
-import { UserWithTeamDto } from '../dto/internal/user-with-team.dto';
-import { CreateLocalUserDto } from '../dto/request/req-create-local-user.dto';
 import { SocialProvider } from 'src/modules/auth/const/auth.const';
-import { CreateSocialAuthDto } from 'src/modules/auth/dto/internal/social-auth/create-social-auth.dto';
 import { DEFAULT_PROFILE_IMAGE } from 'src/modules/account/core/const/user.const';
 import { UserRedisService } from './user-redis.service';
 import { EventName } from 'src/shared/const/event.const';
 import { EventEmitter2, OnEvent } from '@nestjs/event-emitter';
+import {
+  CreateLocalUserInput,
+  CreateSocialAuthInput,
+  UserWithLocalAuth,
+  UserWithTeam,
+  UserWithTeamAndSocialAuths,
+} from './types/account.interface';
 
 @Injectable()
 export class AccountCoreService {
@@ -70,14 +72,14 @@ export class AccountCoreService {
     sub: string,
     provider: SocialProvider,
     email: string,
-  ): Promise<{ user: UserWithTeamDto | null; isNewUser: boolean }> {
-    const user = await this.userRepo.findOne({
+  ): Promise<{ user: UserWithTeamAndSocialAuths | null; isNewUser: boolean }> {
+    const user = (await this.userRepo.findOne({
       relations: { social_auths: true, support_team: true },
       where: [
         { social_auths: { sub, provider } }, // 이미 연동된 유저?
         { email: email }, // 이메일이 중복된 유저?
       ],
-    });
+    })) as UserWithTeamAndSocialAuths;
 
     if (!user) {
       return { user: null, isNewUser: true };
@@ -88,10 +90,7 @@ export class AccountCoreService {
     );
 
     if (isLoginSuccess) {
-      return {
-        user: await UserWithTeamDto.createAndValidate(user),
-        isNewUser: false,
-      };
+      return { user, isNewUser: false };
     }
 
     // 여기까지 왔다면, 이메일만 같은 다른 계정이 있음
@@ -99,36 +98,21 @@ export class AccountCoreService {
   }
 
   async verifyLocalAuth(userId: number, password: string): Promise<boolean> {
-    const user = await this.userRepo.findOne({
+    const user = (await this.userRepo.findOne({
       where: { id: userId },
       relations: { local_auth: true },
-    });
+    })) as UserWithLocalAuth;
     if (!user.local_auth?.password) return false;
     const result = await user.validatePassword(password);
     return result;
   }
 
-  async validateLocalUser(dto: LoginLocalUserDto): Promise<UserWithTeamDto> {
-    const { email, password } = dto;
-
-    const user = await this.userRepo.findOne({
-      where: { email },
-      relations: { support_team: true, local_auth: true },
-    });
-
-    const isVerified = await user.validatePassword(password);
-    if (!isVerified) {
-      throw new AccountInvalidCredentialsError();
-    }
-    return user;
-  }
-
   async createLocalUser(
-    dto: CreateLocalUserDto,
+    data: CreateLocalUserInput,
     termIds: string[],
-  ): Promise<UserWithTeamDto> {
-    const { password, email, image, teamId } = dto;
-    let { nickname } = dto;
+  ): Promise<UserWithTeam> {
+    const { password, email, image, teamId } = data;
+    let { nickname } = data;
     if (nickname.trim() === '' || !nickname.trim()) {
       nickname = await this.generateRandomNickname();
     }
@@ -147,7 +131,7 @@ export class AccountCoreService {
       where: { id: savedUser.id },
       relations: { support_team: true },
     });
-    return await UserWithTeamDto.createAndValidate(user);
+    return user as UserWithTeam;
   }
 
   async createSocialUser(
@@ -157,7 +141,7 @@ export class AccountCoreService {
     providerEmail: string,
     isPrimary: boolean,
     termIds: string[],
-  ) {
+  ): Promise<UserWithTeam> {
     const newUser = await User.createWithSocialAuth({
       email,
       image: '',
@@ -167,10 +151,11 @@ export class AccountCoreService {
       termIds: termIds.length > 0 ? termIds : [],
     });
     const savedUser = await this.userRepo.save(newUser);
-    return await this.userRepo.findOne({
+    const user = await this.userRepo.findOne({
       where: { id: savedUser.id },
       relations: { support_team: true },
     });
+    return user as UserWithTeam;
   }
 
   async deleteUser(userId: number): Promise<{ prevImage: string | null }> {
@@ -186,7 +171,7 @@ export class AccountCoreService {
     };
   }
 
-  async linkSocial(data: CreateSocialAuthDto): Promise<void> {
+  async linkSocial(data: CreateSocialAuthInput): Promise<void> {
     const { sub, provider, userId, providerEmail, isPrimary } = data;
 
     const user = await this.userRepo.findOne({

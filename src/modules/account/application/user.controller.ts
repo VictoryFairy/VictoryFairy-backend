@@ -26,18 +26,18 @@ import { JwtAuth } from 'src/common/decorators/jwt-token.decorator';
 import { CurrentUser } from 'src/common/decorators/current-user.decorator';
 import { ConfigService } from '@nestjs/config';
 import { Response } from 'express';
-import { CreateLocalUserDto } from '../../../dto/request/req-create-local-user.dto';
-import { LoginLocalUserDto } from '../../../dto/request/req-login-local-user.dto';
-import { EmailDto } from '../../../dto/request/req-email-user.dto';
-import { NicknameDto } from '../../../dto/request/req-nickname-user-dto';
-import { PatchUserProfileDto } from '../../../dto/request/req-patch-user-profile.dto';
-import { UserMyPageDto } from '../../../dto/response/res-user-mypage.dto';
-import { ResCheckPwDto } from '../../../dto/response/res-check-pw-dto';
+import { CreateLocalUserDto } from './dto/request/req-create-local-user.dto';
+import { LoginLocalUserDto } from './dto/request/req-login-local-user.dto';
+import { EmailDto } from './dto/request/req-email-user.dto';
+import { NicknameDto } from './dto/request/req-nickname-user.dto';
+import { PatchUserProfileDto } from './dto/request/req-patch-user-profile.dto';
+import { UserMyPageDto } from './dto/response/res-user-mypage.dto';
+import { ResCheckPwDto } from './dto/response/res-check-pw.dto';
 import { TermAgreementDto } from 'src/modules/term/dto/request/term-argreement.dto';
 import { ResOverallOppTeamDto } from 'src/modules/rank/dto/response/res-overall-opp-team.dto';
 import { IDotenv } from 'src/config/dotenv.interface';
-import { AccountApplicationQueryService } from '../../account-application.query.service';
-import { AccountApplicationCommandService } from '../../account-application.command.service';
+import { AccountApplicationQueryService } from './account-application.query.service';
+import { AccountApplicationCommandService } from './account-application.command.service';
 
 @ApiTags('User')
 @Controller('users')

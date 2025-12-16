@@ -11,7 +11,6 @@ import {
 } from 'typeorm';
 import { SocialProvider } from 'src/modules/auth/const/auth.const';
 import { User } from 'src/modules/account/core/domain/user.entity';
-import { CreateSocialAuthDto } from 'src/modules/auth/dto/internal/social-auth/create-social-auth.dto';
 import {
   AccountInvalidSocialAuthDataError,
   AccountInvalidProviderError,
@@ -51,7 +50,13 @@ export class SocialAuth {
 
   private constructor() {}
 
-  static create(props: CreateSocialAuthDto): SocialAuth {
+  static create(props: {
+    provider: SocialProvider;
+    sub: string;
+    providerEmail: string;
+    userId: number;
+    isPrimary: boolean;
+  }): SocialAuth {
     if (
       !props.providerEmail ||
       !props.sub ||

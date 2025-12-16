@@ -5,20 +5,21 @@ import {
   UnauthorizedException,
 } from '@nestjs/common';
 import { AccountCoreService } from '../core/account-core.service';
-import { CreateLocalUserDto } from '../dto/request/req-create-local-user.dto';
+import { CreateLocalUserDto } from './dto/request/req-create-local-user.dto';
 import { UserRedisService } from '../core/user-redis.service';
 import * as moment from 'moment';
-import { LoginLocalUserDto } from '../dto/request/req-login-local-user.dto';
-import { UserWithTeamDto } from '../dto/internal/user-with-team.dto';
+import { LoginLocalUserDto } from './dto/request/req-login-local-user.dto';
 import { runOnTransactionCommit, Transactional } from 'typeorm-transactional';
 import { SocialProvider } from 'src/modules/auth/const/auth.const';
 import { InsertRankDto } from 'src/modules/rank/dto/internal/insert-rank.dto';
 import { TermCoreService } from 'src/modules/term/core/term-core.service';
-import { CreateSocialAuthDto } from 'src/modules/auth/dto/internal/social-auth/create-social-auth.dto';
 import { AwsS3Service } from 'src/infra/aws-s3/aws-s3.service';
 import { TeamCoreService } from 'src/modules/team/core/team-core.service';
 import { RankCoreService } from 'src/modules/rank/core/rank-core.service';
 import { RankingRedisService } from 'src/modules/rank/core/ranking-redis.service';
+import { UserWithTeamDto } from './dto/response/res-user-with-team.dto';
+import { plainToInstance } from 'class-transformer';
+import { CreateSocialUserDto } from './dto/request/req-create-scoial-user.dto';
 
 @Injectable()
 export class AccountApplicationCommandService {
@@ -33,7 +34,7 @@ export class AccountApplicationCommandService {
     private readonly rankingRedisService: RankingRedisService,
   ) {}
 
-  async loginLocalUser(dto: LoginLocalUserDto) {
+  async loginLocalUser(dto: LoginLocalUserDto): Promise<UserWithTeamDto> {
     const { email, password } = dto;
     const user = await this.accountCoreService.findUserByEmail(email);
     const isVerified = await this.accountCoreService.verifyLocalAuth(
@@ -43,7 +44,7 @@ export class AccountApplicationCommandService {
     if (!isVerified) {
       throw new UnauthorizedException('이메일 또는 비밀번호가 틀렸습니다.');
     }
-    return UserWithTeamDto.createAndValidate(user);
+    return plainToInstance(UserWithTeamDto, user);
   }
 
   @Transactional()
@@ -60,7 +61,7 @@ export class AccountApplicationCommandService {
         providerEmail,
       );
     if (user && !isNewUser) {
-      return { user: await UserWithTeamDto.createAndValidate(user), isNewUser };
+      return { user: plainToInstance(UserWithTeamDto, user), isNewUser };
     }
 
     // 없는 경우, 유저 생성
@@ -92,13 +93,10 @@ export class AccountApplicationCommandService {
         const data = await this.rankCoreService.aggregateRankStatsByUserId(id);
         await this.rankingRedisService.updateRankings(id, data);
       } catch (error) {
-        this.logger.warn(`유저 ${user.id} 캐싱 실패`, error.stack);
+        this.logger.warn(`유저 ${createdUser.id} 캐싱 실패`, error.stack);
       }
     });
-    return {
-      user: await UserWithTeamDto.createAndValidate(createdUser),
-      isNewUser,
-    };
+    return { user: createdUser, isNewUser };
   }
 
   @Transactional()
@@ -147,15 +145,23 @@ export class AccountApplicationCommandService {
     await this.rankingRedisService.deleteRankByUserId(userId, teamIds);
   }
 
-  async linkSocial(data: CreateSocialAuthDto): Promise<void> {
-    await this.accountCoreService.linkSocial(data);
+  async linkSocial(dto: CreateSocialUserDto): Promise<void> {
+    const { sub, provider, userId, providerEmail, isPrimary } = dto;
+    await this.accountCoreService.linkSocial({
+      sub,
+      provider,
+      userId,
+      providerEmail,
+      isPrimary,
+    });
   }
 
-  async unlinkSocial(data: {
+  async unlinkSocial(dto: {
     userId: number;
     provider: SocialProvider;
   }): Promise<void> {
-    await this.accountCoreService.unlinkSocial(data);
+    const { userId, provider } = dto;
+    await this.accountCoreService.unlinkSocial({ userId, provider });
   }
 
   async changePassword(dto: LoginLocalUserDto): Promise<void> {

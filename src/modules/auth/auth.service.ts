@@ -12,7 +12,7 @@ import { v7 as uuidv7 } from 'uuid';
 import { AuthRedisService } from './auth-redis.service';
 import { IOAuthStateCachingData } from 'src/modules/auth/strategies/interface/oauth.interface';
 import { IJwtPayload } from './types/auth.type';
-import { EmailWithCodeDto } from '../account/dto/request/req-email-user.dto';
+import { EmailWithCodeDto } from '../account/application/dto/request/req-email-user.dto';
 import { IDotenv } from 'src/config/dotenv.interface';
 
 @Injectable()

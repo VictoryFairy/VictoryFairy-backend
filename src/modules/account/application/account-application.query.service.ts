@@ -9,12 +9,13 @@ import { Term } from 'src/modules/term/core/domain/term.entity';
 import { UserTerm } from '../core/domain/user-term.entity';
 import { InjectEntityManager } from '@nestjs/typeorm';
 import { User } from '../core/domain/user.entity';
-import { UserWithTeamDto } from '../dto/internal/user-with-team.dto';
-import { UserMeResDto } from '../dto/response/res-user-me.dto';
-import { UserMyPageDto } from '../dto/response/res-user-mypage.dto';
+import { UserMeResDto } from './dto/response/res-user-me.dto';
+import { UserMyPageDto } from './dto/response/res-user-mypage.dto';
 import { rankScoreWithDecimal } from 'src/common/utils/calculateRankScore.util';
 import { ResOverallOppTeamDto } from 'src/modules/rank/dto/response/res-overall-opp-team.dto';
 import { RegisteredGameStatus } from 'src/modules/registered-game/types/registered-game-status.type';
+import { UserWithTeamDto } from './dto/response/res-user-with-team.dto';
+import { plainToInstance } from 'class-transformer';
 
 @Injectable()
 export class AccountApplicationQueryService {
@@ -74,7 +75,7 @@ export class AccountApplicationQueryService {
       where: { id: userId },
     });
     if (!user) throw new BadRequestException('존재하지 않는 유저입니다.');
-    return await UserWithTeamDto.createAndValidate(user);
+    return plainToInstance(UserWithTeamDto, user);
   }
 
   /**

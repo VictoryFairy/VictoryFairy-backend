@@ -201,8 +201,7 @@ export class User {
 
   public removeSocialAuth(props: { provider: SocialProvider }): void {
     // 소셜 계정 연동 내역이 없는 경우
-    if (!this.social_auths.length)
-      throw new AccountNoSocialLinkHistoryError();
+    if (!this.social_auths.length) throw new AccountNoSocialLinkHistoryError();
 
     const targetSocialAuth = this.social_auths.find((socialAuth) => {
       socialAuth.provider === props.provider;
