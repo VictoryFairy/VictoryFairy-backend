@@ -207,15 +207,22 @@ export class AccountApplicationCommandService {
     }
 
     if (field === 'teamId') {
-      await this.accountCoreService.updateUserProfileTeamId(userId, value);
+      const { prevTeamId } =
+        await this.accountCoreService.updateUserProfileTeamId(userId, value);
       const insertRankInput: InsertRankInput = {
         teamId: value,
         userId,
         activeYear: moment().utc().year(),
       };
       await this.rankCoreService.insertRankIfAbsent(insertRankInput); // 랭킹 테이블 기본 데이터 생성
+
       const data =
         await this.rankCoreService.aggregateRankStatsByUserId(userId);
+      if (data[prevTeamId] && data[prevTeamId].getTotalCount() === 0) {
+        await this.rankCoreService.deleteRank(prevTeamId, userId);
+        await this.rankingRedisService.deleteRankByUserId(userId, [prevTeamId]);
+        delete data[prevTeamId];
+      }
       await this.rankingRedisService.updateRankings(userId, data);
       return;
     }

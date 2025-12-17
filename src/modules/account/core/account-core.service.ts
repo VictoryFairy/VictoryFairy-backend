@@ -272,13 +272,18 @@ export class AccountCoreService {
     await this.userRepo.save(user);
   }
 
-  async updateUserProfileTeamId(userId: number, teamId: number): Promise<void> {
+  async updateUserProfileTeamId(
+    userId: number,
+    teamId: number,
+  ): Promise<{ prevTeamId: number }> {
     const user = await this.userRepo.findOne({
       where: { id: userId },
-      relations: { local_auth: true },
+      relations: { local_auth: true, support_team: true },
     });
+    const prevTeamId = user.support_team.id;
     user.updateTeam(teamId);
     await this.userRepo.save(user);
+    return { prevTeamId };
   }
 
   async agreeTerms(userId: number, termIds: string[]): Promise<void> {

@@ -1,6 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { FindOptionsWhere, Repository } from 'typeorm';
 import { Rank } from './domain/rank.entity';
 import { RankingRedisService } from 'src/modules/rank/core/ranking-redis.service';
 import { RankScoreVo } from './domain/vo/rank-score.vo';
@@ -84,6 +84,24 @@ export class RankCoreService {
 
     await this.rankRepo.save(targetRankData);
     return;
+  }
+
+  async deleteRank(
+    teamId: number,
+    userId: number,
+    activeYear?: number,
+  ): Promise<void> {
+    const where: FindOptionsWhere<Rank> = {
+      user: { id: userId },
+      team_id: teamId,
+    };
+    if (activeYear) {
+      where.active_year = activeYear;
+    }
+    const rankData = await this.rankRepo.findOne({ where });
+    if (!rankData) return;
+
+    await this.rankRepo.remove(rankData);
   }
 
   async aggregateRankStatsByUserId(

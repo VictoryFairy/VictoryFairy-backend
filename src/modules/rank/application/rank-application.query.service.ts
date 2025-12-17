@@ -6,7 +6,10 @@ import {
   RefinedRankData,
   RefinedRankDataWithProfile,
 } from '../core/types/rank.interface';
-import { RankNearbyResDto } from './dto/response/rank-nearby-res.dto';
+import {
+  RankNearbyResDto,
+  UserStatsResDto,
+} from './dto/response/rank-nearby-res.dto';
 import { plainToInstance } from 'class-transformer';
 
 @Injectable()
@@ -38,12 +41,21 @@ export class RankApplicationQueryService {
     userId: number,
     teamId: number | 'total',
   ): Promise<RankNearbyResDto | null> {
-    const userRank = await this.rankingRedisService.getUserRankByUserId(
+    const [userRank, userStats] = await Promise.all([
+      this.rankingRedisService.getUserRankByUserId(userId, teamId),
+      this.rankCoreService.aggregateRankStatsByUserId(userId),
+    ]);
+    const userStatsDto: UserStatsResDto = {
       userId,
-      teamId,
-    );
+      totalGames: userStats.total.getTotalCount(),
+      win: userStats.total.getWinCount(),
+    };
+    // 랭킹 없는 경우
     if (userRank === null) {
-      return null;
+      return plainToInstance(RankNearbyResDto, {
+        nearBy: [],
+        user: userStatsDto,
+      });
     }
     const start = Math.max(userRank - 1, 0);
     const end = userRank + 1;
@@ -53,17 +65,10 @@ export class RankApplicationQueryService {
         end,
         teamId,
       );
-    const [nearBy, userStats] = await Promise.all([
-      this.concatRankDataWithUserProfile(refinedRankData),
-      this.rankCoreService.aggregateRankStatsByUserId(userId),
-    ]);
+    const nearBy = await this.concatRankDataWithUserProfile(refinedRankData);
     return plainToInstance(RankNearbyResDto, {
       nearBy,
-      user: {
-        userId: userId,
-        totalGames: userStats.total.getTotalCount(),
-        win: userStats.total.getWinCount(),
-      },
+      user: userStatsDto,
     });
   }
 

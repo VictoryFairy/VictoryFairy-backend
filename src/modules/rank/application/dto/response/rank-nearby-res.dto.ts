@@ -2,7 +2,7 @@ import { ApiProperty } from '@nestjs/swagger';
 import { RankResDto } from './rank-res.dto';
 import { Type } from 'class-transformer';
 
-class UserStatsResDto {
+export class UserStatsResDto {
   @ApiProperty({ example: 2 })
   userId: number;
 
@@ -42,4 +42,3 @@ export class RankNearbyResDto {
   })
   user: UserStatsResDto;
 }
-
