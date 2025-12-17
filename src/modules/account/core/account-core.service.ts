@@ -142,10 +142,11 @@ export class AccountCoreService {
     isPrimary: boolean,
     termIds: string[],
   ): Promise<UserWithTeam> {
+    const nickname = await this.generateRandomNickname();
     const newUser = await User.createWithSocialAuth({
       email,
-      image: '',
-      nickname: '',
+      image: null,
+      nickname,
       teamId: 1,
       socialAuthData: { sub, provider, providerEmail, isPrimary },
       termIds: termIds.length > 0 ? termIds : [],

@@ -47,8 +47,8 @@ export class RankApplicationQueryService {
     ]);
     const userStatsDto: UserStatsResDto = {
       userId,
-      totalGames: userStats.total.getTotalCount(),
-      win: userStats.total.getWinCount(),
+      totalGames: userStats?.total?.getTotalCount() || 0,
+      win: userStats?.total?.getWinCount() || 0,
     };
     // 랭킹 없는 경우
     if (userRank === null) {

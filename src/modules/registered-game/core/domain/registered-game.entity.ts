@@ -129,7 +129,9 @@ export class RegisteredGame {
     }
   }
 
-  determineStatus(status: string, winnerTeamId: number | null) {
+  determineStatus(metaData: { status: string; winnerTeamId: number | null }) {
+    const { status, winnerTeamId } = metaData;
+    console.log(status, winnerTeamId);
     if (
       /.*취소$/.test(status) ||
       status === '그라운드사정' ||
@@ -138,12 +140,16 @@ export class RegisteredGame {
       this.status = 'No game';
       return;
     }
+
+    // 경기 종료인 경우
     if (status === '경기종료') {
       if (!winnerTeamId) {
         this.status = 'Tie';
+        return;
+      } else {
+        this.status = winnerTeamId === this.cheering_team.id ? 'Win' : 'Lose';
+        return;
       }
-      this.status = winnerTeamId === this.cheering_team.id ? 'Win' : 'Lose';
-      return;
     }
     // 경기 중인 경우
     this.status = null;

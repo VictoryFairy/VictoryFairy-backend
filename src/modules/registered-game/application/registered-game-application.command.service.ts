@@ -36,16 +36,16 @@ export class RegisteredGameApplicationCommandService {
       image: image ?? null,
       seat,
       review,
+      userId,
+      cheeringTeam: { id: cheeringTeam.id },
       game: {
         id: game.id,
         status: game.status,
         homeTeam: { id: game.home_team.id },
         awayTeam: { id: game.away_team.id },
+        winnerTeam: { id: game.winning_team?.id || null },
       },
-      cheeringTeam: { id: cheeringTeam.id },
-      userId,
     };
-
     const savedRegisteredGame =
       await this.registeredGameCoreService.save(saveInput);
 

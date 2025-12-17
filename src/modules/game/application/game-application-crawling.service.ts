@@ -224,8 +224,10 @@ export class GameApplicationCrawlingService {
 
       const registeredGameUpdates = [];
       for (const registeredGame of registeredGames) {
-        const team_id = registeredGame.cheering_team.id;
-        registeredGame.determineStatus(game.status, team_id);
+        registeredGame.determineStatus({
+          status: game.status,
+          winnerTeamId: game.winning_team?.id || null,
+        });
         registeredGameUpdates.push({
           registeredGame,
         });

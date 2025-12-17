@@ -44,6 +44,9 @@ export class JwtStrategy {
     let user = result ? result[userId.toString()] : null;
     if (!user) {
       const foundUser = await this.accountCoreService.getUserById(userId);
+      if (!foundUser) {
+        throw new UnauthorizedException('유저 정보 없음');
+      }
       const { id, nickname, profile_image } = foundUser;
       user = { id, nickname, profile_image };
     }

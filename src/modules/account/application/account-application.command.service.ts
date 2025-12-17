@@ -218,7 +218,11 @@ export class AccountApplicationCommandService {
 
       const data =
         await this.rankCoreService.aggregateRankStatsByUserId(userId);
-      if (data[prevTeamId] && data[prevTeamId].getTotalCount() === 0) {
+      if (
+        prevTeamId !== value &&
+        data[prevTeamId] &&
+        data[prevTeamId].getTotalCount() === 0
+      ) {
         await this.rankCoreService.deleteRank(prevTeamId, userId);
         await this.rankingRedisService.deleteRankByUserId(userId, [prevTeamId]);
         delete data[prevTeamId];

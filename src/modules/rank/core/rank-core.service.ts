@@ -47,15 +47,13 @@ export class RankCoreService {
       where: { user: { id: userId }, active_year: activeYear, team_id: teamId },
     });
 
-    if (!foundRankData) {
-      const createRank = Rank.create({
-        teamId,
-        userId,
-        activeYear,
-      });
-      await this.rankRepo.save(createRank);
-      return;
-    }
+    if (foundRankData) return;
+    const createRank = Rank.create({
+      teamId,
+      userId,
+      activeYear,
+    });
+    await this.rankRepo.save(createRank);
     return;
   }
 

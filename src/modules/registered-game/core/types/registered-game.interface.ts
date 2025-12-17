@@ -35,6 +35,7 @@ export interface SaveRegisteredGameInput {
     status: string;
     homeTeam: { id: number };
     awayTeam: { id: number };
+    winnerTeam: { id: number } | null;
   };
   cheeringTeam: { id: number };
   userId: number;

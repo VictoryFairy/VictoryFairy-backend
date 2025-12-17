@@ -47,8 +47,9 @@ export class RegisteredGameCoreService {
   async save(data: SaveRegisteredGameInput): Promise<RegisteredGame> {
     const { image, seat, review, game, cheeringTeam, userId } = data;
 
+    const { id: gameId, status, homeTeam, awayTeam, winnerTeam } = game;
     const isDuplicate = await this.registeredGameRepo.findOne({
-      where: { game: { id: game.id }, user: { id: userId } },
+      where: { game: { id: gameId }, user: { id: userId } },
     });
     if (isDuplicate) {
       throw new RegisteredGameAlreadyRegisteredError();
@@ -61,13 +62,16 @@ export class RegisteredGameCoreService {
       userId,
       cheeringTeamId: cheeringTeam.id,
       gameMetaData: {
-        gameId: game.id,
-        homeTeamId: game.homeTeam.id,
-        awayTeamId: game.awayTeam.id,
+        gameId,
+        homeTeamId: homeTeam.id,
+        awayTeamId: awayTeam.id,
       },
     });
 
-    newRegisteredGame.determineStatus(game.status, cheeringTeam.id);
+    newRegisteredGame.determineStatus({
+      status,
+      winnerTeamId: winnerTeam?.id || null,
+    });
 
     const savedRegisteredGame =
       await this.registeredGameRepo.save(newRegisteredGame);
