@@ -1,7 +1,7 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { ArrayNotEmpty, IsNotEmpty, IsString } from 'class-validator';
 
-export class TermAgreementDto {
+export class TermAgreementReqDto {
   @ApiProperty({
     type: [String],
     description: '동의할 약관 ID 목록',

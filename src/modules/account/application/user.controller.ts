@@ -33,7 +33,7 @@ import { NicknameDto } from './dto/request/req-nickname-user.dto';
 import { PatchUserProfileDto } from './dto/request/req-patch-user-profile.dto';
 import { UserMyPageDto } from './dto/response/res-user-mypage.dto';
 import { ResCheckPwDto } from './dto/response/res-check-pw.dto';
-import { TermAgreementDto } from 'src/modules/term/dto/request/term-argreement.dto';
+import { TermAgreementReqDto } from './dto/request/req-term-agreement.dto';
 import { OverallOppTeamResDto } from 'src/modules/rank/application/dto/response/overall-opp-team-res.dto';
 import { IDotenv } from 'src/config/dotenv.interface';
 import { AccountApplicationQueryService } from './account-application.query.service';
@@ -209,12 +209,12 @@ export class UserController {
   @JwtAuth('access')
   @HttpCode(HttpStatus.NO_CONTENT)
   @ApiOperation({ summary: '약관 동의' })
-  @ApiBody({ type: TermAgreementDto })
+  @ApiBody({ type: TermAgreementReqDto })
   @ApiNoContentResponse({ description: '성공 시 데이터 없이 상태코드만 응답' })
   @ApiInternalServerErrorResponse({ description: 'DB 업데이트 실패한 경우' })
   async agreeTerm(
     @CurrentUser('id') userId: number,
-    @Body() body: TermAgreementDto,
+    @Body() body: TermAgreementReqDto,
   ) {
     const { termIds } = body;
 

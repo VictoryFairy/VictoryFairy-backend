@@ -2,7 +2,10 @@ import { Injectable } from '@nestjs/common';
 import { Term } from './domain/term.entity';
 import { Repository } from 'typeorm';
 import { InjectRepository } from '@nestjs/typeorm';
-import { CachedTermList } from './types/term.type';
+import {
+  CachedTermList,
+  GetRequiredTermIdsResult,
+} from './types/term.interface';
 import { TermRedisService } from 'src/modules/term/core/term-redis.service';
 
 @Injectable()
@@ -13,7 +16,7 @@ export class TermCoreService {
     private readonly termRedisService: TermRedisService,
   ) {}
 
-  async getRequiredTermIds(): Promise<{ requiredTermIds: string[] }> {
+  async getRequiredTermIds(): Promise<GetRequiredTermIdsResult> {
     const terms = await this.termRepo.find({
       where: { is_required: true },
       select: { id: true },
