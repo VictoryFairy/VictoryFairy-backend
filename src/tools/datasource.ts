@@ -21,8 +21,8 @@ const dataOptions: DataSourceOptions & SeederOptions = {
   password: process.env.DB_PASSWORD,
   entities: [
     isProduction
-      ? join(__dirname, '../modules/**/entities/*.entity.js')
-      : join(__dirname, '../modules/**/entities/*.entity.ts'),
+      ? join(__dirname, '../modules/**/*.entity.js')
+      : join(__dirname, '../modules/**/*.entity.ts'),
   ],
   migrations: [
     isProduction

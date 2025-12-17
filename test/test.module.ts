@@ -8,22 +8,26 @@ import { AppController } from 'src/app.controller';
 import { AppService } from 'src/app.service';
 import { GlobalExceptionFilter } from 'src/common/filters/global-exception.filter';
 import { CustomThrottlerGuard } from 'src/common/guard/custom-throttler.guard';
-import { getDatabaseConfig } from 'src/core/config/database.config';
-import { RedisThrottlerStorageService } from 'src/core/redis/redis-throttler-storage.service';
-import { RedisModule } from 'src/core/redis/redis.module';
-import { SeederService } from 'src/core/seeder/seeder.service';
-import { SlackModule } from 'src/core/slack/slack.module';
-import { AccountModule } from 'src/modules/account/account.module';
-import { CheeringSongModule } from 'src/modules/cheering-song/cheering-song.module';
-import { GameModule } from 'src/modules/game/game.module';
-import { ParkingInfoModule } from 'src/modules/parking-info/parking-info.module';
-import { RankModule } from 'src/modules/rank/rank.module';
-import { RegisteredGameModule } from 'src/modules/registered-game/registered-game.module';
-import { SchedulingModule } from 'src/modules/scheduling/scheduling.module';
-import { StadiumModule } from 'src/modules/stadium/stadium.module';
-import { TeamModule } from 'src/modules/team/team.module';
+import { getDatabaseConfig } from 'src/config/database.config';
+import { RedisThrottlerStorageService } from 'src/infra/redis/redis-throttler-storage.service';
+import { RedisModule } from 'src/infra/redis/redis.module';
+import { SeederService } from 'src/infra/seeder/seeder.service';
+import { ParkingInfoApplicationModule } from 'src/modules/parking-info/application/parking-info-application.module';
+import { StadiumApplicationModule } from 'src/modules/stadium/application/stadium-application.module';
+import { TeamApplicationModule } from 'src/modules/team/application/team-application.module';
+import { AccountApplicationModule } from 'src/modules/account/application/account-application.module';
+import { RankApplicationModule } from 'src/modules/rank/application/rank-application.module';
+import { GameApplicationModule } from 'src/modules/game/application/game-application.module';
+import { RegisteredGameApplicationModule } from 'src/modules/registered-game/application/registered-game-application.module';
 import { DataSource } from 'typeorm';
 import { addTransactionalDataSource } from 'typeorm-transactional';
+import { AuthModule } from 'src/modules/auth/auth.module';
+import { AwsS3Module } from 'src/infra/aws-s3/aws-s3.module';
+import { ExternalChannelModule } from 'src/infra/external-channel/external-channel.module';
+import { MailModule } from 'src/infra/mail/mail.module';
+import { ScheduleModule } from '@nestjs/schedule';
+import { CheeringSongApplicationModule } from 'src/modules/cheering-song/application/cheering-song-application.module';
+import { DomainExceptionFilter } from 'src/common/filters/domain-exception.filter';
 
 @Module({
   imports: [
@@ -60,23 +64,28 @@ import { addTransactionalDataSource } from 'typeorm-transactional';
       }),
     }),
     EventEmitterModule.forRoot({}),
+    ScheduleModule.forRoot(),
     RedisModule,
-    ParkingInfoModule,
-    StadiumModule,
-    TeamModule,
-    RegisteredGameModule,
-    GameModule,
-    AccountModule,
-    RankModule,
-    SchedulingModule,
-    CheeringSongModule,
-    SlackModule,
+    ParkingInfoApplicationModule,
+    StadiumApplicationModule,
+    TeamApplicationModule,
+    AccountApplicationModule,
+    RankApplicationModule,
+    GameApplicationModule,
+    RegisteredGameApplicationModule,
+    AuthModule,
+    AwsS3Module,
+    MailModule,
+    ExternalChannelModule,
+    // WorkerModule,
+    CheeringSongApplicationModule,
   ],
   controllers: [AppController],
   providers: [
     AppService,
     SeederService,
     { provide: APP_FILTER, useClass: GlobalExceptionFilter },
+    { provide: APP_FILTER, useClass: DomainExceptionFilter },
     { provide: APP_GUARD, useClass: CustomThrottlerGuard },
   ],
 })
