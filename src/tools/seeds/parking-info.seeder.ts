@@ -1,8 +1,8 @@
-import { Stadium } from 'src/modules/stadium/entities/stadium.entity';
+import { Stadium } from 'src/modules/stadium/core/domain/stadium.entity';
 import { parkingInfoSeeder } from 'src/tools/seeds/data/parking-info.seed';
 import { DataSource } from 'typeorm';
 import { Seeder } from 'typeorm-extension';
-import { ParkingInfo } from 'src/modules/parking-info/entities/parking-info.entity';
+import { ParkingInfo } from 'src/modules/parking-info/core/domain/parking-info.entity';
 
 export default class ParkingInfoSeeder implements Seeder {
   async run(dataSource: DataSource): Promise<any> {

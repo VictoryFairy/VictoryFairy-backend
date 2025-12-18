@@ -1,4 +1,4 @@
-import { DEFAULT_PROFILE_IMAGE } from 'src/modules/user/const/user.const';
+import { DEFAULT_PROFILE_IMAGE } from 'src/modules/account/core/const/user.const';
 
 export const getTestUsers = () => {
   const mockUserList = [];

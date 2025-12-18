@@ -1,0 +1,24 @@
+import { Module } from '@nestjs/common';
+import { AuthController } from './auth.controller';
+import { UserController } from './user.controller';
+import { AccountApplicationCommandService } from './account-application.command.service';
+import { AccountCoreModule } from '../core/account-core.module';
+import { TermCoreModule } from 'src/modules/term/core/term-core.module';
+import { AccountApplicationQueryService } from './account-application.query.service';
+import { AwsS3Module } from 'src/infra/aws-s3/aws-s3.module';
+import { TeamCoreModule } from 'src/modules/team/core/team-core.module';
+import { RankCoreModule } from 'src/modules/rank/core/rank-core.module';
+
+@Module({
+  imports: [
+    TermCoreModule,
+    AccountCoreModule,
+    RankCoreModule,
+    AwsS3Module,
+    TeamCoreModule,
+  ],
+  providers: [AccountApplicationCommandService, AccountApplicationQueryService],
+  exports: [],
+  controllers: [AuthController, UserController],
+})
+export class AccountApplicationModule {}

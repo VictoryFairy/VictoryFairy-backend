@@ -1,8 +1,8 @@
-import { DataSource } from 'typeorm';
 import { Seeder } from 'typeorm-extension';
 import { Logger } from '@nestjs/common';
 import * as moment from 'moment';
-import { upsertSchedules } from 'src/modules/scheduling/game-crawling.util';
+import { DataSource } from 'typeorm';
+import { upsertSchedules } from 'src/modules/game/application/util/game-schedule.crawling.util';
 
 export default class GameSeeder implements Seeder {
   private readonly logger = new Logger(GameSeeder.name);
@@ -12,7 +12,11 @@ export default class GameSeeder implements Seeder {
     try {
       await Promise.all(
         getGameMonth.map(async (seedMonth) => {
-          await upsertSchedules({ ...seedMonth, dataSource });
+          await upsertSchedules({
+            ...seedMonth,
+            em: dataSource.manager,
+            logger: this.logger,
+          });
           this.logger.log(
             `Seeding completed for ${seedMonth.year}-${seedMonth.month}`,
           );

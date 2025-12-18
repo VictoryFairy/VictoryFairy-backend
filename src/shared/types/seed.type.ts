@@ -1,4 +1,4 @@
-import { TStadium, TTeam } from 'src/modules/scheduling/crawling-game.type';
+import { TStadium, TTeam } from 'src/modules/game/application/util/crawling-game.type';
 
 export interface ICheeringSongSeed {
   type: TCheeringSongType;

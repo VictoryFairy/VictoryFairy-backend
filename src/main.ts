@@ -2,14 +2,14 @@ import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 import { ValidationPipe } from '@nestjs/common';
 import { SwaggerModule } from '@nestjs/swagger';
-import { swaggerConfig } from './core/config/swagger.config';
+import { swaggerConfig } from './config/swagger.config';
 import * as cookieParser from 'cookie-parser';
 import { ConfigService } from '@nestjs/config';
 import { ApiLoggingInterceptor } from './common/interceptors/api-logger.interceptor';
 import { initializeTransactionalContext } from 'typeorm-transactional';
 import { NestExpressApplication } from '@nestjs/platform-express';
 import * as Sentry from '@sentry/node';
-import { IDotenv } from './core/config/dotenv.interface';
+import { IDotenv } from './config/dotenv.interface';
 
 async function bootstrap() {
   initializeTransactionalContext();
