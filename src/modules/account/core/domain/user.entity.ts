@@ -132,10 +132,7 @@ export class User {
     user.profile_image = props.image;
     user.nickname = props.nickname;
     user.support_team = { id: props.teamId } as Team;
-    user.addSocialAuth({
-      ...props.socialAuthData,
-      userId: user.id,
-    });
+    user.addSocialAuth({ ...props.socialAuthData });
     user.agreeTerms(props.termIds);
     return user;
   }
@@ -180,10 +177,12 @@ export class User {
   public addSocialAuth(props: {
     sub: string;
     provider: SocialProvider;
-    userId: number;
     providerEmail: string;
     isPrimary: boolean;
   }): void {
+    if (!this.social_auths) {
+      this.social_auths = [];
+    }
     if (
       this.social_auths.find(
         (auth) => auth.provider === props.provider && auth.sub === props.sub,
@@ -192,35 +191,33 @@ export class User {
       throw new AccountAlreadyLinkedError();
     }
     const socialAuth = SocialAuth.create(props);
-    if (!this.social_auths.length) {
-      this.social_auths = [socialAuth];
-      return;
-    }
+
     this.social_auths.push(socialAuth);
   }
 
-  public removeSocialAuth(props: { provider: SocialProvider }): void {
+  public removeSocialAuth(props: { provider: SocialProvider }): {
+    targetSocialAuth: SocialAuth;
+  } {
     // 소셜 계정 연동 내역이 없는 경우
     if (!this.social_auths.length) throw new AccountNoSocialLinkHistoryError();
 
-    const targetSocialAuth = this.social_auths.find((socialAuth) => {
-      socialAuth.provider === props.provider;
+    const targetSocialAuthIndex = this.social_auths.findIndex((socialAuth) => {
+      return socialAuth.provider === props.provider;
     });
 
     // 해당 플랫폼으로 연동된 계정이 없는 경우
-    if (!targetSocialAuth) {
+    if (targetSocialAuthIndex === -1) {
       throw new AccountSocialPlatformNotFoundError();
     }
     // 첫 가입 플랫폼은 연동 해제 불가능
-    if (targetSocialAuth.is_primary) {
+    if (this.social_auths[targetSocialAuthIndex].is_primary) {
       throw new AccountPrimarySocialCannotUnlinkError();
     }
 
-    // 해당 플랫폼으로 연동된 계정 제거
-    const socialAuth = this.social_auths.filter(
-      (socialAuth) => socialAuth.provider !== props.provider,
-    );
-    this.social_auths = socialAuth;
+    // 해당 플랫폼으로 연동된 계정 반환
+    return {
+      targetSocialAuth: this.social_auths[targetSocialAuthIndex],
+    };
   }
 
   private async createLocalAuth(props: { password: string }): Promise<void> {

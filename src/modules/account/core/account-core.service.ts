@@ -20,6 +20,7 @@ import {
   UserWithTeam,
   UserWithTeamAndSocialAuths,
 } from './types/account.interface';
+import { SocialAuth } from './domain/social-auth.entity';
 
 @Injectable()
 export class AccountCoreService {
@@ -27,6 +28,8 @@ export class AccountCoreService {
   constructor(
     @InjectRepository(User)
     private readonly userRepo: Repository<User>,
+    @InjectRepository(SocialAuth)
+    private readonly socialAuthRepo: Repository<SocialAuth>,
     private readonly userRedisService: UserRedisService,
     private readonly eventEmitter: EventEmitter2,
   ) {}
@@ -180,13 +183,7 @@ export class AccountCoreService {
       relations: { social_auths: true },
     });
 
-    user.addSocialAuth({
-      sub,
-      provider,
-      userId,
-      providerEmail,
-      isPrimary,
-    });
+    user.addSocialAuth({ sub, provider, providerEmail, isPrimary });
     await this.userRepo.save(user);
   }
 
@@ -200,8 +197,8 @@ export class AccountCoreService {
       relations: { social_auths: true },
     });
 
-    user.removeSocialAuth({ provider });
-    await this.userRepo.save(user);
+    const { targetSocialAuth } = user.removeSocialAuth({ provider });
+    await this.socialAuthRepo.remove(targetSocialAuth);
   }
 
   async getUserAgreedRequiredTerm(userId: number): Promise<string[]> {

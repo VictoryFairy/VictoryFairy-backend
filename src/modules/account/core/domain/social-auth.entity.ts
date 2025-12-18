@@ -54,15 +54,9 @@ export class SocialAuth {
     provider: SocialProvider;
     sub: string;
     providerEmail: string;
-    userId: number;
     isPrimary: boolean;
   }): SocialAuth {
-    if (
-      !props.providerEmail ||
-      !props.sub ||
-      !props.provider ||
-      !props.isPrimary
-    ) {
+    if (!props.providerEmail || !props.sub || !props.provider) {
       throw new AccountInvalidSocialAuthDataError();
     }
     if (!Object.values(SocialProvider).includes(props.provider)) {
@@ -72,7 +66,6 @@ export class SocialAuth {
     socialAuth.provider = props.provider;
     socialAuth.sub = props.sub;
     socialAuth.provider_email = props.providerEmail;
-    socialAuth.user_id = props.userId;
     socialAuth.is_primary = props.isPrimary;
     return socialAuth;
   }

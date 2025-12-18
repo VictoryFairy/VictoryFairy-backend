@@ -322,7 +322,6 @@ export class AuthController {
   /** 유저 로그아웃 */
   @Delete('logout')
   @HttpCode(HttpStatus.OK)
-  @JwtAuth('refresh')
   @ApiOperation({ summary: '로그아웃' })
   @ApiOkResponse({ description: '성공 시 데이터 없이 상태코드만 응답' })
   logout(@Res() res: Response) {
