@@ -25,6 +25,12 @@ describe('Core User Action Flow(e2e)', () => {
     .flat()
     .find((game) => game.id === '20250511LTKT1');
 
+  const targetTestedUser = {
+    id: 1,
+    email: 'test1@example.com',
+    teamId: 1,
+  };
+
   beforeAll(async () => {
     // 트랜잭션 컨텍스트 초기화
     initializeTransactionalContext();
@@ -136,7 +142,7 @@ describe('Core User Action Flow(e2e)', () => {
           seat: '115블록 2열 13번',
           review: '좋았다',
           gameId: targetGame.id,
-          cheeringTeamId: targetGame.awayTeam.id, // away팀을 응원 (승리 팀)
+          cheeringTeamId: targetTestedUser.teamId, // 1번 팀을 응원
         })
         .expect(HttpStatus.CREATED);
 
@@ -311,7 +317,69 @@ describe('Core User Action Flow(e2e)', () => {
         .expect(HttpStatus.NOT_FOUND);
     });
 
-    it('21. 회원 탈퇴', () => {
+    it('21. 패배한 경기에 대한 직관 등록 성공', async () => {
+      const loseGameId = '20250823LTNC0'; // 테스터 유저가 away_team = 1 인 경우
+
+      const res = await requestWithDefault(app, 'post', '/registered-games')
+        .set('Authorization', `Bearer ${accessTokenList[0]}`)
+        .send({
+          seat: '115블록 2열 13번',
+          review: '패배했다',
+          gameId: loseGameId,
+          cheeringTeamId: targetTestedUser.teamId,
+        });
+
+      expect(HttpStatus.CREATED);
+      expect(res.body).toHaveProperty('status', RegisteredGameStatus.Lose);
+      expect(res.body.game).toHaveProperty('id', loseGameId);
+    });
+
+    it('22. 취소된 경기에 대한 직관 등록 성공', async () => {
+      const cancelGameId = '20250917LTSS0'; // 테스터 유저가 away_team = 1 인 경우
+      const res = await requestWithDefault(app, 'post', '/registered-games')
+        .set('Authorization', `Bearer ${accessTokenList[0]}`)
+        .send({
+          seat: '115블록 2열 13번',
+          review: '취소했다',
+          gameId: cancelGameId,
+          cheeringTeamId: targetTestedUser.teamId,
+        });
+      expect(HttpStatus.CREATED);
+      expect(res.body).toHaveProperty('status', RegisteredGameStatus.NoGame);
+      expect(res.body.game).toHaveProperty('id', cancelGameId);
+    });
+
+    it('23. 무승부한 경기에 대한 직관 등록 성공', async () => {
+      const tieGameId = '20250830OBLT0'; // 테스터 유저가 home_team = 1 인 경우
+      const res = await requestWithDefault(app, 'post', '/registered-games')
+        .set('Authorization', `Bearer ${accessTokenList[0]}`)
+        .send({
+          seat: '115블록 2열 13번',
+          review: '무승부했다',
+          gameId: tieGameId,
+          cheeringTeamId: targetTestedUser.teamId,
+        });
+      expect(HttpStatus.CREATED);
+      expect(res.body).toHaveProperty('status', RegisteredGameStatus.Tie);
+      expect(res.body.game).toHaveProperty('id', tieGameId);
+    });
+
+    it('24. 직관 종합 기록 맞는 지 확인', async () => {
+      const res = await requestWithDefault(app, 'get', '/users/me')
+        .set('Authorization', `Bearer ${accessTokenList[0]}`)
+        .expect(HttpStatus.OK);
+
+      expect(res.body.user).toHaveProperty('id', targetTestedUser.id);
+      expect(res.body.user).toHaveProperty('email', targetTestedUser.email);
+      expect(res.body.record).toHaveProperty('win', 0);
+      expect(res.body.record).toHaveProperty('lose', 1);
+      expect(res.body.record).toHaveProperty('tie', 1);
+      expect(res.body.record).toHaveProperty('cancel', 1);
+      expect(res.body.record).toHaveProperty('total', 3);
+      expect(res.body.record).toHaveProperty('score', 990);
+    });
+
+    it('25. 회원 탈퇴', () => {
       return requestWithDefault(app, 'delete', '/users/me')
         .set('Authorization', `Bearer ${accessTokenList[0]}`)
         .expect(HttpStatus.NO_CONTENT);
