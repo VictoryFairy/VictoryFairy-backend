@@ -2,9 +2,9 @@ import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
 import { IJwtPayload } from 'src/modules/auth/types/auth.type';
-import { UserRedisService } from 'src/core/redis/user-redis.service';
-import { UserService } from 'src/modules/user/user.service';
-import { IDotenv } from 'src/core/config/dotenv.interface';
+import { IDotenv } from 'src/config/dotenv.interface';
+import { UserRedisService } from 'src/modules/account/core/user-redis.service';
+import { AccountCoreService } from 'src/modules/account/core/account-core.service';
 
 @Injectable()
 export class JwtStrategy {
@@ -14,7 +14,7 @@ export class JwtStrategy {
     private readonly jwtService: JwtService,
     private readonly configService: ConfigService<IDotenv>,
     private readonly userRedisService: UserRedisService,
-    private readonly userService: UserService,
+    private readonly accountCoreService: AccountCoreService,
   ) {
     this.refreshSecret = this.configService.get('JWT_REFRESH_SECRET', {
       infer: true,
@@ -40,14 +40,15 @@ export class JwtStrategy {
   async checkUser(
     userId: number,
   ): Promise<{ id: number; nickname: string; profile_image: string }> {
-    let user = await this.userRedisService.getUserInfoById(userId);
+    const result = await this.userRedisService.getUserInfoByIds([userId]);
+    let user = result ? result[userId.toString()] : null;
     if (!user) {
-      const dbUser = await this.userService.getUser({ id: userId });
-      user = {
-        id: dbUser.id,
-        nickname: dbUser.nickname,
-        profile_image: dbUser.profile_image,
-      };
+      const foundUser = await this.accountCoreService.getUserById(userId);
+      if (!foundUser) {
+        throw new UnauthorizedException('유저 정보 없음');
+      }
+      const { id, nickname, profile_image } = foundUser;
+      user = { id, nickname, profile_image };
     }
     return user;
   }

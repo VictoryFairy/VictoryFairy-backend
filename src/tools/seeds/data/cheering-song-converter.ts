@@ -23,7 +23,7 @@ import * as ktPlayerSong from './raw-cheering-songs/kt.player.song.json';
 import * as ktTeamSong from './raw-cheering-songs/kt.team.song.json';
 import * as lgPlayerSong from './raw-cheering-songs/lg.player.song.json';
 import * as lgTeamSong from './raw-cheering-songs/lg.team.song.json';
-import { TTeam } from 'src/modules/scheduling/crawling-game.type';
+import { TTeam } from 'src/modules/game/application/util/crawling-game.type';
 function refineSamsungTeamSong() {
   const type: TCheeringSongType = 'team';
   const team_name: TTeam = '삼성 라이온즈';

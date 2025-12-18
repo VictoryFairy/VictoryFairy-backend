@@ -275,4 +275,46 @@ export const mockGames = [
     winning_team_id: 7,
     stadium_id: 1,
   },
+
+  // 1번 팀이 패배한 경기
+  {
+    id: '20250823LTNC0',
+    date: '2025-08-23',
+    time: '18:00:00',
+    status: '경기종료',
+    home_team_score: 4,
+    away_team_score: 1,
+    home_team_id: 6,
+    away_team_id: 1,
+    winning_team_id: 6,
+    stadium_id: 2,
+  },
+
+  // 1번 팀이 무승부한 경기
+  {
+    id: '20250830OBLT0',
+    date: '2025-08-30',
+    time: '18:00:00',
+    status: '경기종료',
+    home_team_id: 1,
+    away_team_id: 2,
+    home_team_score: 8,
+    away_team_score: 8,
+    winning_team_id: null,
+    stadium_id: 8,
+  },
+
+  // 취소된 경기
+  {
+    id: '20250917LTSS0',
+    date: '2025-09-17',
+    time: '18:30:00',
+    status: '그라운드사정',
+    home_team_id: 4,
+    away_team_id: 1,
+    home_team_score: null,
+    away_team_score: null,
+    winning_team_id: null,
+    stadium_id: 4,
+  },
 ];

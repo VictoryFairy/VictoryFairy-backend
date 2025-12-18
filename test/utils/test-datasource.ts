@@ -18,7 +18,7 @@ const dataSourceOptions: DataSourceOptions & SeederOptions = {
   database: process.env.DB_DATABASE_NAME,
   username: process.env.DB_USER,
   password: process.env.DB_PASSWORD,
-  entities: [join(__dirname, '../../src/modules/**/entities/*.entity.ts')],
+  entities: [join(__dirname, '../../src/modules/**/*.entity.ts')],
   migrations: [join(__dirname, '../../src/tools/migrations/*.ts')],
   migrationsTableName: 'migrations',
   seeds: [

@@ -1,4 +1,4 @@
-import { Team } from 'src/modules/team/entities/team.entity';
+import { Team } from 'src/modules/team/core/domain/team.entity';
 import { DataSource } from 'typeorm';
 import { Seeder } from 'typeorm-extension';
 import { teamSeeder } from './data/team.seed';

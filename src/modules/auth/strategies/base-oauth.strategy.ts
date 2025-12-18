@@ -4,7 +4,7 @@ import {
   ISocialUserInfo,
 } from 'src/modules/auth/strategies/interface/oauth.interface';
 import { ConfigService } from '@nestjs/config';
-import { IDotenv } from 'src/core/config/dotenv.interface';
+import { IDotenv } from 'src/config/dotenv.interface';
 
 export abstract class BaseOAuthStrategy implements IOAuthStrategy {
   protected clientId: string;

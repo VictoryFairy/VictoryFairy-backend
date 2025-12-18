@@ -8,7 +8,7 @@ import {
   IsString,
   ValidateNested,
 } from 'class-validator';
-import { CheeringSongDto } from 'src/modules/cheering-song/dtos/cheering-song.dto';
+import { CheeringSongDto } from 'src/modules/cheering-song/application/dto/cheering-song.dto';
 
 @Exclude()
 export class CursorPageMetaDto {

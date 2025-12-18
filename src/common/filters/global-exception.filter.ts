@@ -8,8 +8,8 @@ import {
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import * as Sentry from '@sentry/node';
-import { IDotenv } from 'src/core/config/dotenv.interface';
-import { SlackService } from 'src/core/slack/slack.service';
+import { IDotenv } from 'src/config/dotenv.interface';
+import { SlackService } from 'src/infra/external-channel/slack.service';
 
 @Catch()
 export class GlobalExceptionFilter implements ExceptionFilter {
