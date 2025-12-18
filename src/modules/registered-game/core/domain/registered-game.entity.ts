@@ -131,7 +131,6 @@ export class RegisteredGame {
 
   determineStatus(metaData: { status: string; winnerTeamId: number | null }) {
     const { status, winnerTeamId } = metaData;
-    console.log(status, winnerTeamId);
     if (
       /.*취소$/.test(status) ||
       status === '그라운드사정' ||
